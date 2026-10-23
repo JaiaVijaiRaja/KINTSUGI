@@ -79,8 +79,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
       path: '/reconstruction',
       label: 'Reconstruction Studio',
       icon: Wrench,
-      phase: 'Phase 3',
-      description: 'Self-healing signal repair & confidence',
+      phase: 'Phase 6',
+      badge: 'Active',
+      description: 'Confidence-aware data reconstruction engine',
     },
     {
       path: '/audit',

@@ -88,3 +88,9 @@ class DetectionRunResultsResponse(BaseModel):
     anomalies: List[AnomalyRecord]
     limit: int
     offset: int
+
+
+class DetectionRunListResponse(BaseModel):
+    """Collection of historical detection runs."""
+    runs: List[DetectionRun]
+    total: int

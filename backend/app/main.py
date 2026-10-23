@@ -9,6 +9,7 @@ from app.api.routes.health import router as health_router
 from app.api.routes.datasets import router as datasets_router
 from app.api.routes.pipelines import router as pipelines_router
 from app.api.routes.anomalies import router as anomalies_router
+from app.api.routes.reconstruction import router as reconstruction_router
 from app.core.config import settings
 
 # Configure logging
@@ -44,6 +45,7 @@ def create_application() -> FastAPI:
     app.include_router(datasets_router, prefix=settings.API_PREFIX)
     app.include_router(pipelines_router, prefix=settings.API_PREFIX)
     app.include_router(anomalies_router, prefix=settings.API_PREFIX)
+    app.include_router(reconstruction_router, prefix=settings.API_PREFIX)
 
     # Global Exception Handlers
     @app.exception_handler(StarletteHTTPException)

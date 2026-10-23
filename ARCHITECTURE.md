@@ -11,7 +11,7 @@ The project takes its name from *Kintsugi* (金継ぎ), the traditional Japanese
 ## 2. Core Architectural Invariants
 
 ### 1. Preservation of Original Readings
-Original measured sensor values (`rawMeasuredValue`) are permanently retained and NEVER overwritten, mutated, or deleted. All downstream consumers can inspect both the raw reading and the healed signal simultaneously. In Phase 4 and Phase 5, `preserve_original_readings` is enforced as an immutable invariant (`True`). Raw CSV datasets are mounted read-only and verified via SHA-256 integrity checks.
+Original measured sensor values (`original_value`) are permanently retained and NEVER overwritten, mutated, or deleted. All downstream consumers can inspect both the raw reading and the healed signal simultaneously. In all phases, `preserve_original_readings` is enforced as an immutable invariant (`True`). Raw CSV datasets are mounted read-only and verified via SHA-256 integrity checks.
 
 ### 2. The Four Processing Statuses
 Every telemetry data point evaluated by the pipeline is categorized into one of four mutually exclusive, strictly defined processing statuses:
@@ -19,8 +19,8 @@ Every telemetry data point evaluated by the pipeline is categorized into one of 
 | Status | Code | Meaning | Downstream Action |
 | :--- | :--- | :--- | :--- |
 | **MEASURED** | `01_RAW` | Original unmodified physical sensor reading. Verified within nominal operating boundaries. | Passed to downstream operational telemetry as trusted truth. |
-| **ESTIMATED** | `02_PROP` | Candidate repaired value generated via contextual time-series or multivariate model imputation. | Internal intermediate proposal; pending confidence verification. |
-| **CORRECTED** | `03_VERIF` | High-confidence validated repair. The candidate repair exceeds the required policy confidence threshold (e.g. $\ge 0.80$). | Approved for downstream control loops, labeled with repair metadata. |
+| **ESTIMATED** | `02_PROP` | Candidate repaired value generated via contextual time-series or multivariate model imputation. | Internal intermediate proposal; holding raw reading pending human review. |
+| **CORRECTED** | `03_VERIF` | High-confidence validated repair. The candidate repair exceeds the required policy confidence threshold (e.g. $\ge 0.80$) or received operator approval. | Approved for downstream control loops, labeled with repair metadata. |
 | **UNRESOLVED** | `04_ABST` | Insufficient contextual evidence or corrupted neighboring channels. The system strictly **abstains from guessing**. | Flagged for operator review; safety interlocks alerted; no fabricated precision. |
 
 ### 3. Strict Requirement to Abstain
@@ -30,7 +30,7 @@ When evidence is ambiguous, sensor correlation is degraded, or uncertainty margi
 
 ## 3. Scope: Implemented vs. Planned Features
 
-### Implemented Features (Phases 1 through 5)
+### Implemented Features (Phases 1 through 6)
 * **Application Shell & Navigation**: Complete 8-route single-page application shell (`/overview`, `/datasets`, `/pipeline`, `/anomalies`, `/reconstruction`, `/audit`, `/evaluation`, `/settings`).
 * **Zero-Dependency History Router**: Lightweight HTML5 History API client router supporting direct browser URL navigation, browser Back/Forward, automatic `/` to `/overview` redirect, and 404 Not Found handling.
 * **Verified Backend Health Contract**: Live `GET /api/health` endpoint returning operational status, service identifier, API version, environment, and ISO-8601 UTC server timestamp with roundtrip latency tracking.
@@ -54,87 +54,56 @@ When evidence is ambiguous, sensor correlation is degraded, or uncertainty margi
   * Atomic detection run persistence in `storage/runs/{run_id}/run.json` and `anomalies.json`.
   * Dedicated API endpoints for execution (`POST /api/pipelines/{id}/run`), run status (`GET /api/pipelines/{id}/runs/{run_id}`), run results (`GET /api/pipelines/{id}/runs/{run_id}/results`), and anomalies catalog (`GET /api/anomalies`, `GET /api/anomalies/{anomaly_id}`).
   * Interactive Anomaly Explorer frontend with real pipeline selection, execution controls, KPI cards, SVG time-series visualization with anomaly overlays, filterable records table, and detailed observation modal.
+* **Confidence-Aware Data Reconstruction Engine (Phase 6 Core Feature)**:
+  * Chronological Linear Interpolation with strict boundary extrapolation prohibition, gap limits, timestamp weighting ($\Delta t$), and anomaly neighbor exclusion.
+  * Local Median Reconstruction with isolated window, target exclusion, minimum valid neighbor quorum, and anomaly exclusion.
+  * Cross-Sensor Validation evaluating empirical Pearson correlation ($|r| \ge 0.70$) on nominal observations, linear regression residual corroboration, and severe conflict detection ($>3.5\sigma_{\text{res}}$).
+  * Evidence-Based Confidence Scoring (0 to 100) combining neighbor density, method concordance, temporal proximity, signal stability, cleanliness, and cross-sensor corroboration.
+  * Deterministic Acceptance Policies driving explicit status transitions (`MEASURED`, `ESTIMATED`, `CORRECTED`, `UNRESOLVED`).
+  * Operator human review decisions (`ACCEPT`, `REJECT`, `MODIFY`) committed with audit notes.
+  * Reconstruction Studio frontend with run selection, controls, KPI summary cards, filterable results table, and detailed evidence inspector modal.
 
 ### Planned for Future Phases
-* **Signal Reconstruction & Imputation (Phase 6)**: Contextual multivariate regression, piecewise linear interpolation, and neighboring channel validation.
-* **Confidence Scoring & Calibration (Phase 6)**: Empirical uncertainty margins and confidence evaluation.
-* **Cryptographic Audit Ledger (Phase 7)**: SHA-256 hash chains documenting all repair proposals and operator decisions.
-* **Evaluation Center Benchmarking (Phase 8)**: Precision, recall, F1, RMSE, MAE, and abstention rate metrics against ground-truth datasets.
+* **Evaluation Center Benchmarking (Phase 7)**: Independent performance metrics, precision, recall, F1, RMSE, MAE, and calibration curves against labeled test datasets.
+* **Cryptographic Audit Ledger (Phase 8)**: Append-only SHA-256 hash chains documenting all repair proposals and operator decisions.
 
 ---
 
-## 4. Real Sensor Anomaly Detection Architecture (Phase 5)
+## 4. Confidence-Aware Data Reconstruction Architecture (Phase 6)
 
-### 1. Robust Statistical Detector (Trailing Rolling Median & MAD)
-* **Mathematical Definition**:
-  For an indexed series $x_0, x_1, \dots, x_{N-1}$ and trailing window size $w$:
-  $$W_i = \{x_k \mid \max(0, i - w + 1) \le k \le i \text{ and } x_k \in \mathbb{R}_{\text{finite}}\}$$
-  $$\tilde{x}_i = \text{median}(W_i)$$
-  $$\text{MAD}_i = \text{median}(\{|x_k - \tilde{x}_i| \mid x_k \in W_i\})$$
-  $$\text{Score}_i = \frac{|x_i - \tilde{x}_i|}{\text{MAD}_i}$$
-* **Threshold Condition**:
-  Observation $x_i$ is flagged if $\text{Score}_i > T_{\text{MAD}}$ (`mad_threshold`).
-* **Trailing Window Self-Participation**:
-  The current observation participates in its own trailing baseline window $W_i$. Because median and MAD have a 50% breakdown point, an isolated transient impulse cannot corrupt or bias the baseline.
-* **Zero-MAD & Constant Signal Handling**:
-  In industrial plants, sensors often rest at constant operating values (e.g. constant $50.0^\circ\text{C}$). If more than 50% of the observations in $W_i$ are identical, $\text{MAD}_i = 0.0$:
-  * **Nominal Match**: If $|x_i - \tilde{x}_i| \le 10^{-9}$, the reading matches the constant window median. It is marked **nominal** (`flagged=False`, `score=0.0`) to prevent false-positive cascades.
-  * **Step / Impulse Deviation**: If $|x_i - \tilde{x}_i| > 10^{-9}$, the reading deviates from a flat baseline. It is safely flagged with sentinel `score=999.0` avoiding division by zero.
-* **Edge Windows & Minimum Observations**:
-  If $|W_i| < \text{min\_observations}$, the detector declines to evaluate $x_i$ and records `flagged=False` with reason "Insufficient valid historical observations in trailing window".
-* **Missing & Non-Finite Data**:
-  Missing (NaN) and non-finite ($\pm\infty$) samples are never silently replaced. They are documented with reason "Observation is missing or non-finite (NaN/Inf); statistical outlier detection requires finite scalar".
+### 1. Chronological Linear Interpolation
+* **Mathematical Formula**:
+  Given target row index $i$ with timestamp $t_i$, left valid bounding neighbor $(t_L, y_L)$ at row $L < i$, and right valid bounding neighbor $(t_R, y_R)$ at row $R > i$:
+  $$\hat{y}_i = y_L + \frac{t_i - t_L}{t_R - t_L} \cdot (y_R - y_L)$$
+  When timestamps are absent, row indices are used:
+  $$\hat{y}_i = y_L + \frac{i - L}{R - L} \cdot (y_R - y_L)$$
+* **Safety Invariants**:
+  1. **Extrapolation Prohibited**: If $L$ is absent (left boundary) or $R$ is absent (right boundary), the method strictly returns `can_reconstruct=False`.
+  2. **Gap Limit Enforcement**: If $R - L - 1 > \text{max\_gap\_size}$, linear interpolation abstains.
+  3. **Neighbor Cleanliness**: Observations flagged as unresolved anomalies cannot serve as trusted bounding neighbors $L$ or $R$.
 
----
+### 2. Local Median Reconstruction
+* **Mathematical Formula**:
+  For window radius $w$:
+  $$N_i = \{y_k \mid \max(0, i - w) \le k \le \min(N-1, i + w), k \ne i, y_k \in \mathbb{R}_{\text{finite}}, k \notin \text{Anomalies}\}$$
+  $$\hat{y}_i = \text{median}(N_i)$$
+* **Safety Invariants**:
+  1. The target observation $i$ is strictly excluded from its own reference neighborhood.
+  2. Flagged anomalies within the window are excluded.
+  3. If $|N_i| < \text{min\_trusted\_neighbors}$ (default 3), the method declines to reconstruct.
 
-### 2. Multivariate Isolation Forest Detector
-* **Algorithm**:
-  Fits an ensemble of isolation trees on numeric sensor channels using `sklearn.ensemble.IsolationForest`.
-* **Reproducibility**:
-  Explicitly sets `random_state=random_seed` ensuring deterministic partitions across identical inputs.
-* **Finite Row Filtering & Row Mapping**:
-  Isolation Forest requires 2D finite matrices. Rows containing any NaN or Inf across configured sensor channels are filtered out for model fitting, while retaining a strict array index mapping back to original CSV rows (`source_row_index`).
-* **Minimum Observation Enforcement**:
-  If the count of usable finite rows is less than `min_observations`, the detector safely declines to fit and returns an advisory warning.
-* **Zero Variance Safeguard**:
-  If all features exhibit zero variance (completely constant signals), Isolation Forest is bypassed with an advisory warning.
+### 3. Empirical Cross-Sensor Validation
+* **Corroboration Threshold**:
+  Computes Pearson correlation coefficient $r$ across all nominal (non-anomalous) rows between target sensor $Y$ and candidate reference sensor $X$:
+  $$r = \frac{\sum (x_k - \bar{x})(y_k - \bar{y})}{\sqrt{\sum (x_k - \bar{x})^2 \sum (y_k - \bar{y})^2}}$$
+* **Invariant**: If $|r| < 0.70$, the engine strictly disclaims any cross-sensor relationship (`has_relationship=False`).
+* **Regression Corroboration**: If $|r| \ge 0.70$, fits empirical linear regression $y = \beta_1 x + \beta_0$ and evaluates residual standard error $\sigma_{\text{res}}$:
+  * **Corroborating**: If $|\hat{y} - \hat{y}_{\text{reg}}| \le 2.0\sigma_{\text{res}}$, cross-sensor corroboration bonus (+10 pts) is awarded.
+  * **Conflicting**: If $|\hat{y} - \hat{y}_{\text{reg}}| > 3.5\sigma_{\text{res}}$, severe evidence conflict is flagged (-25 pts penalty and hold for review).
 
 ---
 
-### 3. Detector Consensus & Severity Rubric
-
-Each detector records its independent results in `detector_details`. KINTSUGI applies an explicit aggregation policy:
-
-```mermaid
-graph TD
-    A[Observation x_i] --> B[Statistical MAD Detector]
-    A --> C[Isolation Forest Detector]
-    B --> D{MAD Flagged?}
-    C --> E{IF Flagged?}
-    D -- Yes --> F{Both Flagged?}
-    E -- Yes --> F
-    D -- No --> G{IF Flagged?}
-    G -- Yes --> H[SINGLE_DETECTOR Flag]
-    G -- No --> I[Nominal / No Anomaly]
-    F -- Yes --> J[MULTI_DETECTOR Consensus]
-    F -- No --> H
-```
-
-* **Consensus Types**:
-  * `MULTI_DETECTOR`: Both detectors independently flagged the point.
-  * `SINGLE_DETECTOR`: Exactly one detector flagged the point.
-  * `NORMAL`: Neither detector flagged the point (not stored in anomalies catalog).
-* **Documented Severity Rubric**:
-  * `CRITICAL`: Multi-detector consensus with extreme deviation ($>2.0\times$ MAD threshold or IF score $< -0.15$).
-  * `HIGH`: Any multi-detector consensus, or single-detector flag with extreme deviation.
-  * `MEDIUM`: Single-detector flag exceeding threshold margin.
-  * `LOW`: Borderline single-detector flag near threshold boundary.
-* **Anomaly vs. Confirmed Fault Disclaimer**:
-  Detector agreement demonstrates corroborating mathematical suspicion across localized dispersion and decision tree splits; **it does NOT constitute physical proof of a hardware fault**.
-
----
-
-### 4. Persistence Architecture
+## 5. Storage & Persistence Layout
 
 ```
 backend/storage/
@@ -145,30 +114,35 @@ backend/storage/
 │       └── quality.json             # Data quality audit
 ├── pipelines/
 │   └── pipe_{uuid}.json             # Saved pipeline configuration (v1, v2...)
-└── runs/
-    └── run_{uuid}/
-        ├── run.json                 # Run execution state, summary counts, warnings
-        └── anomalies.json           # Array of individual AnomalyRecord objects
+├── runs/
+│   └── run_{uuid}/
+│       ├── run.json                 # Detection run execution state & summary counts
+│       └── anomalies.json           # Array of individual AnomalyRecord objects
+└── reconstruction/
+    └── rec_run_{uuid}/
+        ├── run.json                 # Reconstruction execution state & summary counts
+        └── results.json             # Per-reading audit records & review decisions
 ```
 
-* **Data Preservation**: Raw CSV files in `storage/datasets/` are strictly read-only and never modified by detection runs.
+* **Data Preservation**: Raw CSV files in `storage/datasets/` are strictly read-only and never modified by detection or reconstruction runs.
 * **Atomic Writes**: All JSON persistence uses `.tmp` files committed via atomic `os.replace`.
 
 ---
 
-## 5. API Contracts Summary
+## 6. API Contracts Summary
 
-### Pipeline Execution & Results
-* `POST /api/pipelines/{pipeline_id}/run`
-  * Executes detection using saved configuration.
-  * Returns `DetectionRunResponse` (`run` metadata and `sample_anomalies`).
-* `GET /api/pipelines/{pipeline_id}/runs/{run_id}`
-  * Retrieves run status (`completed`, `failed`, `partial_failure`), duration, and `summary` metrics.
-* `GET /api/pipelines/{pipeline_id}/runs/{run_id}/results?limit=50&offset=0`
-  * Retrieves paginated anomaly records for the specified run.
+### Pipeline Execution & Detection
+* `POST /api/pipelines/{pipeline_id}/run` — Executes detection run.
+* `GET /api/pipelines/{pipeline_id}/runs` — Lists detection runs for pipeline.
+* `GET /api/pipelines/{pipeline_id}/runs/{run_id}` — Retrieves detection run status.
+* `GET /api/pipelines/{pipeline_id}/runs/{run_id}/results` — Retrieves anomaly records.
+* `GET /api/anomalies` — Queries and filters anomaly records across runs.
+* `GET /api/anomalies/{anomaly_id}` — Retrieves single anomaly details.
 
-### Anomalies Catalog
-* `GET /api/anomalies?dataset_id={id}&run_id={id}&sensor_column={col}&detector_name={name}&severity={sev}&limit=50&offset=0`
-  * Queries and filters anomaly records across persisted runs.
-* `GET /api/anomalies/{anomaly_id}`
-  * Retrieves detailed per-detector diagnostics for a specific anomaly record.
+### Reconstruction Runs & Results
+* `POST /api/pipelines/{pipeline_id}/runs/{detection_run_id}/reconstruct` — Executes confidence-aware reconstruction run.
+* `GET /api/reconstruction/runs` — Lists reconstruction runs with optional filtering.
+* `GET /api/reconstruction/runs/{reconstruction_run_id}` — Retrieves reconstruction run metadata and summary counts.
+* `GET /api/reconstruction/runs/{reconstruction_run_id}/results` — Retrieves paginated reconstruction records with sensor and status filters.
+* `GET /api/reconstruction/results/{result_id}` — Retrieves single reconstruction record with evidence references and confidence factor breakdown.
+* `POST /api/reconstruction/results/{result_id}/review` — Records an operator human review decision (`ACCEPT`, `REJECT`, `MODIFY`).

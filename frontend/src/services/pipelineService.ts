@@ -7,6 +7,7 @@ import type {
   PipelineRun,
   PipelineValidationResponse,
 } from '../types/pipeline';
+import type { DetectionRun } from '../types/anomaly';
 import type { PaginatedResponse } from '../types/api';
 
 async function handleResponse<T>(res: Response): Promise<T> {
@@ -159,5 +160,27 @@ export const pipelineService = {
       'Pipeline runs are planned for a subsequent execution phase.',
       501
     );
+  },
+
+  /**
+   * List historical detection runs executed under a specific pipeline.
+   */
+  async listPipelineRuns(
+    pipelineId: string
+  ): Promise<{ runs: DetectionRun[]; total: number }> {
+    const baseUrl = apiService.getBaseUrl();
+    try {
+      const res = await fetch(
+        `${baseUrl}/api/pipelines/${encodeURIComponent(pipelineId)}/runs`,
+        {
+          headers: { Accept: 'application/json' },
+        }
+      );
+      return await handleResponse<{ runs: DetectionRun[]; total: number }>(res);
+    } catch (err: unknown) {
+      if (err instanceof ApiServiceError) throw err;
+      const msg = err instanceof Error ? err.message : String(err);
+      throw new ApiServiceError(`Failed to list detection runs: ${msg}`);
+    }
   },
 };

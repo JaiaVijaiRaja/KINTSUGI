@@ -292,6 +292,28 @@ class DetectionService:
                 detail=f"Corrupted metadata for detection run '{run_id}'.",
             )
 
+    def list_detection_runs(self, pipeline_id: Optional[str] = None) -> List[DetectionRun]:
+        """List historical detection runs, optionally filtered by pipeline_id."""
+        runs_base = get_runs_storage_path()
+        runs: List[DetectionRun] = []
+        if not runs_base.exists():
+            return runs
+
+        for r_dir in sorted(runs_base.iterdir(), key=lambda p: p.stat().st_mtime, reverse=True):
+            if r_dir.is_dir() and r_dir.name.startswith("run_"):
+                run_file = r_dir / "run.json"
+                if run_file.exists():
+                    try:
+                        with open(run_file, "r", encoding="utf-8") as f:
+                            data = json.load(f)
+                            run = DetectionRun(**data)
+                            if pipeline_id and run.configuration_id != pipeline_id:
+                                continue
+                            runs.append(run)
+                    except Exception as e:
+                        logger.warning("Error reading detection run in %s: %s", r_dir.name, str(e))
+        return runs
+
     def get_detection_run_results(
         self, run_id: str, limit: int = 100, offset: int = 0
     ) -> DetectionRunResultsResponse:

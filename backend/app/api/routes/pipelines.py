@@ -109,10 +109,13 @@ async def update_pipeline(
 
 from app.schemas.anomaly import (
     DetectionRun,
+    DetectionRunListResponse,
     DetectionRunResponse,
     DetectionRunResultsResponse,
 )
+from app.schemas.reconstruction import ReconstructionRunResponse
 from app.services.detection_service import detection_service
+from app.services.reconstruction_service import reconstruction_service
 
 
 @router.post(
@@ -139,6 +142,19 @@ async def execute_pipeline_run(pipeline_id: str) -> DetectionRunResponse:
 async def execute_pipeline_alias(pipeline_id: str) -> DetectionRunResponse:
     """Compatibility alias for POST /api/pipelines/{pipeline_id}/run."""
     return await execute_pipeline_run(pipeline_id)
+
+
+@router.get(
+    "/{pipeline_id}/runs",
+    response_model=DetectionRunListResponse,
+    status_code=status.HTTP_200_OK,
+    summary="List detection runs for pipeline",
+    description="Retrieves all historical detection runs executed under the specified pipeline configuration.",
+)
+async def list_pipeline_runs(pipeline_id: str) -> DetectionRunListResponse:
+    """List historical detection runs for this pipeline."""
+    runs = detection_service.list_detection_runs(pipeline_id=pipeline_id)
+    return DetectionRunListResponse(runs=runs, total=len(runs))
 
 
 @router.get(
@@ -180,3 +196,22 @@ async def get_pipeline_run_results(
             detail=f"Run '{run_id}' does not belong to pipeline '{pipeline_id}'.",
         )
     return detection_service.get_detection_run_results(run_id, limit=limit, offset=offset)
+
+
+@router.post(
+    "/{pipeline_id}/runs/{detection_run_id}/reconstruct",
+    response_model=ReconstructionRunResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Execute signal reconstruction",
+    description="Starts and persists a confidence-aware reconstruction run for anomalies detected in the specified detection run.",
+)
+async def execute_pipeline_reconstruction(
+    pipeline_id: str,
+    detection_run_id: str,
+) -> ReconstructionRunResponse:
+    """Execute signal reconstruction for a completed detection run."""
+    logger.info("Triggered reconstruction run for pipeline '%s', detection run '%s'", pipeline_id, detection_run_id)
+    return reconstruction_service.execute_reconstruction_run(
+        pipeline_id=pipeline_id,
+        detection_run_id=detection_run_id,
+    )
