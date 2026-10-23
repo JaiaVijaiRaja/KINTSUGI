@@ -11,7 +11,7 @@ The project takes its name from *Kintsugi* (金継ぎ), the traditional Japanese
 ## 2. Core Architectural Invariants
 
 ### 1. Preservation of Original Readings
-Original measured sensor values (`rawMeasuredValue`) are permanently retained and NEVER overwritten, mutated, or deleted. All downstream consumers can inspect both the raw reading and the healed signal simultaneously. In Phase 4 configuration management, `preserve_original_readings` is enforced as an immutable invariant (`True`). Configurations attempting to disable original reading retention are strictly rejected.
+Original measured sensor values (`rawMeasuredValue`) are permanently retained and NEVER overwritten, mutated, or deleted. All downstream consumers can inspect both the raw reading and the healed signal simultaneously. In Phase 4 and Phase 5, `preserve_original_readings` is enforced as an immutable invariant (`True`). Raw CSV datasets are mounted read-only and verified via SHA-256 integrity checks.
 
 ### 2. The Four Processing Statuses
 Every telemetry data point evaluated by the pipeline is categorized into one of four mutually exclusive, strictly defined processing statuses:
@@ -30,178 +30,145 @@ When evidence is ambiguous, sensor correlation is degraded, or uncertainty margi
 
 ## 3. Scope: Implemented vs. Planned Features
 
-### Implemented in Phase 1, Phase 2, Phase 3 & Phase 4
+### Implemented Features (Phases 1 through 5)
 * **Application Shell & Navigation**: Complete 8-route single-page application shell (`/overview`, `/datasets`, `/pipeline`, `/anomalies`, `/reconstruction`, `/audit`, `/evaluation`, `/settings`).
 * **Zero-Dependency History Router**: Lightweight HTML5 History API client router supporting direct browser URL navigation, browser Back/Forward, automatic `/` to `/overview` redirect, and 404 Not Found handling.
 * **Verified Backend Health Contract**: Live `GET /api/health` endpoint returning operational status, service identifier, API version, environment, and ISO-8601 UTC server timestamp with roundtrip latency tracking.
-* **Strict CORS Whitelisting**: Explicit origin restriction allowing only `http://localhost:5173` and `http://127.0.0.1:5173`.
 * **Dataset Ingestion Engine (Phase 3 Core Feature)**:
   * Multipart file upload (`POST /api/datasets/upload`) for CSV telemetry streams.
   * Multi-encoding support (`utf-8-sig`, `utf-8`, `latin-1`).
   * Strict validation against empty files, invalid extensions, header-only datasets, duplicate column names, empty column names, and mismatched row lengths.
   * Server-controlled isolated storage paths (`ds_{uuid}`) preventing path traversal.
-  * Configurable upload size limits (50 MB default), max row count (500,000), and max column count (200).
-* **Genuine Data Quality Audit (Phase 3 Core Feature)**:
-  * Exact total row and column counts.
-  * Full row duplicate detection count and percentage.
-  * Total missing cells count and overall missing percentage.
-  * Per-column metrics: detected data type (`float`, `integer`, `string`, `datetime`, `boolean`), missing count, missing percentage, unique values count.
-  * Descriptive statistics for numeric sensor channels: `min`, `max`, `mean`, `median`, `std`, `q25`, `q75`.
-  * Conservative timestamp candidate analysis: identifies timestamp channels, computes parseability %, evaluates duplicate timestamps, and verifies monotonic sequence progression.
+  * Exact data quality audit calculations (row duplicates, missing counts, column types, descriptive statistics).
 * **Pipeline Configuration Engine (Phase 4 Core Feature)**:
   * Typed, versioned configuration data model (`PipelineConfig`, `PipelineConfigCreate`, `PipelineConfigUpdate`).
   * Live validation endpoint (`POST /api/pipelines/validate`) validating against actual dataset schema, column types, and data quality without side-effects.
   * Persistence endpoint (`POST /api/pipelines`) saving atomic configuration files in `storage/pipelines/` with server-controlled IDs (`pipe_{uuid}`).
   * Configuration listing (`GET /api/pipelines`) and single retrieval (`GET /api/pipelines/{id}`).
   * Versioned update endpoint (`PUT /api/pipelines/{id}`) incrementing `configuration_version` and re-validating.
-  * Channel role assignment: single timestamp, one or more numeric sensors, and excluded channels.
-  * Conflicting role detection: prevents column assigned to multiple conflicting roles.
-  * Non-numeric sensor rejection: ensures sensor channels contain numeric data.
-  * Statistical detector settings (rolling window, MAD threshold, min observations).
-  * Isolation Forest detector settings (contamination fraction, random seed, min observations).
-  * Reconstruction policy configuration (linear interpolation, max gap size, cross-sensor validation, immutable raw reading retention).
-  * Confidence policy as decision logic (review threshold, human review requirement, corroborating sensor quorum).
-  * Unsaved changes modal guard preventing accidental data loss during editing.
-* **Automated Test Suite**:
-  * 37 backend automated test cases covering valid upload, listing, metadata, preview, quality metrics, invalid extensions, empty files, malformed CSV, header-only CSV, missing IDs, oversized uploads, preview limits, unusual filenames, persistence, valid configuration validation, unknown dataset IDs, unknown columns, duplicate sensors, conflicting roles, invalid detection parameters, invalid reconstruction parameters, invalid confidence policy, successful creation, listing configurations, retrieving saved configurations, updating configurations, unknown configuration IDs, service restart persistence, validation side-effect isolation, non-numeric sensor rejection, and end-to-end integration workflow.
+* **Real Sensor Anomaly Detection Engine (Phase 5 Core Feature)**:
+  * Robust statistical anomaly detection via trailing rolling median and Median Absolute Deviation (MAD).
+  * Multivariate Isolation Forest detection via `scikit-learn` with finite-sample filtering and exact source row mapping.
+  * Explicit multi-detector aggregation policy distinguishing single-detector vs multi-detector consensus.
+  * Documented severity classification rubric (`CRITICAL`, `HIGH`, `MEDIUM`, `LOW`).
+  * Atomic detection run persistence in `storage/runs/{run_id}/run.json` and `anomalies.json`.
+  * Dedicated API endpoints for execution (`POST /api/pipelines/{id}/run`), run status (`GET /api/pipelines/{id}/runs/{run_id}`), run results (`GET /api/pipelines/{id}/runs/{run_id}/results`), and anomalies catalog (`GET /api/anomalies`, `GET /api/anomalies/{anomaly_id}`).
+  * Interactive Anomaly Explorer frontend with real pipeline selection, execution controls, KPI cards, SVG time-series visualization with anomaly overlays, filterable records table, and detailed observation modal.
 
-### Planned for Phase 5 (Anomaly Detection, Self-Healing & Ledger)
-* Execution of Statistical and Isolation Forest detectors against configured pipelines.
-* Signal reconstruction algorithms (linear interpolation, splines, multivariate regression).
-* Contextual confidence score calculation (0.00–1.00) based on signal degradation and sensor correlation.
-* Immutable append-only audit ledger with SHA-256 cryptographic chaining.
-* Operator manual override workflow with mandatory rationale documentation.
-* Controlled empirical benchmark evaluation against standard labeled datasets (IMS Bearing, SWaT).
+### Planned for Future Phases
+* **Signal Reconstruction & Imputation (Phase 6)**: Contextual multivariate regression, piecewise linear interpolation, and neighboring channel validation.
+* **Confidence Scoring & Calibration (Phase 6)**: Empirical uncertainty margins and confidence evaluation.
+* **Cryptographic Audit Ledger (Phase 7)**: SHA-256 hash chains documenting all repair proposals and operator decisions.
+* **Evaluation Center Benchmarking (Phase 8)**: Precision, recall, F1, RMSE, MAE, and abstention rate metrics against ground-truth datasets.
 
 ---
 
-## 4. Storage Architecture
+## 4. Real Sensor Anomaly Detection Architecture (Phase 5)
+
+### 1. Robust Statistical Detector (Trailing Rolling Median & MAD)
+* **Mathematical Definition**:
+  For an indexed series $x_0, x_1, \dots, x_{N-1}$ and trailing window size $w$:
+  $$W_i = \{x_k \mid \max(0, i - w + 1) \le k \le i \text{ and } x_k \in \mathbb{R}_{\text{finite}}\}$$
+  $$\tilde{x}_i = \text{median}(W_i)$$
+  $$\text{MAD}_i = \text{median}(\{|x_k - \tilde{x}_i| \mid x_k \in W_i\})$$
+  $$\text{Score}_i = \frac{|x_i - \tilde{x}_i|}{\text{MAD}_i}$$
+* **Threshold Condition**:
+  Observation $x_i$ is flagged if $\text{Score}_i > T_{\text{MAD}}$ (`mad_threshold`).
+* **Trailing Window Self-Participation**:
+  The current observation participates in its own trailing baseline window $W_i$. Because median and MAD have a 50% breakdown point, an isolated transient impulse cannot corrupt or bias the baseline.
+* **Zero-MAD & Constant Signal Handling**:
+  In industrial plants, sensors often rest at constant operating values (e.g. constant $50.0^\circ\text{C}$). If more than 50% of the observations in $W_i$ are identical, $\text{MAD}_i = 0.0$:
+  * **Nominal Match**: If $|x_i - \tilde{x}_i| \le 10^{-9}$, the reading matches the constant window median. It is marked **nominal** (`flagged=False`, `score=0.0`) to prevent false-positive cascades.
+  * **Step / Impulse Deviation**: If $|x_i - \tilde{x}_i| > 10^{-9}$, the reading deviates from a flat baseline. It is safely flagged with sentinel `score=999.0` avoiding division by zero.
+* **Edge Windows & Minimum Observations**:
+  If $|W_i| < \text{min\_observations}$, the detector declines to evaluate $x_i$ and records `flagged=False` with reason "Insufficient valid historical observations in trailing window".
+* **Missing & Non-Finite Data**:
+  Missing (NaN) and non-finite ($\pm\infty$) samples are never silently replaced. They are documented with reason "Observation is missing or non-finite (NaN/Inf); statistical outlier detection requires finite scalar".
+
+---
+
+### 2. Multivariate Isolation Forest Detector
+* **Algorithm**:
+  Fits an ensemble of isolation trees on numeric sensor channels using `sklearn.ensemble.IsolationForest`.
+* **Reproducibility**:
+  Explicitly sets `random_state=random_seed` ensuring deterministic partitions across identical inputs.
+* **Finite Row Filtering & Row Mapping**:
+  Isolation Forest requires 2D finite matrices. Rows containing any NaN or Inf across configured sensor channels are filtered out for model fitting, while retaining a strict array index mapping back to original CSV rows (`source_row_index`).
+* **Minimum Observation Enforcement**:
+  If the count of usable finite rows is less than `min_observations`, the detector safely declines to fit and returns an advisory warning.
+* **Zero Variance Safeguard**:
+  If all features exhibit zero variance (completely constant signals), Isolation Forest is bypassed with an advisory warning.
+
+---
+
+### 3. Detector Consensus & Severity Rubric
+
+Each detector records its independent results in `detector_details`. KINTSUGI applies an explicit aggregation policy:
+
+```mermaid
+graph TD
+    A[Observation x_i] --> B[Statistical MAD Detector]
+    A --> C[Isolation Forest Detector]
+    B --> D{MAD Flagged?}
+    C --> E{IF Flagged?}
+    D -- Yes --> F{Both Flagged?}
+    E -- Yes --> F
+    D -- No --> G{IF Flagged?}
+    G -- Yes --> H[SINGLE_DETECTOR Flag]
+    G -- No --> I[Nominal / No Anomaly]
+    F -- Yes --> J[MULTI_DETECTOR Consensus]
+    F -- No --> H
+```
+
+* **Consensus Types**:
+  * `MULTI_DETECTOR`: Both detectors independently flagged the point.
+  * `SINGLE_DETECTOR`: Exactly one detector flagged the point.
+  * `NORMAL`: Neither detector flagged the point (not stored in anomalies catalog).
+* **Documented Severity Rubric**:
+  * `CRITICAL`: Multi-detector consensus with extreme deviation ($>2.0\times$ MAD threshold or IF score $< -0.15$).
+  * `HIGH`: Any multi-detector consensus, or single-detector flag with extreme deviation.
+  * `MEDIUM`: Single-detector flag exceeding threshold margin.
+  * `LOW`: Borderline single-detector flag near threshold boundary.
+* **Anomaly vs. Confirmed Fault Disclaimer**:
+  Detector agreement demonstrates corroborating mathematical suspicion across localized dispersion and decision tree splits; **it does NOT constitute physical proof of a hardware fault**.
+
+---
+
+### 4. Persistence Architecture
 
 ```
 backend/storage/
 ├── datasets/
-│   └── ds_79122c0f0d41/                 # Server-generated dataset directory
-│       ├── data.csv                     # Original unmodified raw CSV file
-│       ├── metadata.json                # Ingestion metadata (filename, row count, column list)
-│       └── quality.json                 # Calculated data quality report & column statistics
-└── pipelines/
-    ├── pipe_b147584b47e0.json           # Persisted pipeline configuration (v1, v2...)
-    └── pipe_b147584b47e0.tmp            # Ephemeral file for atomic commit via os.replace
+│   └── ds_{uuid}/
+│       ├── data.csv                 # Raw sensor CSV (IMMUTABLE, READ-ONLY)
+│       ├── metadata.json            # Dataset catalog metadata
+│       └── quality.json             # Data quality audit
+├── pipelines/
+│   └── pipe_{uuid}.json             # Saved pipeline configuration (v1, v2...)
+└── runs/
+    └── run_{uuid}/
+        ├── run.json                 # Run execution state, summary counts, warnings
+        └── anomalies.json           # Array of individual AnomalyRecord objects
 ```
 
-* **Separation of Storage**: Pipeline configurations are stored independently from uploaded dataset files in `storage/pipelines/`.
-* **Atomic Writes**: Configurations are written to a temporary `.tmp` file, flushed to disk (`os.fsync`), and atomically committed using `os.replace`. This prevents corruption in the event of unexpected process termination.
-* **Path Safety**: Directory and file identifiers are server-generated (`ds_` or `pipe_` followed by 12-character hex UUID). Client-supplied strings are never used in filesystem paths.
-* **Git Isolation**: The `storage/` directory is strictly excluded by `.gitignore`.
+* **Data Preservation**: Raw CSV files in `storage/datasets/` are strictly read-only and never modified by detection runs.
+* **Atomic Writes**: All JSON persistence uses `.tmp` files committed via atomic `os.replace`.
 
 ---
 
-## 5. Active & Planned API Contract
+## 5. API Contracts Summary
 
-### Implemented & Live Endpoints
+### Pipeline Execution & Results
+* `POST /api/pipelines/{pipeline_id}/run`
+  * Executes detection using saved configuration.
+  * Returns `DetectionRunResponse` (`run` metadata and `sample_anomalies`).
+* `GET /api/pipelines/{pipeline_id}/runs/{run_id}`
+  * Retrieves run status (`completed`, `failed`, `partial_failure`), duration, and `summary` metrics.
+* `GET /api/pipelines/{pipeline_id}/runs/{run_id}/results?limit=50&offset=0`
+  * Retrieves paginated anomaly records for the specified run.
 
-#### Health (`/api/health`)
-* `GET /api/health` — Returns status, service ID, version, environment, and UTC timestamp.
-
-#### Datasets (`/api/datasets`)
-* `POST /api/datasets/upload` — Ingest CSV telemetry file via multipart/form-data. Returns `DatasetDetailResponse` (metadata + quality).
-* `GET /api/datasets` — List cataloged datasets with row counts, column counts, and sizes.
-* `GET /api/datasets/{dataset_id}` — Retrieve metadata for a specific dataset.
-* `GET /api/datasets/{dataset_id}/preview?limit=50&offset=0` — Retrieve bounded row preview.
-* `GET /api/datasets/{dataset_id}/quality` — Retrieve computed data quality summary.
-
-#### Pipelines (`/api/pipelines`) — Phase 4 Core Feature
-* `POST /api/pipelines/validate` — Validate configuration against target dataset schema and quality audit. Returns `PipelineValidationResponse` with structured errors and advisory warnings. Does NOT persist configuration or execute any pipeline.
-* `POST /api/pipelines` — Create, validate, and persist a new pipeline configuration. Returns `PipelineConfig` (v1) with HTTP 201 Created.
-* `GET /api/pipelines` — List all saved pipeline configurations from storage, sorted by `updated_at` descending.
-* `GET /api/pipelines/{pipeline_id}` — Retrieve a specific configuration by ID. Returns HTTP 404 if not found.
-* `PUT /api/pipelines/{pipeline_id}` — Validate updates against target dataset, increment `configuration_version`, update `updated_at`, and atomically persist. Returns updated `PipelineConfig`.
-
-### Planned Endpoints (Phase 5)
-* **Execution (`/api/pipelines/{id}/execute`)**:
-  - `POST /api/pipelines/{id}/execute`
-  - `GET /api/pipelines/runs`
-  - `GET /api/pipelines/runs/{id}/status`
-* **Anomalies (`/api/anomalies`)**:
-  - `GET /api/anomalies`
-  - `GET /api/anomalies/summary`
-  - `GET /api/anomalies/timeseries`
-* **Reconstruction (`/api/reconstruction`)**:
-  - `GET /api/reconstruction/records`
-  - `GET /api/reconstruction/summary`
-  - `POST /api/reconstruction/override`
-* **Audit Trail (`/api/audit`)**:
-  - `GET /api/audit/records`
-  - `GET /api/audit/verify/{id}`
-  - `GET /api/audit/export`
-* **Evaluation (`/api/evaluation`)**:
-  - `GET /api/evaluation/benchmarks`
-  - `POST /api/evaluation/run`
-  - `GET /api/evaluation/results/{id}`
-
----
-
-## 6. Pipeline Configuration Design & Validation Rules
-
-### Configuration Data Model Schema
-```typescript
-interface PipelineConfig {
-  configuration_id: string;             // Server-generated 'pipe_' + hex UUID
-  configuration_name: string;           // 1 to 100 characters
-  description?: string;                 // Max 500 characters
-  dataset_id: string;                   // References valid dataset
-  configuration_version: number;        // Revision counter (1, 2, ...)
-  timestamp_column?: string | null;     // Datetime channel name or null
-  sensor_columns: string[];             // At least 1 numeric column
-  ignored_columns: string[];            // Excluded columns
-  detection_settings: {
-    statistical: {
-      enabled: boolean;
-      window_size: number;              // 5 to 500 samples
-      mad_threshold: number;            // 1.0 to 10.0 multiples of MAD
-      min_observations: number;         // 5 to 100 samples
-    };
-    isolation_forest: {
-      enabled: boolean;
-      contamination: number;            // 0.001 to 0.500 (0.1% to 50%)
-      random_seed: number;              // Integer seed
-      min_observations: number;         // 10 to 1000 samples
-    };
-  };
-  reconstruction_settings: {
-    allow_linear_interpolation: boolean;
-    max_gap_size: number;               // 1 to 100 samples
-    require_cross_sensor_validation: boolean;
-    preserve_original_readings: boolean;// Enforced True
-    allow_automatic_correction: boolean;
-    fallback_behavior: 'abstain_unresolved' | 'flag_only';
-  };
-  confidence_policy: {
-    review_threshold: number;           // 0.00 to 1.00
-    human_review_required: boolean;
-    min_evidence_sensors: number;       // 0 to 20
-    unjustified_behavior: 'abstain_unresolved' | 'retain_raw';
-  };
-  created_at: string;                   // ISO-8601 UTC
-  updated_at: string;                   // ISO-8601 UTC
-}
-```
-
-### Validation Rules Summary
-1. **Target Dataset Verification**: Dataset must exist; unknown dataset ID returns HTTP 404.
-2. **Column Existence**: All assigned columns (`timestamp_column`, `sensor_columns`, `ignored_columns`) must exist in dataset metadata.
-3. **Sensor Numeric Requirement**: Sensor columns must have detected numeric types (`float` or `integer`). Non-numeric sensor assignments produce blocking validation errors.
-4. **No Conflicting Roles**: A column cannot be assigned to more than one role (e.g. timestamp and sensor, or sensor and ignored).
-5. **Duplicate Assignments**: Assigning the same sensor column multiple times produces validation errors.
-6. **Sensor Selection Count**: At least one sensor column must be mapped.
-7. **Preservation Invariant**: `preserve_original_readings` must be `True`.
-8. **Bounded Numerical Ranges**: Window sizes, thresholds, contamination fractions, and observation limits are validated against strict mathematical boundaries.
-9. **Contextual Quality Warnings**: Non-monotonic timestamps, duplicate timestamps, missing cells in sensor columns, and single-sensor cross-validation quorums generate advisory warnings without blocking valid configurations.
-
-### Distinction: Configuration vs. Execution
-KINTSUGI strictly decouples configuration management from pipeline execution. Phase 4 provides complete lifecycle management for pipeline specifications. No machine learning models are fit, no time series are interpolated, and no synthetic metrics are produced during configuration saving or validation. Execution engines are scheduled for Phase 5.
-
-### Current Limitations
-* **Local Filesystem Persistence**: Configurations are stored as individual JSON documents on local disk.
-* **No Pipeline Execution**: Run endpoints (`POST /api/pipelines/{id}/execute`) return HTTP 501 until Phase 5.
-* **Static Schema Verification**: Configuration is validated against the static dataset schema at the time of validation; if the underlying dataset is deleted, configurations referencing it will fail validation upon subsequent editing.
+### Anomalies Catalog
+* `GET /api/anomalies?dataset_id={id}&run_id={id}&sensor_column={col}&detector_name={name}&severity={sev}&limit=50&offset=0`
+  * Queries and filters anomaly records across persisted runs.
+* `GET /api/anomalies/{anomaly_id}`
+  * Retrieves detailed per-detector diagnostics for a specific anomaly record.

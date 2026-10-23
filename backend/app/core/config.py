@@ -19,6 +19,7 @@ class Settings(BaseSettings):
     ]
     STORAGE_DIR: str = "storage/datasets"
     PIPELINE_STORAGE_DIR: str = "storage/pipelines"
+    RUNS_STORAGE_DIR: str = "storage/runs"
     MAX_UPLOAD_SIZE_BYTES: int = 52_428_800  # 50 MB
     MAX_DATASET_ROWS: int = 500_000
     MAX_DATASET_COLS: int = 200

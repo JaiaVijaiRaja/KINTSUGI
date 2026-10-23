@@ -103,3 +103,80 @@ async def update_pipeline(
     """Update existing pipeline configuration."""
     logger.info("Updating pipeline configuration '%s'", pipeline_id)
     return pipeline_service.update_pipeline_config(pipeline_id, payload)
+
+
+# Phase 5: Anomaly Detection Execution & Run Endpoints
+
+from app.schemas.anomaly import (
+    DetectionRun,
+    DetectionRunResponse,
+    DetectionRunResultsResponse,
+)
+from app.services.detection_service import detection_service
+
+
+@router.post(
+    "/{pipeline_id}/run",
+    response_model=DetectionRunResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Execute pipeline anomaly detection",
+    description="Starts and persists a detection run on the pipeline's target dataset using configured detectors.",
+)
+async def execute_pipeline_run(pipeline_id: str) -> DetectionRunResponse:
+    """Execute detection run for saved pipeline configuration."""
+    logger.info("Triggered detection run execution for pipeline '%s'", pipeline_id)
+    run = detection_service.execute_detection_run(pipeline_id)
+    results = detection_service.get_detection_run_results(run.run_id, limit=5, offset=0)
+    return DetectionRunResponse(run=run, sample_anomalies=results.anomalies)
+
+
+@router.post(
+    "/{pipeline_id}/execute",
+    response_model=DetectionRunResponse,
+    status_code=status.HTTP_201_CREATED,
+    include_in_schema=False,
+)
+async def execute_pipeline_alias(pipeline_id: str) -> DetectionRunResponse:
+    """Compatibility alias for POST /api/pipelines/{pipeline_id}/run."""
+    return await execute_pipeline_run(pipeline_id)
+
+
+@router.get(
+    "/{pipeline_id}/runs/{run_id}",
+    response_model=DetectionRun,
+    status_code=status.HTTP_200_OK,
+    summary="Retrieve detection run status",
+    description="Retrieves detection run execution status, metadata, and summary counts.",
+)
+async def get_pipeline_run_status(pipeline_id: str, run_id: str) -> DetectionRun:
+    """Retrieve status for a specific detection run."""
+    run = detection_service.get_detection_run(run_id)
+    if run.configuration_id != pipeline_id:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Run '{run_id}' does not belong to pipeline '{pipeline_id}'.",
+        )
+    return run
+
+
+@router.get(
+    "/{pipeline_id}/runs/{run_id}/results",
+    response_model=DetectionRunResultsResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Retrieve detection run results",
+    description="Retrieves persisted anomaly records for a completed detection run.",
+)
+async def get_pipeline_run_results(
+    pipeline_id: str,
+    run_id: str,
+    limit: int = 50,
+    offset: int = 0,
+) -> DetectionRunResultsResponse:
+    """Retrieve persisted anomaly records for a detection run."""
+    run = detection_service.get_detection_run(run_id)
+    if run.configuration_id != pipeline_id:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Run '{run_id}' does not belong to pipeline '{pipeline_id}'.",
+        )
+    return detection_service.get_detection_run_results(run_id, limit=limit, offset=offset)
