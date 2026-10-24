@@ -87,21 +87,23 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
       path: '/audit',
       label: 'Audit Trail',
       icon: History,
-      phase: 'Phase 4',
-      description: 'Immutable ledger of repair decisions',
+      phase: 'Phase 8',
+      badge: 'Active',
+      description: 'Immutable SHA-256 ledger & provenance',
     },
     {
       path: '/evaluation',
       label: 'Evaluation Center',
       icon: CheckCircle2,
-      phase: 'Phase 4',
-      description: 'Precision, MAE, RMSE & benchmarks',
+      phase: 'Phase 7',
+      badge: 'Active',
+      description: 'Controlled benchmarks & performance metrics',
     },
     {
       path: '/settings',
       label: 'Settings & System Info',
       icon: Settings,
-      phase: 'Phase 2',
+      phase: 'Phase 10',
       badge: 'Active',
       description: 'Environment & API configurations',
     },
@@ -134,7 +136,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
             <span>Pipeline Modules</span>
           </div>
           <p className="text-[11px] text-slate-500 mt-0.5 font-mono">
-            Phase 2 • Shell & Skeleton
+            Operational Pipeline Modules
           </p>
         </div>
 
@@ -213,8 +215,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
               <span className="text-slate-300">Python 3.14 + FastAPI</span>
             </div>
             <div className="flex justify-between">
-              <span>Shell Status:</span>
-              <span className="text-amber-300">Phase 2 Complete</span>
+              <span>System Status:</span>
+              <span className="text-amber-300">Phase 10 Verified</span>
             </div>
           </div>
         </div>

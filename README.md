@@ -1,107 +1,78 @@
 # KINTSUGI — Confidence-Aware Self-Healing Data Pipeline
 
-> **Phase 9: End-to-End Integration and Reliability Engineering**
+> **Phase 10: Final Polish, Demonstration Preparation, and Deployment Readiness**
 
 KINTSUGI is a confidence-aware, self-healing industrial data pipeline designed to ingest noisy multi-sensor telemetry, detect quality anomalies, reconstruct damaged signals with contextual confidence scores, preserve original measurements in an immutable audit ledger, and verify performance through reproducible benchmarks.
 
-Like the Japanese art of *Kintsugi* (repairing broken ceramics with gold lacquer), KINTSUGI treats signal repairs with complete transparency: **raw measured telemetry is never overwritten or discarded**. Proposed reconstructions carry evidence-based confidence scores, and when evidence is insufficient, the system strictly abstains by marking values as `UNRESOLVED` rather than guessing.
+Like the Japanese art of *Kintsugi* (金継ぎ, repairing broken ceramics with gold lacquer), KINTSUGI treats signal repairs with complete transparency: **raw measured telemetry is never overwritten or discarded**. Proposed reconstructions carry evidence-based confidence scores, and when evidence is insufficient, the system strictly abstains by marking values as `UNRESOLVED` rather than guessing.
 
 ---
 
-## Architecture at a Glance
+## 1. Project Overview & The Industrial Reliability Problem
 
-* **Frontend**: React 19 + TypeScript + Vite 8 + Tailwind CSS v4 + Lucide Icons
-* **Client Routing**: Zero-dependency HTML5 History router (`useRouter`, `Link`) supporting direct navigation, browser Back/Forward, automatic `/` to `/overview` redirect, and 404 Not Found handling.
-* **Backend**: Python 3.14 + FastAPI + Pydantic v2 + Pandas + NumPy + Scikit-Learn + Uvicorn
-* **API Endpoints**:
-  * `GET /api/health` — Operational health check with latency tracking.
-  * `POST /api/datasets/upload` — Multipart/form-data ingestion, validation, and quality audit.
-  * `GET /api/datasets` — Catalog of registered datasets with metadata.
-  * `GET /api/datasets/{dataset_id}` — Dataset metadata and schema.
-  * `GET /api/datasets/{dataset_id}/preview` — Bounded tabular row preview.
-  * `GET /api/datasets/{dataset_id}/quality` — Comprehensive calculated data quality report.
-  * `POST /api/pipelines/validate` — Validate configuration against target dataset (no side-effects).
-  * `POST /api/pipelines` — Create and persist a validated pipeline configuration.
-  * `GET /api/pipelines` — Catalog of saved pipeline configurations.
-  * `GET /api/pipelines/{pipeline_id}` — Retrieve a specific pipeline configuration.
-  * `PUT /api/pipelines/{pipeline_id}` — Update configuration with validation and version increment.
-  * `POST /api/pipelines/{pipeline_id}/run` — Execute real detection run on stored sensor dataset.
-  * `GET /api/pipelines/{pipeline_id}/runs` — List historical detection runs for a pipeline.
-  * `GET /api/pipelines/{pipeline_id}/runs/{run_id}` — Retrieve detection run status and summary counts.
-  * `GET /api/pipelines/{pipeline_id}/runs/{run_id}/results` — Retrieve persisted anomaly records for a run.
-  * `GET /api/anomalies` — Query and filter detected anomaly records across runs.
-  * `GET /api/anomalies/{anomaly_id}` — Lookup individual anomaly record details.
-  * `POST /api/pipelines/{pipeline_id}/runs/{detection_run_id}/reconstruct` — Execute confidence-aware signal reconstruction.
-  * `GET /api/reconstruction/runs` — List historical reconstruction runs with optional filtering.
-  * `GET /api/reconstruction/runs/{reconstruction_run_id}` — Retrieve reconstruction run status, summary metrics, and error logs.
-  * `GET /api/reconstruction/runs/{reconstruction_run_id}/results` — Retrieve paginated reconstruction records with filtering by sensor and status.
-  * `GET /api/reconstruction/results/{result_id}` — Retrieve single reconstruction record with evidence references and factor breakdown.
-  * `POST /api/reconstruction/results/{result_id}/review` — Record operator human review decision (`ACCEPT`, `REJECT`, `MODIFY`).
-  * `POST /api/evaluations` — Execute controlled fault injection benchmark (Mode A) or existing run evaluation (Mode B).
-  * `GET /api/evaluations` — List evaluation runs with pagination and filters.
-  * `GET /api/evaluations/{evaluation_id}` — Retrieve evaluation run metadata and summary metrics.
-  * `GET /api/evaluations/{evaluation_id}/metrics` — Retrieve full evaluation metrics and definitions.
-  * `GET /api/evaluations/{evaluation_id}/breakdown` — Retrieve per-sensor and per-fault breakdowns.
-  * `GET /api/evaluations/{evaluation_id}/manifest` — Retrieve fault injection manifest.
-  * `POST /api/evaluations/{evaluation_id}/validate` — Verify benchmark dataset integrity and source immutability.
-  * `GET /api/audit/events` — Query chronological append-only audit ledger events with pagination and filters.
-  * `GET /api/audit/events/{event_id}` — Retrieve single audit event record with cryptographic hash chain digests.
-  * `GET /api/audit/observations/{dataset_id}/{row_id}` — Assemble observation lifecycle history and raw values for a dataset row index.
-  * `GET /api/audit/traces/{reconstruction_result_id}` — Assemble end-to-end causal provenance trace: Observation -> Detector -> Anomaly -> Reconstruction -> Confidence -> Review -> Benchmark.
-  * `GET /api/audit/runs/{run_id}` — Retrieve audit events associated with a specific run.
-  * `POST /api/audit/verify` — Recompute SHA-256 digests across the entire append-only audit event chain to detect tampering.
-  * `GET /api/audit/export` — Export filtered audit trail records in JSONL or CSV format for regulatory compliance.
-* **Testing**: 137 automated Pytest test cases across unit, workflow, and Phase 9 integration suites • Strict TypeScript type checking & Vite production build
-* **Design Philosophy**: Deep slate palette, emerald/amber accents, accessible focus states, atomic persistence, zero fabricated metrics.
+In mission-critical industrial environments—such as power generation gas turbines, oil & gas compressors, chemical reactors, and electrical grid substations—telemetry feeds suffer from severe real-world data-quality degradations:
+* Transient electrical spikes and outlier noise
+* Frozen/stuck sensor readings due to transducer lockup
+* Missing data intervals caused by packet drops or network communication lapses
+* Gradual mechanical calibration drift
 
-For an in-depth breakdown of system architecture, data quality rules, and API contracts, see [ARCHITECTURE.md](ARCHITECTURE.md).
+Traditional automated data-cleaning approaches introduce two fatal failure modes:
+1. **Destructive Overwriting**: They silently overwrite or delete raw physical sensor readings, destroying regulatory audit evidence and preventing downstream control systems from assessing original measurement veracity.
+2. **Hallucinated Precision**: They attempt to interpolate or impute values regardless of whether valid bounding evidence exists—hallucinating plausible-looking numbers over wide data blackouts.
+
+KINTSUGI solves this by treating signal healing as an auditable, confidence-bounded process governed by non-negotiable safety invariants:
+* Original raw measurements are permanently preserved and immutable.
+* Every proposed repair is decomposed into transparent physical evidence factors (0 to 100).
+* The pipeline strictly **abstains from guessing** (`UNRESOLVED`) when bounding evidence is broken or ambiguous.
+* All lifecycle state transitions are cryptographically sealed in an append-only SHA-256 hash-chain ledger.
 
 ---
 
-## Eight Application Routes
+## 2. Key Capabilities (Implemented & Verified)
 
-| Route | Module Name | Current Status | Milestone |
-| :--- | :--- | :--- | :--- |
-| `/overview` | System Overview | **Verified Live Operational** (Real-time system health, pipeline metrics, module navigation) | Phase 1 & 2 Shell |
-| `/datasets` | Dataset Management | **Verified Live Operational** (CSV upload, catalog, data quality audit, real row preview) | Phase 3 Core Feature |
-| `/pipeline` | Pipeline Configuration | **Verified Live Operational** (Dataset selector, column mapping, detection settings, reconstruction policies, backend validation, persistent configuration management) | Phase 4 Core Feature |
-| `/anomalies` | Anomaly Explorer | **Verified Live Operational** (Real execution engine, rolling MAD, Isolation Forest, consensus aggregation, interactive SVG time-series visualizer, anomaly records table, per-detector inspector) | Phase 5 Core Feature |
-| `/reconstruction` | Reconstruction Studio | **Verified Live Operational** (Confidence-aware reconstruction engine, linear interpolation, local median, cross-sensor validation, evidence factor decomposition, status transitions, operator review ledger) | Phase 6 Core Feature |
-| `/evaluation` | Evaluation Center | **Verified Live Operational** (Controlled fault injection benchmarks, 6 fault types, detection & reconstruction metrics, abstention safety, integrity validation) | Phase 7 Core Feature |
-| `/audit` | Audit Trail | **Verified Live Operational** (Append-only SHA-256 hash chain ledger, causal provenance tracing, observation row lifecycle, explainability engine, compliance export) | Phase 8 Core Feature |
-| `/settings` | Settings & System Info | **Verified Live Operational** (Safe runtime info, API diagnostics, interactive docs links) | Phase 2 Shell |
-
----
-
-## Confidence-Aware Data Reconstruction Engine (Phase 6)
-
-### 1. Reconstruction Algorithms
-
-#### A. Chronological Linear Interpolation
-* **Chronological Ordering**: Respects timestamp progression or sequential row indices.
-* **Strict Extrapolation Prohibition**: Reconstructs only when valid bounding observations exist on both sides. Extrapolating beyond available data is strictly prohibited and leads to explicit abstention.
-* **Gap Limit Enforcement**: Reconstructs across missing or contiguous anomalous observations up to `max_gap_size`. Exceeding this limit triggers abstention as `UNRESOLVED`.
-* **Timestamp Weighting & Duplicate Handling**: Uses exact temporal distance ($\Delta t$) between timestamps. When duplicate timestamps exist, deterministic midpoint ordering is applied.
-* **Exclusion of Contaminated Neighbors**: Neighboring observations that are themselves unresolved anomalies are strictly excluded from bracket baselines.
-
-#### B. Local Median Reconstruction
-* **Localized Window**: Computes candidate baseline from valid observations within a configurable window $W = [i - w, i + w]$.
-* **Target Observation Excluded**: The anomalous observation itself is excluded from candidate calculation.
-* **Anomaly Neighbor Exclusion**: Unresolved flagged anomalies within the window are excluded from the reference set.
-* **Quorum Enforcement**: Requires a minimum count of valid, non-anomalous neighbors (default $\ge 3$). If insufficient trusted neighbors exist, the algorithm declines to guess.
-
-#### C. Cross-Sensor Empirical Validation
-* **Strict Relationship Requirement**: Evaluates empirical Pearson correlation on nominal (non-anomalous) rows.
-* **No Unverified Physical Assumptions**: If $|r| < 0.70$, the engine strictly disclaims any cross-sensor relationship (`has_relationship=False`).
-* **Linear Regression & Residual Corroboration**: If $|r| \ge 0.70$, fits an empirical regression and computes residual dispersion $\sigma_{\text{res}}$. If candidate reconstruction deviates $> 3.5\sigma_{\text{res}}$, severe conflict is flagged and the candidate is rejected.
+* **Robust Telemetry Ingestion (Phase 3)**: Validated CSV stream ingestion with multi-encoding detection (`utf-8`, `utf-8-sig`, `latin-1`), isolated server-controlled storage (`ds_{uuid}`), path traversal prevention, and data quality audits (row duplicates, missing cell rates, column statistics, ISO-8601 timestamp inference).
+* **Versioned Pipeline Configuration (Phase 4)**: Typed, persistent pipeline profiles (`pipe_{uuid}`) with validation against dataset schemas, separate sensor/ignored channel assignments, and detection/reconstruction parameter bounds.
+* **Multi-Detector Anomaly Engine (Phase 5)**: High-performance execution combining trailing rolling median with Median Absolute Deviation (MAD) and multivariate Isolation Forest (`scikit-learn`), multi-detector consensus policies, and severity classification (`CRITICAL`, `HIGH`, `MEDIUM`, `LOW`).
+* **Confidence-Aware Signal Reconstruction (Phase 6)**:
+  * Chronological Linear Interpolation with strict boundary extrapolation prohibition.
+  * Local Median Reconstruction with isolated window, target observation exclusion, and quorum thresholds.
+  * Empirical Cross-Sensor Validation evaluating Pearson correlations ($|r| \ge 0.70$) on nominal baselines with linear regression residual corroboration.
+  * Evidence-Based Confidence Scoring (0 to 100) decomposed into 6 physical factors.
+  * Four strict processing statuses: `MEASURED`, `ESTIMATED`, `CORRECTED`, and `UNRESOLVED`.
+  * Human-in-the-loop operator review workflow (`ACCEPT`, `REJECT`, `MODIFY`) with audit notes.
+* **Evaluation Center & Benchmarking (Phase 7)**: Controlled synthetic fault injection across 6 industrial fault models (point spikes, corruption, missing intervals, drift ramps, frozen sensors, communication gaps) generating separate benchmark copies and ground-truth manifests. Quantitative metrics (Precision, Recall, F1, Specificity, MAE, RMSE) with zero-denominator safeguards.
+* **Cryptographic Audit Trail & Explainability (Phase 8)**: Append-only ledger (`storage/audit/events.jsonl`) with parent-child SHA-256 hash chains, causal provenance graph reconstruction, single-observation row lifecycle tracking, live tamper verification, and bounded compliance export (JSONL and CSV).
+* **End-to-End Integration & Reliability (Phase 9)**: 137 passing tests, cold application restart persistence, corrupted storage recovery, standardized error envelopes, and SHA-256 source immutability verification.
+* **Demonstration & Deployment Readiness (Phase 10)**: Polished industrial dashboard with dark slate surfaces and metallic gold accents, live KPI metrics with clear population scopes, demonstration script (`DEMO_SCRIPT.md`), verification checklist (`DEMO_CHECKLIST.md`), troubleshooting guide (`DEMO_TROUBLESHOOTING.md`), and Docker container orchestration (`docker-compose.yml`).
 
 ---
 
-### 2. The Four Processing Statuses & Transition Rules
+## 3. System Architecture & Processing Flow
 
 ```
                       ┌──────────────────────────────────────┐
-                      │  Detected Anomaly from Detection Run │
+                      │   Raw Multi-Sensor Telemetry (CSV)   │
+                      └──────────────────┬───────────────────┘
+                                         │  (Read-only, SHA-256 Verified)
+                                         ▼
+                      ┌──────────────────────────────────────┐
+                      │    Dataset Ingestion & Quality Audit │
+                      └──────────────────┬───────────────────┘
+                                         ▼
+                      ┌──────────────────────────────────────┐
+                      │    Pipeline Configuration & Bounds   │
+                      └──────────────────┬───────────────────┘
+                                         ▼
+                      ┌──────────────────────────────────────┐
+                      │    Multi-Detector Anomaly Engine     │
+                      │  (Rolling MAD + Isolation Forest)    │
+                      └──────────────────┬───────────────────┘
+                                         ▼
+                      ┌──────────────────────────────────────┐
+                      │  Confidence-Aware Reconstruction     │
+                      │  - Linear Interpolation (No Extrap)  │
+                      │  - Local Median (Quorum >= 3)        │
+                      │  - Cross-Sensor Empirical Check      │
                       └──────────────────┬───────────────────┘
                                          │
                          ┌───────────────┴───────────────┐
@@ -124,115 +95,183 @@ For an in-depth breakdown of system architecture, data quality rules, and API co
                                 ┌──────────────────────────────────────────────┐
                                 │                  CORRECTED                   │
                                 └──────────────────────────────────────────────┘
-```
-
-* **MEASURED**: Physical sensor reading preserved in its exact unaltered state.
-* **ESTIMATED**: Contextual reconstruction proposal generated with evidence score; holding original reading pending human review.
-* **CORRECTED**: High-confidence repair approved via automated policy threshold or operator review.
-* **UNRESOLVED**: Low-confidence, broken gap, or contradictory evidence; system strictly abstains from guessing. Original value remains untouched.
-
----
-
-### 3. Transparent Evidence-Based Confidence Scoring (0 to 100)
-
-> [!IMPORTANT]
-> The confidence score is an **evidence index** composed of documented factors. It is **NOT a calibrated statistical probability**.
-
-| Factor | Point Range | Criteria |
-| :--- | :--- | :--- |
-| **Neighbor Density** | 0 to 25 | Scaled by available valid neighbors ($\min(N/8, 1.0) \times 25$). |
-| **Method Concordance** | 0 to 25 | Agreement between Linear Interpolation and Local Median ($1.0 - \text{diff}/\text{baseline}$). |
-| **Temporal Proximity** | 0 to 20 | Penalizes wide gaps or distant supporting brackets ($e^{-\text{gap}/3} \times 20$). |
-| **Signal Stability** | 0 to 15 | Reward for localized signal stability ($\sigma_{\text{local}}/\mu_{\text{local}}$). |
-| **Neighbor Cleanliness** | 0 to 15 | Ratio of non-anomalous neighbors to total inspected window neighbors. |
-| **Cross-Sensor Impact** | -25 to +10 | +10 bonus for regression corroboration ($<2\sigma_{\text{res}}$); -25 penalty for severe conflict ($>3.5\sigma_{\text{res}}$). |
-| **Structural Failures** | Override to 0.0 | Extrapolation violation, gap limit breach, or non-finite calculation overrides score to 0.0. |
-
----
-
-### 4. Storage & Persistence Layout
-
-```
-backend/storage/
-├── datasets/
-│   └── ds_79122c0f0d41/
-│       ├── data.csv                 # Raw unmodified CSV file (STRICTLY IMMUTABLE)
-│       ├── metadata.json            # Dataset catalog metadata
-│       └── quality.json             # Computed data quality audit
-├── pipelines/
-│   └── pipe_b147584b47e0.json       # Saved pipeline configuration (v1, v2...)
-├── runs/
-│   └── run_a7c8e219fb04/
-│       ├── run.json                 # Detection run metadata & summary
-│       └── anomalies.json           # Persisted anomaly records
-├── reconstruction/
-│   └── rec_run_c21f0b48a192/
-│       ├── run.json                 # Reconstruction execution state & summary counts
-│       └── results.json             # Per-reading audit records, factor breakdown & review log
-├── evaluations/
-│   └── eval_45ef61a9bc20/
-│       ├── evaluation.json          # Benchmark run metadata, profile, metrics, timing
-│       ├── manifest.json            # Deterministic ground truth injected fault manifest
-│       └── metrics.json             # Fast-read quantitative metric cache
-└── audit/
-    └── events.jsonl                 # Append-only SHA-256 hash chain compliance ledger
+                                       │
+                                       ▼
+                      ┌──────────────────────────────────────┐
+                      │   Append-Only SHA-256 Audit Ledger   │
+                      │   (Cryptographic Hash Chain Proof)   │
+                      └──────────────────────────────────────┘
 ```
 
 ---
 
-## Verification & Test Execution
+## 4. Technology Stack & Prerequisites
 
-### Backend Automated Test Suite
+### Core Dependencies
+* **Frontend**:
+  * React 19.x
+  * TypeScript 5.9.x
+  * Vite 8.3.x
+  * Tailwind CSS v4
+  * Lucide Icons
+* **Backend**:
+  * Python 3.12+ (tested on Python 3.14)
+  * FastAPI 0.115+
+  * Pydantic v2.7+ & Pydantic-Settings
+  * Pandas 2.2+ & NumPy
+  * Scikit-Learn 1.4+
+  * Uvicorn 0.30+
+  * Pytest 8.0+
+
+### Prerequisites
+* Python 3.12 or newer
+* Node.js v20.x or newer & npm v10+
+* (Optional for containerization) Docker & Docker Compose v2+
+
+---
+
+## 5. Installation & Local Setup
+
+### 1. Clone & Set Up Backend
+```powershell
+# Navigate to repository root
+cd "c:\WORK LAB-SL19\Workstation\MY PROJECT\ANTIGRAVITY\HORIZONXT26"
+
+# Create and activate Python virtual environment
+python -m venv backend\.venv
+.\backend\.venv\Scripts\Activate.ps1
+
+# Install required Python dependencies
+pip install --upgrade pip
+pip install -r backend\requirements.txt
+```
+
+### 2. Set Up Frontend
+```powershell
+# Navigate to frontend directory
+cd frontend
+
+# Install Node dependencies
+npm install
+cd ..
+```
+
+---
+
+## 6. Environment Configuration
+
+### Backend Configuration (`backend/.env`)
+Create `backend/.env` (or rely on built-in safe defaults):
+```env
+ENVIRONMENT=development
+HOST=127.0.0.1
+PORT=8000
+CORS_ORIGINS=http://localhost:5173,http://127.0.0.1:5173,http://localhost:80
+```
+
+### Frontend Configuration (`frontend/.env`)
+Create `frontend/.env`:
+```env
+VITE_API_BASE_URL=http://127.0.0.1:8000
+```
+
+> [!NOTE]
+> No sensitive third-party API keys or private database passwords are required. All persistence uses local isolated storage paths under `backend/storage/`.
+
+---
+
+## 7. Running Locally
+
+### Start Backend Service
+```powershell
+cd backend
+.\.venv\Scripts\uvicorn.exe app.main:app --host 127.0.0.1 --port 8000 --reload
+```
+* Backend API Health: `http://127.0.0.1:8000/api/health`
+* Interactive OpenAPI Documentation: `http://127.0.0.1:8000/docs`
+
+### Start Frontend Application
+```powershell
+cd frontend
+npm run dev
+```
+* Frontend Dashboard: `http://localhost:5173`
+
+---
+
+## 8. Eight Application Routes
+
+| Route | Module Name | Operational Status | Key Functionality |
+| :--- | :--- | :--- | :--- |
+| `/overview` | System Overview | **Live Operational** | Live KPI cards with population scopes, system health, and recent audit activity stream |
+| `/datasets` | Dataset Management | **Live Operational** | Drag-and-drop CSV upload, data quality audit, missing rates, and tabular preview |
+| `/pipeline` | Pipeline Configuration | **Live Operational** | Column role mapping, detection bounds, reconstruction thresholds, and atomic saving |
+| `/anomalies` | Anomaly Explorer | **Live Operational** | Real anomaly detection, SVG multi-sensor time-series chart, and detector consensus |
+| `/reconstruction` | Reconstruction Studio | **Live Operational** | Tri-value comparison (`MEASURED`, `ESTIMATED`, `CORRECTED`, `UNRESOLVED`), evidence factor breakdown, and human review |
+| `/evaluation` | Evaluation Center | **Live Operational** | Controlled synthetic fault injection benchmarks (Mode A), existing run inspection (Mode B), and confusion matrix |
+| `/audit` | Audit Trail | **Live Operational** | Chronological SHA-256 hash-chain ledger, causal provenance graphs, row lifecycles, and compliance export |
+| `/settings` | Settings & System Info | **Live Operational** | Runtime specifications, network diagnostics, and interactive OpenAPI documentation |
+
+---
+
+## 9. Automated Testing & Verification
+
+### Run Full Backend Test Suite
 ```powershell
 .\backend\.venv\Scripts\pytest.exe backend\tests -v
 ```
-All **137 test cases** pass with zero failures:
-* **17 dataset ingestion and quality audit tests (`test_datasets.py`)**
-* **3 operational health, CORS, and 404 tests (`test_health.py`)**
-* **16 pipeline configuration and validation tests (`test_pipelines.py`)**
-* **1 end-to-end Phase 4 workflow verification test (`test_phase4_workflow.py`)**
-* **20 Phase 5 anomaly detection tests (`test_detection.py`)**
-* **1 end-to-end Phase 5 workflow verification test (`test_phase5_workflow.py`)**
-* **23 Phase 6 reconstruction engine tests (`test_reconstruction.py`)**
-* **1 end-to-end Phase 6 workflow verification test (`test_phase6_workflow.py`)**
-* **26 Phase 7 evaluation & benchmarking tests (`test_evaluation.py`)**
-* **20 Phase 8 audit trail & explainability tests (`test_audit.py`)**
-* **9 Phase 9 end-to-end integration & reliability tests (`test_integration_phase9.py`)**:
-  1. Complete critical end-to-end workflow (Upload -> Preview -> Pipeline -> Run Detection -> Run Reconstruction -> Evaluate Benchmark -> Trace Provenance -> Restart & Verify -> Source SHA-256 Immutability)
-  2. Boundary extrapolation strictly prohibited invariant
-  3. Unresolved status never masquerades as corrected invariant
-  4. Evaluation metric denominator edge-case safety (unlabeled runs return `None`, not `0.0`)
-  5. Persistence across cold application restarts
-  6. Corrupted storage file recovery and honest degradation
-  7. API failure contracts and standardized error envelopes
-  8. SHA-256 audit ledger cryptographic hash chain tamper detection
-  9. Bounded compliance export formats (JSONL & CSV)
+**All 137 test cases pass with zero failures**:
+* `test_datasets.py`: 17 tests (Ingestion, encoding, validation, quality metrics)
+* `test_health.py`: 3 tests (Health status, CORS headers, 404 contracts)
+* `test_pipelines.py`: 16 tests (Configuration CRUD, validation, version increment)
+* `test_phase4_workflow.py`: 1 test (End-to-end configuration lifecycle)
+* `test_detection.py`: 20 tests (Rolling MAD, Isolation Forest, consensus aggregation)
+* `test_phase5_workflow.py`: 1 test (End-to-end detection lifecycle)
+* `test_reconstruction.py`: 23 tests (Linear interpolation, local median, cross-sensor, abstention, factor breakdown)
+* `test_phase6_workflow.py`: 1 test (End-to-end reconstruction lifecycle)
+* `test_evaluation.py`: 26 tests (Synthetic fault injection, confusion matrix, denominator safety, manifests)
+* `test_audit.py`: 20 tests (Append-only ledger, SHA-256 hash chains, causal provenance, export)
+* `test_integration_phase9.py`: 9 tests (Full critical lifecycle, invariants, restart persistence, corruption recovery, tamper detection, compliance export)
 
-### Frontend Typecheck & Production Build
+### Run Frontend Typecheck & Production Build
 ```powershell
 cd frontend
 npm run build
 ```
-Vite production build and TypeScript compilation (`tsc -b && vite build`) complete cleanly with zero errors.
+Vite production build and TypeScript compilation complete with **0 errors**.
 
 ---
 
-## Instructions to Reproduce Full End-to-End Workflow
+## 10. Confidence Scoring & Abstention Mechanics
 
-1. **Start Backend Service**:
-   ```powershell
-   cd backend
-   .\.venv\Scripts\uvicorn.exe app.main:app --host 127.0.0.1 --port 8000 --reload
-   ```
-2. **Start Frontend Dev Server**:
-   ```powershell
-   cd frontend
-   npm run dev
-   ```
-3. **Execute Full Pipeline Workflow**:
-   * Navigate to `http://localhost:5173/datasets` and upload an industrial telemetry CSV.
-   * Navigate to `/pipeline`, configure sensor channels, detection settings, and reconstruction parameters, then click **Save Pipeline Configuration**.
-   * Navigate to `/anomalies`, select the pipeline, and click **Run Real Detection** to produce real anomaly records.
-   * Navigate to `/reconstruction` (Reconstruction Studio), select the completed detection run, and click **Start Reconstruction Run**.
-   * View the real KPI summary cards, filter by status or sensor, and click **Inspect** on any observation to inspect the tri-value comparison, supporting evidence neighbors, and confidence factor breakdown.
-   * Use the **Operator Review & Ledger Commitment** panel to accept, reject, or modify proposed values with an audit comment.
+### Transparent Evidence-Based Confidence Scoring (0 to 100)
+> [!IMPORTANT]
+> The confidence score is an **evidence index** composed of documented physical factors. It is **NOT a calibrated statistical probability**.
+
+| Factor | Point Range | Criteria |
+| :--- | :--- | :--- |
+| **Neighbor Density** | 0 to 25 | Scaled by available valid surrounding observations ($\min(N/8, 1.0) \times 25$). |
+| **Method Concordance** | 0 to 25 | Agreement between Linear Interpolation and Local Median ($1.0 - \text{diff}/\text{baseline}$). |
+| **Temporal Proximity** | 0 to 20 | Penalizes wide gaps or distant supporting brackets ($e^{-\text{gap}/3} \times 20$). |
+| **Signal Stability** | 0 to 15 | Reward for localized signal stability ($\sigma_{\text{local}}/\mu_{\text{local}}$). |
+| **Neighbor Cleanliness** | 0 to 15 | Ratio of non-anomalous neighbors to total inspected window neighbors. |
+| **Cross-Sensor Corroboration** | -25 to +10 | +10 bonus for regression corroboration ($<2\sigma_{\text{res}}$); -25 penalty for severe conflict ($>3.5\sigma_{\text{res}}$). |
+| **Structural Invariant Violations** | Override to 0.0 | Boundary extrapolation breach, gap limit exceedance, or non-finite values force score to 0.0 and status to `UNRESOLVED`. |
+
+---
+
+## 11. Demonstration Assets & Guides
+
+* **[DEMO_SCRIPT.md](DEMO_SCRIPT.md)**: Structured 5-to-7 minute presentation script for judges and juries.
+* **[DEMO_CHECKLIST.md](DEMO_CHECKLIST.md)**: 15-minute pre-demonstration verification checklist.
+* **[DEMO_TROUBLESHOOTING.md](DEMO_TROUBLESHOOTING.md)**: Emergency quick-reference guide for live demo incidents.
+* **`demo/turbine_telemetry_demo.csv`**: Deterministic 60-row industrial gas turbine telemetry dataset containing known synthetic faults (Row 12 spike, Rows 24–26 gap, Rows 36–39 frozen sensor).
+* **`demo/ground_truth_manifest.json`**: Reference ground truth values.
+
+---
+
+## 12. Deployment Readiness & Known Limitations
+
+* **Containerized Deployment**: Supported via `docker-compose.yml` with persistent storage volume `kintsugi_persistent_storage` and production Nginx reverse proxy.
+* **Local Filesystem Persistence**: Current persistence uses local atomic JSON/CSV storage in `backend/storage/`. On ephemeral cloud platforms (e.g. AWS Fargate, Google Cloud Run), volume mounting or cloud object storage is required to survive container redeployments (see [DEPLOYMENT.md](DEPLOYMENT.md)).
+* **Single-Node Architecture**: Scaled for single-instance industrial edge appliances; multi-node distributed clustering would require a centralized database (e.g. PostgreSQL) and message broker.

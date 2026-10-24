@@ -80,6 +80,12 @@ When evidence is ambiguous, sensor correlation is degraded, or uncertainty margi
   * Invariant enforcement: extrapolation prohibition, quorum abstention, status distinction, denominator safety, and immutable raw datasets.
   * Application restart persistence verification and resilient recovery from corrupted storage files.
   * Standardized error response contracts (`{"error": {"code": ..., "message": ..., "path": ...}}`).
+* **Final Polish, Demonstration Preparation & Deployment Readiness (Phase 10 Core Feature)**:
+  * Upgraded unified industrial visual system (dark industrial slate surfaces `#090d16`, restrained metallic amber/gold `#d97706`/`#fbbf24`, zero fake terminal or decorative AI fluff).
+  * Population-scoped Overview dashboard with live audit ledger verification, health tracking, and empty state guides.
+  * Deterministic demonstration fixture (`demo/turbine_telemetry_demo.csv`) and reference manifest with repeatable, scripted faults (spikes, communication drops, frozen sensors).
+  * Comprehensive demonstration operational guides: `DEMO_SCRIPT.md`, `DEMO_CHECKLIST.md`, and `DEMO_TROUBLESHOOTING.md`.
+  * Multi-stage Docker containerization (`backend/Dockerfile`, `frontend/Dockerfile`), Nginx reverse proxy configuration (`frontend/nginx.conf`), `docker-compose.yml`, and `DEPLOYMENT.md` documenting filesystem persistence boundaries.
 
 
 ---

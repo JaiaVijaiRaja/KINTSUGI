@@ -65,7 +65,7 @@ export const Header: React.FC<HeaderProps> = ({
                   KINTSUGI
                 </span>
                 <span className="text-[10px] font-mono uppercase px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-300 border border-amber-500/30 font-medium">
-                  Phase 2 Shell
+                  Phase 10 • Verified
                 </span>
               </div>
               <p className="text-[11px] text-slate-400 hidden sm:block tracking-wide">

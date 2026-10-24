@@ -24,7 +24,12 @@ import {
   Activity,
   Sparkles,
   Info,
+  Sliders,
+  ShieldAlert,
+  Wrench,
+  Award,
 } from 'lucide-react';
+import { useRouter } from '../router';
 import { PageHeader } from '../components/common/PageHeader';
 import { Card, CardHeader, CardContent } from '../components/common/Card';
 import { Button } from '../components/common/Button';
@@ -43,6 +48,7 @@ import type { DatasetMetadata } from '../types/dataset';
 type TabMode = 'explorer' | 'trace' | 'observation' | 'integrity' | 'export';
 
 export const AuditPage: React.FC = () => {
+  const { navigate } = useRouter();
   const [activeTab, setActiveTab] = useState<TabMode>('explorer');
 
   // Datasets for filter dropdown
@@ -1379,6 +1385,80 @@ export const AuditPage: React.FC = () => {
                   <p className="text-slate-300 font-sans text-xs leading-relaxed">
                     {selectedEvent.decision_reason}
                   </p>
+                </div>
+              )}
+
+              {/* Associated Pipeline Entities (Interactive Cross-Module Navigation) */}
+              {(selectedEvent.dataset_id || selectedEvent.pipeline_id || selectedEvent.detection_run_id || selectedEvent.reconstruction_run_id || selectedEvent.evaluation_run_id) && (
+                <div className="p-3 rounded-lg bg-slate-950 border border-slate-800 space-y-2">
+                  <span className="text-[10px] text-slate-500 uppercase block">Associated Pipeline Entities</span>
+                  <div className="flex flex-wrap gap-2 text-xs">
+                    {selectedEvent.dataset_id && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        icon={Database}
+                        onClick={() => {
+                          setSelectedEvent(null);
+                          navigate('/datasets');
+                        }}
+                      >
+                        Dataset: {selectedEvent.dataset_id}
+                      </Button>
+                    )}
+                    {selectedEvent.pipeline_id && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        icon={Sliders}
+                        onClick={() => {
+                          setSelectedEvent(null);
+                          navigate('/pipeline');
+                        }}
+                      >
+                        Pipeline: {selectedEvent.pipeline_id}
+                      </Button>
+                    )}
+                    {selectedEvent.detection_run_id && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        icon={ShieldAlert}
+                        onClick={() => {
+                          setSelectedEvent(null);
+                          navigate('/anomalies');
+                        }}
+                      >
+                        Detection: {selectedEvent.detection_run_id}
+                      </Button>
+                    )}
+                    {selectedEvent.reconstruction_run_id && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        icon={Wrench}
+                        onClick={() => {
+                          setSelectedEvent(null);
+                          navigate('/reconstruction');
+                        }}
+                      >
+                        Reconstruction: {selectedEvent.reconstruction_run_id}
+                      </Button>
+                    )}
+                    {selectedEvent.evaluation_run_id && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        icon={Award}
+                        onClick={() => {
+                          setSelectedEvent(null);
+                          navigate('/evaluation');
+                        }}
+                      >
+                        Evaluation: {selectedEvent.evaluation_run_id}
+                      </Button>
+                    )}
+                  </div>
                 </div>
               )}
 

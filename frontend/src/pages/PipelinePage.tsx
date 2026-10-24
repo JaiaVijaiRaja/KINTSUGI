@@ -25,6 +25,7 @@ import { EmptyState } from '../components/common/EmptyState';
 import { Button } from '../components/common/Button';
 import { datasetService } from '../services/datasetService';
 import { pipelineService } from '../services/pipelineService';
+import { useRouter } from '../router';
 import type { DatasetMetadata, DataQualitySummary } from '../types/dataset';
 import type {
   PipelineConfig,
@@ -34,6 +35,8 @@ import type {
 } from '../types/pipeline';
 
 export const PipelinePage: React.FC = () => {
+  const { navigate } = useRouter();
+
   // Datasets state
   const [datasets, setDatasets] = useState<DatasetMetadata[]>([]);
   const [isLoadingDatasets, setIsLoadingDatasets] = useState<boolean>(true);
@@ -557,6 +560,16 @@ export const PipelinePage: React.FC = () => {
           <div className="flex-1">
             <span className="font-semibold text-emerald-200">Configuration Saved</span>
             <p className="mt-0.5 text-emerald-300/90 leading-relaxed">{saveSuccessMessage}</p>
+            <div className="mt-2.5 flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                icon={Play}
+                onClick={() => navigate('/anomalies')}
+              >
+                Proceed to Anomaly Detection &rarr;
+              </Button>
+            </div>
           </div>
           <button
             onClick={() => setSaveSuccessMessage(null)}
