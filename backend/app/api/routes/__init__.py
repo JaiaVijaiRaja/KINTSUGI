@@ -6,6 +6,7 @@ from app.api.routes.pipelines import router as pipelines_router
 from app.api.routes.anomalies import router as anomalies_router
 from app.api.routes.reconstruction import router as reconstruction_router
 from app.api.routes.evaluations import router as evaluations_router
+from app.api.routes.audit import router as audit_router
 
 __all__ = [
     "health_router",
@@ -14,4 +15,5 @@ __all__ = [
     "anomalies_router",
     "reconstruction_router",
     "evaluations_router",
+    "audit_router",
 ]

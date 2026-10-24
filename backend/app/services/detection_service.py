@@ -260,6 +260,46 @@ class DetectionService:
             os.replace(anom_tmp, anom_file)
 
             logger.info("Successfully persisted detection run %s (%d anomalies)", run_id, len(anomalies))
+
+            try:
+                from app.services.audit_service import audit_service
+                from app.schemas.audit import AuditEventType
+
+                audit_service.record_event(
+                    AuditEventType.DETECTION_RUN_STARTED,
+                    detection_run_id=run_id,
+                    pipeline_id=config.configuration_id,
+                    dataset_id=config.dataset_id,
+                    custom_timestamp=start_time,
+                    decision_reason="Detection run started.",
+                )
+                for a in anomalies:
+                    audit_service.record_event(
+                        AuditEventType.ANOMALY_DETECTED,
+                        detection_run_id=run_id,
+                        anomaly_id=a.anomaly_id,
+                        dataset_id=config.dataset_id,
+                        pipeline_id=config.configuration_id,
+                        source_row_index=a.source_row_index,
+                        sensor_column=a.sensor_column,
+                        original_value=a.original_value,
+                        new_status="ANOMALY",
+                        detection_method=a.detectors_flagged[0] if a.detectors_flagged else "unknown",
+                        decision_reason=f"Flagged by {', '.join(a.detectors_flagged)} ({a.consensus} consensus).",
+                        custom_timestamp=a.timestamp or completion_time,
+                    )
+                audit_service.record_event(
+                    AuditEventType.DETECTION_RUN_COMPLETED,
+                    detection_run_id=run_id,
+                    pipeline_id=config.configuration_id,
+                    dataset_id=config.dataset_id,
+                    processing_outcome=run_status,
+                    custom_timestamp=completion_time,
+                    decision_reason=f"Detection completed with {len(anomalies)} anomalies.",
+                )
+            except Exception as audit_err:
+                logger.warning("Failed to record audit events for detection run %s: %s", run_id, str(audit_err))
+
             return run
         except Exception as e:
             logger.exception("Failed to persist run results %s: %s", run_id, str(e))

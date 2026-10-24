@@ -1,6 +1,6 @@
 # KINTSUGI — Confidence-Aware Self-Healing Data Pipeline
 
-> **Phase 6: Confidence-Aware Data Reconstruction Engine**
+> **Phase 8: Audit Trail and Explainability Engine**
 
 KINTSUGI is a confidence-aware, self-healing industrial data pipeline designed to ingest noisy multi-sensor telemetry, detect quality anomalies, reconstruct damaged signals with contextual confidence scores, and preserve original measurements in an auditable ledger.
 
@@ -37,7 +37,21 @@ Like the Japanese art of *Kintsugi* (repairing broken ceramics with gold lacquer
   * `GET /api/reconstruction/runs/{reconstruction_run_id}/results` — Retrieve paginated reconstruction records with filtering by sensor and status.
   * `GET /api/reconstruction/results/{result_id}` — Retrieve single reconstruction record with evidence references and factor breakdown.
   * `POST /api/reconstruction/results/{result_id}/review` — Record operator human review decision (`ACCEPT`, `REJECT`, `MODIFY`).
-* **Testing**: 82 automated Pytest test cases • Strict TypeScript type checking & Vite production build
+  * `POST /api/evaluations` — Execute controlled fault injection benchmark (Mode A) or existing run evaluation (Mode B).
+  * `GET /api/evaluations` — List evaluation runs with pagination and filters.
+  * `GET /api/evaluations/{evaluation_id}` — Retrieve evaluation run metadata and summary metrics.
+  * `GET /api/evaluations/{evaluation_id}/metrics` — Retrieve full evaluation metrics and definitions.
+  * `GET /api/evaluations/{evaluation_id}/breakdown` — Retrieve per-sensor and per-fault breakdowns.
+  * `GET /api/evaluations/{evaluation_id}/manifest` — Retrieve fault injection manifest.
+  * `POST /api/evaluations/{evaluation_id}/validate` — Verify benchmark dataset integrity and source immutability.
+  * `GET /api/audit/events` — Query chronological append-only audit ledger events with pagination and filters.
+  * `GET /api/audit/events/{event_id}` — Retrieve single audit event record with cryptographic hash chain digests.
+  * `GET /api/audit/observations/{dataset_id}/{row_id}` — Assemble observation lifecycle history and raw values for a dataset row index.
+  * `GET /api/audit/traces/{reconstruction_result_id}` — Assemble end-to-end causal provenance trace: Observation -> Detector -> Anomaly -> Reconstruction -> Confidence -> Review -> Benchmark.
+  * `GET /api/audit/runs/{run_id}` — Retrieve audit events associated with a specific run.
+  * `POST /api/audit/verify` — Recompute SHA-256 digests across the entire append-only audit event chain to detect tampering.
+  * `GET /api/audit/export` — Export filtered audit trail records in JSONL or CSV format for regulatory compliance.
+* **Testing**: 128 automated Pytest test cases • Strict TypeScript type checking & Vite production build
 * **Design Philosophy**: Deep slate palette, emerald/amber accents, accessible focus states, atomic persistence, zero fabricated metrics.
 
 For an in-depth breakdown of system architecture, data quality rules, and API contracts, see [ARCHITECTURE.md](ARCHITECTURE.md).
@@ -53,8 +67,8 @@ For an in-depth breakdown of system architecture, data quality rules, and API co
 | `/pipeline` | Pipeline Configuration | **Live Operational** (Dataset selector, column mapping, detection settings, reconstruction policies, backend validation, persistent configuration management) | Phase 4 Core Feature |
 | `/anomalies` | Anomaly Explorer | **Live Operational** (Real execution engine, rolling MAD, Isolation Forest, consensus aggregation, interactive SVG time-series visualizer, anomaly records table, per-detector inspector) | Phase 5 Core Feature |
 | `/reconstruction` | Reconstruction Studio | **Live Operational** (Confidence-aware reconstruction engine, linear interpolation, local median, cross-sensor validation, evidence factor decomposition, status transitions, operator review ledger) | Phase 6 Core Feature |
-| `/audit` | Audit Trail | **Implemented Shell** (Cryptographic lineage concept, filter interface, ledger empty state) | Phase 7 Target |
-| `/evaluation` | Evaluation Center | **Implemented Shell** (Planned benchmark metrics: F1, RMSE, MAE, calibration, empty state) | Phase 7 Target |
+| `/evaluation` | Evaluation Center | **Live Operational** (Controlled fault injection benchmarks, 6 fault types, detection & reconstruction metrics, abstention safety, integrity validation) | Phase 7 Core Feature |
+| `/audit` | Audit Trail | **Live Operational** (Append-only SHA-256 hash chain ledger, causal provenance tracing, observation row lifecycle, explainability engine, compliance export) | Phase 8 Core Feature |
 | `/settings` | Settings & System Info | **Implemented** (Safe runtime info, API diagnostics, interactive docs links) | Phase 2 Shell |
 
 ---

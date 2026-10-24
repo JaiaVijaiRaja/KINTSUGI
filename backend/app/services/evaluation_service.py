@@ -438,6 +438,23 @@ class EvaluationService:
         # Re-commit updated timing
         self._save_run_json(eval_run)
 
+        try:
+            from app.services.audit_service import audit_service
+            from app.schemas.audit import AuditEventType
+
+            audit_service.record_event(
+                AuditEventType.EVALUATION_COMPLETED,
+                evaluation_run_id=eval_run.evaluation_id,
+                dataset_id=eval_run.source_dataset_id,
+                pipeline_id=eval_run.pipeline_id,
+                detection_run_id=eval_run.detection_run_id,
+                reconstruction_run_id=eval_run.reconstruction_run_id,
+                processing_outcome=eval_run.status,
+                decision_reason=f"Evaluation completed in {eval_run.evaluation_mode} mode.",
+            )
+        except Exception as audit_err:
+            logger.warning("Failed to record evaluation audit event: %s", str(audit_err))
+
         return eval_run
 
     def _persist_evaluation_run(

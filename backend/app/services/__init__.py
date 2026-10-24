@@ -4,6 +4,7 @@ from app.services.pipeline_service import pipeline_service
 from app.services.detection_service import detection_service
 from app.services.reconstruction_service import reconstruction_service
 from app.services.evaluation_service import evaluation_service
+from app.services.audit_service import audit_service
 
 __all__ = [
     "dataset_service",
@@ -11,4 +12,5 @@ __all__ = [
     "detection_service",
     "reconstruction_service",
     "evaluation_service",
+    "audit_service",
 ]

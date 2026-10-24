@@ -368,6 +368,58 @@ class ReconstructionService:
                 shutil.rmtree(run_dir)
             temp_dir.rename(run_dir)
             logger.info("Successfully persisted reconstruction run %s with %d records", rec_run_id, len(reconstruction_records))
+
+            try:
+                from app.services.audit_service import audit_service
+                from app.schemas.audit import AuditEventType
+
+                audit_service.record_event(
+                    AuditEventType.RECONSTRUCTION_RUN_STARTED,
+                    reconstruction_run_id=rec_run_id,
+                    detection_run_id=detection_run_id,
+                    pipeline_id=pipeline_id,
+                    dataset_id=det_run.dataset_id,
+                    custom_timestamp=start_time,
+                    decision_reason="Reconstruction run started.",
+                )
+                for r in reconstruction_records:
+                    evt_t = (
+                        AuditEventType.CORRECTION_ACCEPTED
+                        if r.status == "CORRECTED"
+                        else AuditEventType.RECONSTRUCTION_UNRESOLVED
+                        if r.status == "UNRESOLVED"
+                        else AuditEventType.VALUE_PROPOSED
+                    )
+                    audit_service.record_event(
+                        evt_t,
+                        reconstruction_run_id=rec_run_id,
+                        reconstruction_result_id=r.result_id,
+                        detection_run_id=detection_run_id,
+                        pipeline_id=pipeline_id,
+                        dataset_id=det_run.dataset_id,
+                        source_row_index=r.source_row_index,
+                        sensor_column=r.sensor_column,
+                        original_value=r.original_value,
+                        proposed_value=r.proposed_value,
+                        final_value=r.final_value,
+                        new_status=r.status,
+                        reconstruction_method=r.method,
+                        confidence_score=r.confidence_score,
+                        decision_reason=r.abstention_reason or f"Reconstruction committed with status {r.status}.",
+                        custom_timestamp=completion_time,
+                    )
+                audit_service.record_event(
+                    AuditEventType.RECONSTRUCTION_RUN_COMPLETED,
+                    reconstruction_run_id=rec_run_id,
+                    detection_run_id=detection_run_id,
+                    pipeline_id=pipeline_id,
+                    dataset_id=det_run.dataset_id,
+                    processing_outcome="completed",
+                    custom_timestamp=completion_time,
+                    decision_reason=f"Reconstruction completed: {corrected_cnt} corrected, {unresolved_cnt} unresolved.",
+                )
+            except Exception as audit_err:
+                logger.warning("Failed to record audit events for reconstruction run %s: %s", rec_run_id, str(audit_err))
         except Exception as e:
             if temp_dir.exists():
                 shutil.rmtree(temp_dir, ignore_errors=True)
@@ -617,6 +669,35 @@ class ReconstructionService:
                                     with open(tmp_run, "w", encoding="utf-8") as f:
                                         json.dump(run_data, f, indent=2)
                                     tmp_run.replace(run_file)
+
+                                try:
+                                    from app.services.audit_service import audit_service
+                                    from app.schemas.audit import AuditEventType
+
+                                    rev_evt = (
+                                        AuditEventType.REVIEW_APPROVED
+                                        if decision_req.decision == "ACCEPT"
+                                        else AuditEventType.REVIEW_REJECTED
+                                        if decision_req.decision == "REJECT"
+                                        else AuditEventType.REVIEW_COMMENT_ADDED
+                                    )
+                                    audit_service.record_event(
+                                        rev_evt,
+                                        reconstruction_run_id=target_rec.reconstruction_run_id,
+                                        reconstruction_result_id=target_rec.result_id,
+                                        detection_run_id=target_rec.detection_run_id,
+                                        source_row_index=target_rec.source_row_index,
+                                        sensor_column=target_rec.sensor_column,
+                                        original_value=target_rec.original_value,
+                                        proposed_value=target_rec.proposed_value,
+                                        final_value=target_rec.final_value,
+                                        new_status=target_rec.status,
+                                        confidence_score=target_rec.confidence_score,
+                                        decision_reason=f"Operator '{decision_req.reviewer_name}' submitted '{decision_req.decision}': {decision_req.review_comment or 'No comment'}",
+                                        custom_timestamp=now_str,
+                                    )
+                                except Exception as audit_err:
+                                    logger.warning("Failed to record review audit event: %s", str(audit_err))
 
                                 return target_rec
                         except HTTPException:
