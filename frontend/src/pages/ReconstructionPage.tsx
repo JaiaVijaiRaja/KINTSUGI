@@ -932,53 +932,55 @@ export const ReconstructionPage: React.FC = () => {
                 <div className="p-2.5 bg-slate-950 border border-slate-800 rounded-lg">
                   <div className="text-slate-400">Neighbor Count</div>
                   <div className="text-sm font-mono font-bold text-slate-200">
-                    +{inspectedRecord.confidence_breakdown.neighbor_count_score.toFixed(1)} / 25
+                    +{(inspectedRecord.confidence_breakdown?.neighbor_count_score ?? 0).toFixed(1)} / 25
                   </div>
                 </div>
                 <div className="p-2.5 bg-slate-950 border border-slate-800 rounded-lg">
                   <div className="text-slate-400">Method Agreement</div>
                   <div className="text-sm font-mono font-bold text-slate-200">
-                    +{inspectedRecord.confidence_breakdown.method_agreement_score.toFixed(1)} / 25
+                    +{(inspectedRecord.confidence_breakdown?.method_agreement_score ?? 0).toFixed(1)} / 25
                   </div>
                 </div>
                 <div className="p-2.5 bg-slate-950 border border-slate-800 rounded-lg">
                   <div className="text-slate-400">Temporal Proximity</div>
                   <div className="text-sm font-mono font-bold text-slate-200">
-                    +{inspectedRecord.confidence_breakdown.temporal_proximity_score.toFixed(1)} / 20
+                    +{(inspectedRecord.confidence_breakdown?.temporal_proximity_score ?? 0).toFixed(1)} / 20
                   </div>
                 </div>
                 <div className="p-2.5 bg-slate-950 border border-slate-800 rounded-lg">
                   <div className="text-slate-400">Signal Stability</div>
                   <div className="text-sm font-mono font-bold text-slate-200">
-                    +{inspectedRecord.confidence_breakdown.local_stability_score.toFixed(1)} / 15
+                    +{((inspectedRecord.confidence_breakdown as unknown as { local_variance_score?: number })?.local_variance_score ?? inspectedRecord.confidence_breakdown?.local_stability_score ?? 0).toFixed(1)} / 15
                   </div>
                 </div>
                 <div className="p-2.5 bg-slate-950 border border-slate-800 rounded-lg">
                   <div className="text-slate-400">Neighbor Cleanliness</div>
                   <div className="text-sm font-mono font-bold text-slate-200">
-                    +{inspectedRecord.confidence_breakdown.neighbor_cleanliness_score.toFixed(1)} / 15
+                    +{(inspectedRecord.confidence_breakdown?.neighbor_cleanliness_score ?? 0).toFixed(1)} / 15
                   </div>
                 </div>
                 <div className="p-2.5 bg-slate-950 border border-slate-800 rounded-lg">
                   <div className="text-slate-400">Cross-Sensor Impact</div>
                   <div className="text-sm font-mono font-bold text-slate-200">
-                    {inspectedRecord.confidence_breakdown.cross_sensor_score >= 0 ? '+' : ''}
-                    {inspectedRecord.confidence_breakdown.cross_sensor_score.toFixed(1)}
+                    {(inspectedRecord.confidence_breakdown?.cross_sensor_score ?? 0) >= 0 ? '+' : ''}
+                    {(inspectedRecord.confidence_breakdown?.cross_sensor_score ?? 0).toFixed(1)}
                   </div>
                 </div>
               </div>
 
-              {/* Factors applied chips */}
-              <div className="flex items-center gap-1.5 flex-wrap pt-1">
-                {inspectedRecord.confidence_breakdown.factors_applied.map((f, i) => (
-                  <span
-                    key={i}
-                    className="px-2 py-0.5 rounded-md bg-slate-800/80 text-[10px] text-slate-300 font-mono border border-slate-700/60"
-                  >
-                    {f}
-                  </span>
-                ))}
-              </div>
+              {/* Factors applied / penalty chips */}
+              {(((inspectedRecord.confidence_breakdown as unknown as { penalty_reasons?: string[] })?.penalty_reasons) || inspectedRecord.confidence_breakdown?.factors_applied || []).length > 0 && (
+                <div className="flex items-center gap-1.5 flex-wrap pt-1">
+                  {(((inspectedRecord.confidence_breakdown as unknown as { penalty_reasons?: string[] })?.penalty_reasons) || inspectedRecord.confidence_breakdown?.factors_applied || []).map((f, i) => (
+                    <span
+                      key={i}
+                      className="px-2 py-0.5 rounded-md bg-slate-800/80 text-[10px] text-slate-300 font-mono border border-slate-700/60"
+                    >
+                      {f}
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Supporting Observations Table */}

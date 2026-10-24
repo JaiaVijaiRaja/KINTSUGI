@@ -5,6 +5,7 @@ import logging
 import math
 import os
 import shutil
+import time
 import uuid
 from collections import Counter
 from datetime import datetime, timezone
@@ -363,10 +364,22 @@ class ReconstructionService:
             with open(temp_dir / "results.json", "w", encoding="utf-8") as f:
                 json.dump([r.model_dump() for r in reconstruction_records], f, indent=2)
 
-            # Atomic rename commit
-            if run_dir.exists():
-                shutil.rmtree(run_dir)
-            temp_dir.rename(run_dir)
+            # Atomic rename commit with Windows retry & fallback
+            committed = False
+            for attempt in range(5):
+                try:
+                    if run_dir.exists():
+                        shutil.rmtree(run_dir)
+                    temp_dir.rename(run_dir)
+                    committed = True
+                    break
+                except (PermissionError, OSError):
+                    time.sleep(0.05 * (attempt + 1))
+
+            if not committed:
+                shutil.copytree(temp_dir, run_dir, dirs_exist_ok=True)
+                shutil.rmtree(temp_dir, ignore_errors=True)
+
             logger.info("Successfully persisted reconstruction run %s with %d records", rec_run_id, len(reconstruction_records))
 
             try:
