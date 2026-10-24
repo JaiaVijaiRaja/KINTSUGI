@@ -5,6 +5,7 @@ from app.api.routes.datasets import router as datasets_router
 from app.api.routes.pipelines import router as pipelines_router
 from app.api.routes.anomalies import router as anomalies_router
 from app.api.routes.reconstruction import router as reconstruction_router
+from app.api.routes.evaluations import router as evaluations_router
 
 __all__ = [
     "health_router",
@@ -12,4 +13,5 @@ __all__ = [
     "pipelines_router",
     "anomalies_router",
     "reconstruction_router",
+    "evaluations_router",
 ]
