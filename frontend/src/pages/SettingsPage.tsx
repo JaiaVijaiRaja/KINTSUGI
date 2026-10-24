@@ -36,7 +36,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
       <PageHeader
         title="Settings & System Information"
         description="Runtime system configurations, network connectivity diagnostics, and interactive backend API documentation."
-        badge="Phase 2 Active"
+        badge="Phase 9 Active"
         badgeVariant="primary"
         actions={
           <Button
@@ -60,8 +60,8 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
             subtitle="Core application identity and software stack metadata"
             icon={Cpu}
             badge={
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-amber-500/15 text-amber-300 border border-amber-500/30">
-                Phase 2
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
+                Phase 9
               </span>
             }
           />
@@ -77,8 +77,8 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
               </span>
             </div>
             <div className="flex items-center justify-between py-2 border-b border-slate-800">
-              <span className="text-slate-400">Shell Milestone</span>
-              <span className="text-amber-300">Phase 2 — Application Shell</span>
+              <span className="text-slate-400">Integration Milestone</span>
+              <span className="text-emerald-300">Phase 9 — End-to-End Integration & Reliability</span>
             </div>
             <div className="flex items-center justify-between py-2 border-b border-slate-800">
               <span className="text-slate-400">Frontend Stack</span>

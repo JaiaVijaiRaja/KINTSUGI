@@ -1,8 +1,8 @@
 # KINTSUGI — Confidence-Aware Self-Healing Data Pipeline
 
-> **Phase 8: Audit Trail and Explainability Engine**
+> **Phase 9: End-to-End Integration and Reliability Engineering**
 
-KINTSUGI is a confidence-aware, self-healing industrial data pipeline designed to ingest noisy multi-sensor telemetry, detect quality anomalies, reconstruct damaged signals with contextual confidence scores, and preserve original measurements in an auditable ledger.
+KINTSUGI is a confidence-aware, self-healing industrial data pipeline designed to ingest noisy multi-sensor telemetry, detect quality anomalies, reconstruct damaged signals with contextual confidence scores, preserve original measurements in an immutable audit ledger, and verify performance through reproducible benchmarks.
 
 Like the Japanese art of *Kintsugi* (repairing broken ceramics with gold lacquer), KINTSUGI treats signal repairs with complete transparency: **raw measured telemetry is never overwritten or discarded**. Proposed reconstructions carry evidence-based confidence scores, and when evidence is insufficient, the system strictly abstains by marking values as `UNRESOLVED` rather than guessing.
 
@@ -12,7 +12,7 @@ Like the Japanese art of *Kintsugi* (repairing broken ceramics with gold lacquer
 
 * **Frontend**: React 19 + TypeScript + Vite 8 + Tailwind CSS v4 + Lucide Icons
 * **Client Routing**: Zero-dependency HTML5 History router (`useRouter`, `Link`) supporting direct navigation, browser Back/Forward, automatic `/` to `/overview` redirect, and 404 Not Found handling.
-* **Backend**: Python 3.14 + FastAPI + Pydantic v2 + Pandas + Scikit-Learn + Uvicorn
+* **Backend**: Python 3.14 + FastAPI + Pydantic v2 + Pandas + NumPy + Scikit-Learn + Uvicorn
 * **API Endpoints**:
   * `GET /api/health` — Operational health check with latency tracking.
   * `POST /api/datasets/upload` — Multipart/form-data ingestion, validation, and quality audit.
@@ -51,7 +51,7 @@ Like the Japanese art of *Kintsugi* (repairing broken ceramics with gold lacquer
   * `GET /api/audit/runs/{run_id}` — Retrieve audit events associated with a specific run.
   * `POST /api/audit/verify` — Recompute SHA-256 digests across the entire append-only audit event chain to detect tampering.
   * `GET /api/audit/export` — Export filtered audit trail records in JSONL or CSV format for regulatory compliance.
-* **Testing**: 128 automated Pytest test cases • Strict TypeScript type checking & Vite production build
+* **Testing**: 137 automated Pytest test cases across unit, workflow, and Phase 9 integration suites • Strict TypeScript type checking & Vite production build
 * **Design Philosophy**: Deep slate palette, emerald/amber accents, accessible focus states, atomic persistence, zero fabricated metrics.
 
 For an in-depth breakdown of system architecture, data quality rules, and API contracts, see [ARCHITECTURE.md](ARCHITECTURE.md).
@@ -62,14 +62,14 @@ For an in-depth breakdown of system architecture, data quality rules, and API co
 
 | Route | Module Name | Current Status | Milestone |
 | :--- | :--- | :--- | :--- |
-| `/overview` | System Overview | **Implemented** | Phase 1 & 2 Shell |
-| `/datasets` | Dataset Management | **Live Operational** (CSV upload, catalog, data quality audit, real row preview) | Phase 3 Core Feature |
-| `/pipeline` | Pipeline Configuration | **Live Operational** (Dataset selector, column mapping, detection settings, reconstruction policies, backend validation, persistent configuration management) | Phase 4 Core Feature |
-| `/anomalies` | Anomaly Explorer | **Live Operational** (Real execution engine, rolling MAD, Isolation Forest, consensus aggregation, interactive SVG time-series visualizer, anomaly records table, per-detector inspector) | Phase 5 Core Feature |
-| `/reconstruction` | Reconstruction Studio | **Live Operational** (Confidence-aware reconstruction engine, linear interpolation, local median, cross-sensor validation, evidence factor decomposition, status transitions, operator review ledger) | Phase 6 Core Feature |
-| `/evaluation` | Evaluation Center | **Live Operational** (Controlled fault injection benchmarks, 6 fault types, detection & reconstruction metrics, abstention safety, integrity validation) | Phase 7 Core Feature |
-| `/audit` | Audit Trail | **Live Operational** (Append-only SHA-256 hash chain ledger, causal provenance tracing, observation row lifecycle, explainability engine, compliance export) | Phase 8 Core Feature |
-| `/settings` | Settings & System Info | **Implemented** (Safe runtime info, API diagnostics, interactive docs links) | Phase 2 Shell |
+| `/overview` | System Overview | **Verified Live Operational** (Real-time system health, pipeline metrics, module navigation) | Phase 1 & 2 Shell |
+| `/datasets` | Dataset Management | **Verified Live Operational** (CSV upload, catalog, data quality audit, real row preview) | Phase 3 Core Feature |
+| `/pipeline` | Pipeline Configuration | **Verified Live Operational** (Dataset selector, column mapping, detection settings, reconstruction policies, backend validation, persistent configuration management) | Phase 4 Core Feature |
+| `/anomalies` | Anomaly Explorer | **Verified Live Operational** (Real execution engine, rolling MAD, Isolation Forest, consensus aggregation, interactive SVG time-series visualizer, anomaly records table, per-detector inspector) | Phase 5 Core Feature |
+| `/reconstruction` | Reconstruction Studio | **Verified Live Operational** (Confidence-aware reconstruction engine, linear interpolation, local median, cross-sensor validation, evidence factor decomposition, status transitions, operator review ledger) | Phase 6 Core Feature |
+| `/evaluation` | Evaluation Center | **Verified Live Operational** (Controlled fault injection benchmarks, 6 fault types, detection & reconstruction metrics, abstention safety, integrity validation) | Phase 7 Core Feature |
+| `/audit` | Audit Trail | **Verified Live Operational** (Append-only SHA-256 hash chain ledger, causal provenance tracing, observation row lifecycle, explainability engine, compliance export) | Phase 8 Core Feature |
+| `/settings` | Settings & System Info | **Verified Live Operational** (Safe runtime info, API diagnostics, interactive docs links) | Phase 2 Shell |
 
 ---
 
@@ -165,10 +165,17 @@ backend/storage/
 │   └── run_a7c8e219fb04/
 │       ├── run.json                 # Detection run metadata & summary
 │       └── anomalies.json           # Persisted anomaly records
-└── reconstruction/
-    └── rec_run_c21f0b48a192/
-        ├── run.json                 # Reconstruction execution state & summary counts
-        └── results.json             # Per-reading audit records, factor breakdown & review log
+├── reconstruction/
+│   └── rec_run_c21f0b48a192/
+│       ├── run.json                 # Reconstruction execution state & summary counts
+│       └── results.json             # Per-reading audit records, factor breakdown & review log
+├── evaluations/
+│   └── eval_45ef61a9bc20/
+│       ├── evaluation.json          # Benchmark run metadata, profile, metrics, timing
+│       ├── manifest.json            # Deterministic ground truth injected fault manifest
+│       └── metrics.json             # Fast-read quantitative metric cache
+└── audit/
+    └── events.jsonl                 # Append-only SHA-256 hash chain compliance ledger
 ```
 
 ---
@@ -179,45 +186,34 @@ backend/storage/
 ```powershell
 .\backend\.venv\Scripts\pytest.exe backend\tests -v
 ```
-All **82 test cases** pass with zero failures:
-* 17 dataset ingestion and quality audit tests (`test_datasets.py`)
-* 3 operational health, CORS, and 404 tests (`test_health.py`)
-* 16 pipeline configuration and validation tests (`test_pipelines.py`)
-* 1 end-to-end Phase 4 workflow verification test (`test_phase4_workflow.py`)
-* 20 Phase 5 anomaly detection tests (`test_detection.py`)
-* 1 end-to-end Phase 5 workflow verification test (`test_phase5_workflow.py`)
-* **23 Phase 6 reconstruction engine tests (`test_reconstruction.py`)**:
-  1. Linear interpolation with valid surrounding observations
-  2. Boundary extrapolation strictly prohibited
-  3. Gap-limit enforcement
-  4. Timestamp-weighted interpolation with actual $\Delta t$
-  5. Deterministic duplicate timestamp handling
-  6. Local median reconstruction
-  7. Insufficient trusted neighbors handling
-  8. Non-finite input values handling
-  9. Anomaly neighbors excluded from trusted evidence
-  10. Cross-sensor: no unjustified relationship claimed when $|r| < 0.70$
-  11. Conflicting cross-sensor evidence causes abstention/penalty
-  12. Complete confidence factor breakdown decomposition
-  13. Confidence thresholds evaluation
-  14. Invalid reconstructed output rejection
-  15. Explicit abstention (never guesses)
-  16. Acceptance-policy review hold despite high score
-  17. Cryptographic hash preservation of original dataset
-  18. Correct source row mapping
-  19. Reconstruction run persistence and retrieval
-  20. Incomplete detection run rejection
-  21. Invalid detection run ID handling (404)
-  22. Results filtering and pagination
-  23. Operator review decision recording
+All **137 test cases** pass with zero failures:
+* **17 dataset ingestion and quality audit tests (`test_datasets.py`)**
+* **3 operational health, CORS, and 404 tests (`test_health.py`)**
+* **16 pipeline configuration and validation tests (`test_pipelines.py`)**
+* **1 end-to-end Phase 4 workflow verification test (`test_phase4_workflow.py`)**
+* **20 Phase 5 anomaly detection tests (`test_detection.py`)**
+* **1 end-to-end Phase 5 workflow verification test (`test_phase5_workflow.py`)**
+* **23 Phase 6 reconstruction engine tests (`test_reconstruction.py`)**
 * **1 end-to-end Phase 6 workflow verification test (`test_phase6_workflow.py`)**
+* **26 Phase 7 evaluation & benchmarking tests (`test_evaluation.py`)**
+* **20 Phase 8 audit trail & explainability tests (`test_audit.py`)**
+* **9 Phase 9 end-to-end integration & reliability tests (`test_integration_phase9.py`)**:
+  1. Complete critical end-to-end workflow (Upload -> Preview -> Pipeline -> Run Detection -> Run Reconstruction -> Evaluate Benchmark -> Trace Provenance -> Restart & Verify -> Source SHA-256 Immutability)
+  2. Boundary extrapolation strictly prohibited invariant
+  3. Unresolved status never masquerades as corrected invariant
+  4. Evaluation metric denominator edge-case safety (unlabeled runs return `None`, not `0.0`)
+  5. Persistence across cold application restarts
+  6. Corrupted storage file recovery and honest degradation
+  7. API failure contracts and standardized error envelopes
+  8. SHA-256 audit ledger cryptographic hash chain tamper detection
+  9. Bounded compliance export formats (JSONL & CSV)
 
 ### Frontend Typecheck & Production Build
 ```powershell
 cd frontend
 npm run build
 ```
-Vite production build and TypeScript compilation complete cleanly with zero errors in ~300ms.
+Vite production build and TypeScript compilation (`tsc -b && vite build`) complete cleanly with zero errors.
 
 ---
 

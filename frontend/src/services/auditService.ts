@@ -2,6 +2,7 @@
  * API client service for KINTSUGI Audit Trail and Explainability Engine (Phase 8).
  */
 
+import { apiService } from './api';
 import type {
   AuditEvent,
   AuditEventListResponse,
@@ -11,7 +12,27 @@ import type {
   ObservationHistoryResponse,
 } from '../types/audit';
 
-const API_BASE = '/api/audit';
+function getApiBase(): string {
+  return `${apiService.getBaseUrl()}/api/audit`;
+}
+
+async function handleAuditResponse<T>(res: Response, fallbackMsg: string): Promise<T> {
+  if (!res.ok) {
+    let msg = fallbackMsg;
+    try {
+      const err = await res.json();
+      if (err?.error?.message) {
+        msg = err.error.message;
+      } else if (err?.detail) {
+        msg = typeof err.detail === 'string' ? err.detail : JSON.stringify(err.detail);
+      }
+    } catch {
+      // non-JSON
+    }
+    throw new Error(msg);
+  }
+  return res.json() as Promise<T>;
+}
 
 export const auditService = {
   /**
@@ -31,26 +52,24 @@ export const auditService = {
     if (params.offset !== undefined) query.set('offset', params.offset.toString());
 
     const queryString = query.toString();
-    const url = queryString ? `${API_BASE}/events?${queryString}` : `${API_BASE}/events`;
+    const url = queryString ? `${getApiBase()}/events?${queryString}` : `${getApiBase()}/events`;
 
     const res = await fetch(url);
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(err.detail || `Failed to fetch audit events (HTTP ${res.status})`);
-    }
-    return res.json();
+    return handleAuditResponse<AuditEventListResponse>(
+      res,
+      `Failed to fetch audit events (HTTP ${res.status})`
+    );
   },
 
   /**
    * Retrieve a specific audit event by event ID.
    */
   async getEvent(eventId: string): Promise<AuditEvent> {
-    const res = await fetch(`${API_BASE}/events/${encodeURIComponent(eventId)}`);
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(err.detail || `Failed to fetch audit event ${eventId} (HTTP ${res.status})`);
-    }
-    return res.json();
+    const res = await fetch(`${getApiBase()}/events/${encodeURIComponent(eventId)}`);
+    return handleAuditResponse<AuditEvent>(
+      res,
+      `Failed to fetch audit event ${eventId} (HTTP ${res.status})`
+    );
   },
 
   /**
@@ -61,15 +80,12 @@ export const auditService = {
     rowId: number
   ): Promise<ObservationHistoryResponse> {
     const res = await fetch(
-      `${API_BASE}/observations/${encodeURIComponent(datasetId)}/${rowId}`
+      `${getApiBase()}/observations/${encodeURIComponent(datasetId)}/${rowId}`
     );
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(
-        err.detail || `Failed to fetch history for row ${rowId} (HTTP ${res.status})`
-      );
-    }
-    return res.json();
+    return handleAuditResponse<ObservationHistoryResponse>(
+      res,
+      `Failed to fetch history for row ${rowId} (HTTP ${res.status})`
+    );
   },
 
   /**
@@ -77,15 +93,12 @@ export const auditService = {
    */
   async getCausalTrace(reconstructionResultId: string): Promise<CausalTraceResponse> {
     const res = await fetch(
-      `${API_BASE}/traces/${encodeURIComponent(reconstructionResultId)}`
+      `${getApiBase()}/traces/${encodeURIComponent(reconstructionResultId)}`
     );
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(
-        err.detail || `Failed to fetch causal trace for ${reconstructionResultId} (HTTP ${res.status})`
-      );
-    }
-    return res.json();
+    return handleAuditResponse<CausalTraceResponse>(
+      res,
+      `Failed to fetch causal trace for ${reconstructionResultId} (HTTP ${res.status})`
+    );
   },
 
   /**
@@ -97,28 +110,26 @@ export const auditService = {
     offset: number = 0
   ): Promise<AuditEventListResponse> {
     const res = await fetch(
-      `${API_BASE}/runs/${encodeURIComponent(runId)}?limit=${limit}&offset=${offset}`
+      `${getApiBase()}/runs/${encodeURIComponent(runId)}?limit=${limit}&offset=${offset}`
     );
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(err.detail || `Failed to fetch run audit events (HTTP ${res.status})`);
-    }
-    return res.json();
+    return handleAuditResponse<AuditEventListResponse>(
+      res,
+      `Failed to fetch run audit events (HTTP ${res.status})`
+    );
   },
 
   /**
    * Verify cryptographic SHA-256 hash-chain integrity.
    */
   async verifyHashChain(): Promise<HashChainVerificationResponse> {
-    const res = await fetch(`${API_BASE}/verify`, {
+    const res = await fetch(`${getApiBase()}/verify`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
     });
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(err.detail || `Failed to verify hash chain (HTTP ${res.status})`);
-    }
-    return res.json();
+    return handleAuditResponse<HashChainVerificationResponse>(
+      res,
+      `Failed to verify hash chain (HTTP ${res.status})`
+    );
   },
 
   /**
@@ -137,7 +148,7 @@ export const auditService = {
     if (params.end_time) query.set('end_time', params.end_time);
     if (params.limit) query.set('limit', params.limit.toString());
 
-    return `${API_BASE}/export?${query.toString()}`;
+    return `${getApiBase()}/export?${query.toString()}`;
   },
 
   /**
@@ -150,8 +161,18 @@ export const auditService = {
     const url = this.getExportUrl(params, format);
     const res = await fetch(url);
     if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(err.detail || `Failed to export audit records (HTTP ${res.status})`);
+      let msg = `Failed to export audit records (HTTP ${res.status})`;
+      try {
+        const err = await res.json();
+        if (err?.error?.message) {
+          msg = err.error.message;
+        } else if (err?.detail) {
+          msg = typeof err.detail === 'string' ? err.detail : JSON.stringify(err.detail);
+        }
+      } catch {
+        // non-JSON
+      }
+      throw new Error(msg);
     }
 
     const blob = await res.blob();

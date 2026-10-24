@@ -28,9 +28,9 @@ When evidence is ambiguous, sensor correlation is degraded, or uncertainty margi
 
 ---
 
-## 3. Scope: Implemented vs. Planned Features
+## 3. Scope: Implemented Features
 
-### Implemented Features (Phases 1 through 6)
+### Implemented & Verified Features (Phases 1 through 9)
 * **Application Shell & Navigation**: Complete 8-route single-page application shell (`/overview`, `/datasets`, `/pipeline`, `/anomalies`, `/reconstruction`, `/audit`, `/evaluation`, `/settings`).
 * **Zero-Dependency History Router**: Lightweight HTML5 History API client router supporting direct browser URL navigation, browser Back/Forward, automatic `/` to `/overview` redirect, and 404 Not Found handling.
 * **Verified Backend Health Contract**: Live `GET /api/health` endpoint returning operational status, service identifier, API version, environment, and ISO-8601 UTC server timestamp with roundtrip latency tracking.
@@ -62,10 +62,25 @@ When evidence is ambiguous, sensor correlation is degraded, or uncertainty margi
   * Deterministic Acceptance Policies driving explicit status transitions (`MEASURED`, `ESTIMATED`, `CORRECTED`, `UNRESOLVED`).
   * Operator human review decisions (`ACCEPT`, `REJECT`, `MODIFY`) committed with audit notes.
   * Reconstruction Studio frontend with run selection, controls, KPI summary cards, filterable results table, and detailed evidence inspector modal.
+* **Evaluation Center & Benchmarking Engine (Phase 7 Core Feature)**:
+  * Controlled synthetic fault injection across 6 industrial fault models (point spikes, extreme corruption, missing intervals, drift ramps, frozen sensors, communication gaps).
+  * Separate benchmark dataset copies preserving the immutable original source telemetry.
+  * Machine-readable ground-truth manifests (`manifest.json`) recording pre-corruption values and exact row/column coordinates.
+  * Quantitative detection performance metrics (Confusion Matrix, Precision, Recall, F1, Specificity, FPR) with strict zero-denominator safeguards (represented as `None`/null, never fake zeros).
+  * Signal repair accuracy metrics (MAE, RMSE, MAPE with zero-reference exclusion, error improvement vs baseline corruption).
+  * Strict held-out evaluation preventing benchmark reference values from leaking into detection or reconstruction algorithms.
+* **Audit Trail & Explainability Engine (Phase 8 Core Feature)**:
+  * Append-only chronological audit ledger (`storage/audit/events.jsonl`) with cryptographic SHA-256 hash chains linking each event to the preceding event digest.
+  * Causal provenance graph reconstruction: linking source dataset rows, detector anomalies, reconstruction proposals, confidence factor breakdowns, operator reviews, and benchmark evaluations.
+  * Observation row lifecycle inspector reconstructing all state transitions for any telemetry observation.
+  * Cryptographic verification endpoint (`POST /api/audit/verify`) detecting post-hoc tampering or sequence insertion.
+  * Regulatory compliance export in both JSONL and CSV formats bounded by query limits.
+* **End-to-End Integration & Reliability Engineering (Phase 9 Core Feature)**:
+  * Comprehensive 9-test integration test suite (`test_integration_phase9.py`) verifying full critical lifecycle workflows.
+  * Invariant enforcement: extrapolation prohibition, quorum abstention, status distinction, denominator safety, and immutable raw datasets.
+  * Application restart persistence verification and resilient recovery from corrupted storage files.
+  * Standardized error response contracts (`{"error": {"code": ..., "message": ..., "path": ...}}`).
 
-### Planned for Future Phases
-* **Evaluation Center Benchmarking (Phase 7)**: Independent performance metrics, precision, recall, F1, RMSE, MAE, and calibration curves against labeled test datasets.
-* **Cryptographic Audit Ledger (Phase 8)**: Append-only SHA-256 hash chains documenting all repair proposals and operator decisions.
 
 ---
 
@@ -109,7 +124,7 @@ When evidence is ambiguous, sensor correlation is degraded, or uncertainty margi
 backend/storage/
 ├── datasets/
 │   └── ds_{uuid}/
-│       ├── data.csv                 # Raw sensor CSV (IMMUTABLE, READ-ONLY)
+│       ├── data.csv                 # Raw sensor CSV (IMMUTABLE, READ-ONLY, SHA-256 verified)
 │       ├── metadata.json            # Dataset catalog metadata
 │       └── quality.json             # Data quality audit
 ├── pipelines/
@@ -118,10 +133,17 @@ backend/storage/
 │   └── run_{uuid}/
 │       ├── run.json                 # Detection run execution state & summary counts
 │       └── anomalies.json           # Array of individual AnomalyRecord objects
-└── reconstruction/
-    └── rec_run_{uuid}/
-        ├── run.json                 # Reconstruction execution state & summary counts
-        └── results.json             # Per-reading audit records & review decisions
+├── reconstruction/
+│   └── rec_run_{uuid}/
+│       ├── run.json                 # Reconstruction execution state & summary counts
+│       └── results.json             # Per-reading audit records & review decisions
+├── evaluations/
+│   └── eval_{uuid}/
+│       ├── evaluation.json          # Benchmark run metadata, profile, metrics, timing
+│       ├── manifest.json            # Deterministic ground truth injected fault manifest
+│       └── metrics.json             # Fast-read quantitative metric cache
+└── audit/
+    └── events.jsonl                 # Append-only SHA-256 hash chain compliance ledger
 ```
 
 * **Data Preservation**: Raw CSV files in `storage/datasets/` are strictly read-only and never modified by detection or reconstruction runs.
@@ -146,3 +168,22 @@ backend/storage/
 * `GET /api/reconstruction/runs/{reconstruction_run_id}/results` — Retrieves paginated reconstruction records with sensor and status filters.
 * `GET /api/reconstruction/results/{result_id}` — Retrieves single reconstruction record with evidence references and confidence factor breakdown.
 * `POST /api/reconstruction/results/{result_id}/review` — Records an operator human review decision (`ACCEPT`, `REJECT`, `MODIFY`).
+
+### Evaluation Center & Benchmarking
+* `POST /api/evaluations` — Executes controlled fault injection benchmark (Mode A) or existing run evaluation (Mode B).
+* `GET /api/evaluations` — Lists evaluation runs with pagination and filtering.
+* `GET /api/evaluations/{evaluation_id}` — Retrieves evaluation run summary and profile.
+* `GET /api/evaluations/{evaluation_id}/metrics` — Retrieves comprehensive detection and reconstruction metrics.
+* `GET /api/evaluations/{evaluation_id}/breakdown` — Retrieves per-sensor and per-fault metric breakdowns.
+* `GET /api/evaluations/{evaluation_id}/manifest` — Retrieves machine-readable injected fault ground truth manifest.
+* `POST /api/evaluations/{evaluation_id}/validate` — Verifies benchmark dataset integrity and source immutability.
+
+### Audit Trail & Explainability
+* `GET /api/audit/events` — Chronological query across append-only audit events with filters and pagination.
+* `GET /api/audit/events/{event_id}` — Detailed audit record lookup with cryptographic SHA-256 verification hash.
+* `GET /api/audit/observations/{dataset_id}/{row_id}` — Full state transition history for a single dataset observation.
+* `GET /api/audit/traces/{reconstruction_result_id}` — End-to-end causal explainability provenance graph.
+* `GET /api/audit/runs/{run_id}` — Chronological audit events for a pipeline, detection, or reconstruction run.
+* `POST /api/audit/verify` — Recomputes SHA-256 digests across the entire append-only hash chain to detect tampering.
+* `GET /api/audit/export` — Bounded compliance export in JSONL or CSV format.
+

@@ -402,6 +402,22 @@ class PipelineService:
                 os.fsync(f.fileno())
             os.replace(temp_path, file_path)
             logger.info("Created pipeline configuration %s (%s)", config_id, pipeline.configuration_name)
+
+            try:
+                from app.services.audit_service import audit_service
+                from app.schemas.audit import AuditEventType
+                audit_service.record_event(
+                    event_type=AuditEventType.PIPELINE_CREATED,
+                    dataset_id=pipeline.dataset_id,
+                    pipeline_id=config_id,
+                    pipeline_version="1",
+                    decision_reason=f"Pipeline configuration '{pipeline.configuration_name}' created",
+                    validation_outcomes={"sensor_columns": pipeline.sensor_columns},
+                    processing_outcome="CREATED",
+                )
+            except Exception as audit_err:
+                logger.warning("Failed to record audit event for pipeline creation: %s", str(audit_err))
+
             return pipeline
         except Exception as e:
             if temp_path.exists():
@@ -523,6 +539,22 @@ class PipelineService:
                 pipeline_id,
                 updated_pipeline.configuration_version,
             )
+
+            try:
+                from app.services.audit_service import audit_service
+                from app.schemas.audit import AuditEventType
+                audit_service.record_event(
+                    event_type=AuditEventType.PIPELINE_UPDATED,
+                    dataset_id=updated_pipeline.dataset_id,
+                    pipeline_id=pipeline_id,
+                    pipeline_version=str(updated_pipeline.configuration_version),
+                    decision_reason=f"Pipeline configuration '{updated_pipeline.configuration_name}' updated to version {updated_pipeline.configuration_version}",
+                    validation_outcomes={"sensor_columns": updated_pipeline.sensor_columns},
+                    processing_outcome="UPDATED",
+                )
+            except Exception as audit_err:
+                logger.warning("Failed to record audit event for pipeline update: %s", str(audit_err))
+
             return updated_pipeline
         except Exception as e:
             if temp_path.exists():

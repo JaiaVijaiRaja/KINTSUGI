@@ -205,7 +205,9 @@ class AuditService:
                 "previous_hash": last_hash,
             }
 
-            canonical_str = canonicalize_for_hash(raw_dict)
+            # Coerce types consistently through Pydantic schema before canonical hashing
+            coerced_event = AuditEvent(**raw_dict, event_hash="0" * 64)
+            canonical_str = canonicalize_for_hash(coerced_event.model_dump())
             content_to_digest = f"{canonical_str}{last_hash}".encode("utf-8")
             event_hash = sha256(content_to_digest).hexdigest()
             raw_dict["event_hash"] = event_hash

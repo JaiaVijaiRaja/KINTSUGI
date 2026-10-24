@@ -37,38 +37,44 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({ connection, onRetry 
     {
       num: '01',
       title: 'Sensor Ingestion',
-      phase: 'Phase 3',
-      desc: 'High-frequency telemetry ingestion (CSV, Parquet) with schema validation.',
+      phase: 'Phase 3 (Operational)',
+      desc: 'High-frequency telemetry ingestion (CSV) with schema and quality validation.',
     },
     {
       num: '02',
-      title: 'Quality & Anomaly Audit',
-      phase: 'Phase 3',
-      desc: 'Multivariate anomaly detection: spikes, packet loss, and frozen signals.',
+      title: 'Pipeline Configuration',
+      phase: 'Phase 4 (Operational)',
+      desc: 'Channel mapping, robust detection bounds, and persistent versioned configurations.',
     },
     {
       num: '03',
-      title: 'Signal Reconstruction',
-      phase: 'Phase 3',
-      desc: 'Contextual signal healing while preserving original raw telemetry.',
+      title: 'Anomaly Detection',
+      phase: 'Phase 5 (Operational)',
+      desc: 'Rolling MAD and Isolation Forest detectors with multi-detector consensus.',
     },
     {
       num: '04',
-      title: 'Confidence Engine',
-      phase: 'Phase 3',
-      desc: 'Evidence-based confidence assignment; abstains when data is insufficient.',
+      title: 'Signal Reconstruction',
+      phase: 'Phase 6 (Operational)',
+      desc: 'Contextual signal healing while preserving original raw telemetry.',
     },
     {
       num: '05',
-      title: 'Auditable Ledger',
-      phase: 'Phase 4',
-      desc: 'Immutable append-only record of every detection and repair decision.',
+      title: 'Confidence Engine',
+      phase: 'Phase 6 (Operational)',
+      desc: 'Evidence-based confidence scoring; strictly abstains when evidence is insufficient.',
     },
     {
       num: '06',
       title: 'Benchmark Evaluation',
-      phase: 'Phase 4',
-      desc: 'Precision, recall, MAE, and RMSE benchmarking against labeled suites.',
+      phase: 'Phase 7 (Operational)',
+      desc: 'Precision, recall, MAE, and RMSE benchmarking against synthetic fault suites.',
+    },
+    {
+      num: '07',
+      title: 'Auditable Ledger',
+      phase: 'Phase 8 (Operational)',
+      desc: 'Append-only SHA-256 cryptographic hash-chain ledger with causal trace provenance.',
     },
   ];
 
@@ -77,43 +83,43 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({ connection, onRetry 
       title: 'Dataset Management',
       path: '/datasets',
       icon: Database,
-      desc: 'Register multi-sensor CSV/Parquet datasets and inspect data quality schemas.',
-      phase: 'Phase 3 Target',
+      desc: 'Register multi-sensor CSV datasets and inspect data quality schemas.',
+      phase: 'Phase 3 Live',
     },
     {
       title: 'Pipeline Configuration',
       path: '/pipeline',
       icon: Sliders,
       desc: 'Configure channel mapping, outlier bounds, and signal healing policies.',
-      phase: 'Phase 3 Target',
+      phase: 'Phase 4 Live',
     },
     {
       title: 'Anomaly Explorer',
       path: '/anomalies',
       icon: ShieldAlert,
       desc: 'Inspect detected signal anomalies with multivariate time-series overlays.',
-      phase: 'Phase 3 Target',
+      phase: 'Phase 5 Live',
     },
     {
       title: 'Reconstruction Studio',
       path: '/reconstruction',
       icon: Wrench,
       desc: 'Compare raw versus healed readings and review confidence statuses.',
-      phase: 'Phase 3 Target',
-    },
-    {
-      title: 'Audit Trail',
-      path: '/audit',
-      icon: History,
-      desc: 'Query immutable append-only ledger entries preserving full traceability.',
-      phase: 'Phase 4 Target',
+      phase: 'Phase 6 Live',
     },
     {
       title: 'Evaluation Center',
       path: '/evaluation',
       icon: Award,
       desc: 'Examine precision, recall, MAE, and RMSE against benchmark datasets.',
-      phase: 'Phase 4 Target',
+      phase: 'Phase 7 Live',
+    },
+    {
+      title: 'Audit Trail',
+      path: '/audit',
+      icon: History,
+      desc: 'Query append-only hash-chain ledger entries preserving full traceability.',
+      phase: 'Phase 8 Live',
     },
   ];
 
@@ -123,7 +129,7 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({ connection, onRetry 
       <PageHeader
         title="System Overview"
         description="Confidence-Aware, Self-Healing Industrial Data Pipeline. Real-time health monitoring, modular workflow status, and navigation to core pipeline stages."
-        badge="Phase 2 Shell"
+        badge="Phase 9 Operational"
         badgeVariant="primary"
         actions={
           <Button

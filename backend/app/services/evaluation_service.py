@@ -119,6 +119,15 @@ class EvaluationService:
         # Determine target sensor columns
         if req.sensor_columns:
             target_sensors = req.sensor_columns
+        elif req.pipeline_id:
+            try:
+                base_pipe = pipeline_service.get_pipeline_config(req.pipeline_id)
+                target_sensors = [c for c in base_pipe.sensor_columns if c in source_df.columns]
+            except Exception:
+                target_sensors = [
+                    c for c in source_df.columns
+                    if c != timestamp_col and pd.api.types.is_numeric_dtype(source_df[c])
+                ]
         else:
             target_sensors = [
                 c for c in source_df.columns
@@ -233,7 +242,7 @@ class EvaluationService:
                     dataset_id=benchmark_dataset_id,
                     timestamp_column=base_pipe.timestamp_column,
                     sensor_columns=target_sensors,
-                    ignored_columns=base_pipe.ignored_columns,
+                    ignored_columns=[c for c in base_pipe.ignored_columns if c not in target_sensors],
                     detection_settings=base_pipe.detection_settings,
                     reconstruction_settings=base_pipe.reconstruction_settings,
                     confidence_policy=base_pipe.confidence_policy,

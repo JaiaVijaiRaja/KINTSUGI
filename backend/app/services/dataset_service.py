@@ -407,6 +407,31 @@ class DatasetService:
                 f.write(metadata.model_dump_json(indent=2))
 
             logger.info("Successfully ingested dataset %s (%s, %d rows)", dataset_id, filename, total_rows)
+
+            # Record live audit events for dataset ingestion
+            try:
+                from app.services.audit_service import audit_service
+                from app.schemas.audit import AuditEventType
+                audit_service.record_event(
+                    event_type=AuditEventType.DATASET_UPLOADED,
+                    dataset_id=dataset_id,
+                    decision_reason=f"Dataset uploaded: {filename} ({total_rows} rows, {total_cols} columns)",
+                    validation_outcomes={"parsing_status": "ready", "file_size_bytes": file_size},
+                    processing_outcome="SUCCESS",
+                )
+                audit_service.record_event(
+                    event_type=AuditEventType.DATASET_VALIDATED,
+                    dataset_id=dataset_id,
+                    decision_reason="Dataset quality audit and schema validation passed",
+                    validation_outcomes={
+                        "duplicate_rows": duplicate_rows_count,
+                        "missing_cells": total_missing_cells,
+                    },
+                    processing_outcome="VALIDATED",
+                )
+            except Exception as audit_err:
+                logger.warning("Failed to record audit event for dataset upload: %s", str(audit_err))
+
             return DatasetDetailResponse(metadata=metadata, quality=quality_summary)
 
         except Exception as e:
