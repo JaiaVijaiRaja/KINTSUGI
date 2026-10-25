@@ -35,6 +35,21 @@ import type {
   ReviewDecision,
 } from '../types/reconstruction';
 
+const renderFactorScore = (val: number | null | undefined, maxPts: number): React.ReactNode => {
+  if (val === null || val === undefined || typeof val !== 'number' || isNaN(val)) {
+    return <span className="text-amber-400/80 font-mono italic text-[11px]">Unmeasured</span>;
+  }
+  return <span>+{val.toFixed(1)} / {maxPts}</span>;
+};
+
+const renderCrossSensorScore = (val: number | null | undefined): React.ReactNode => {
+  if (val === null || val === undefined || typeof val !== 'number' || isNaN(val)) {
+    return <span className="text-amber-400/80 font-mono italic text-[11px]">Unmeasured</span>;
+  }
+  const prefix = val >= 0 ? '+' : '';
+  return <span>{prefix}{val.toFixed(1)}</span>;
+};
+
 export const ReconstructionPage: React.FC = () => {
   const { navigate } = useRouter();
 
@@ -924,54 +939,75 @@ export const ReconstructionPage: React.FC = () => {
                   Evidence Factor Decomposition
                 </span>
                 <span className="text-xs font-mono font-bold text-amber-400">
-                  Total Score: {inspectedRecord.confidence_score.toFixed(1)} / 100
+                  Total Score:{' '}
+                  {inspectedRecord.confidence_score !== null &&
+                  inspectedRecord.confidence_score !== undefined &&
+                  !isNaN(inspectedRecord.confidence_score)
+                    ? `${inspectedRecord.confidence_score.toFixed(1)} / 100`
+                    : 'Unmeasured'}
                 </span>
               </div>
 
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 text-[11px]">
-                <div className="p-2.5 bg-slate-950 border border-slate-800 rounded-lg">
-                  <div className="text-slate-400">Neighbor Count</div>
-                  <div className="text-sm font-mono font-bold text-slate-200">
-                    +{(inspectedRecord.confidence_breakdown?.neighbor_count_score ?? 0).toFixed(1)} / 25
+              {!inspectedRecord.confidence_breakdown ? (
+                <div className="p-3.5 bg-slate-950/70 border border-slate-800 rounded-lg text-slate-400 text-xs flex items-center gap-2">
+                  <Info className="w-4 h-4 text-amber-400 shrink-0" />
+                  <span>
+                    Evidence breakdown telemetry is unavailable for this observation. Factors are unmeasured.
+                  </span>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 text-[11px]">
+                  <div className="p-2.5 bg-slate-950 border border-slate-800 rounded-lg">
+                    <div className="text-slate-400">Neighbor Count</div>
+                    <div className="text-sm font-mono font-bold text-slate-200">
+                      {renderFactorScore(inspectedRecord.confidence_breakdown.neighbor_count_score, 25)}
+                    </div>
+                  </div>
+                  <div className="p-2.5 bg-slate-950 border border-slate-800 rounded-lg">
+                    <div className="text-slate-400">Method Agreement</div>
+                    <div className="text-sm font-mono font-bold text-slate-200">
+                      {renderFactorScore(inspectedRecord.confidence_breakdown.method_agreement_score, 25)}
+                    </div>
+                  </div>
+                  <div className="p-2.5 bg-slate-950 border border-slate-800 rounded-lg">
+                    <div className="text-slate-400">Temporal Proximity</div>
+                    <div className="text-sm font-mono font-bold text-slate-200">
+                      {renderFactorScore(inspectedRecord.confidence_breakdown.temporal_proximity_score, 20)}
+                    </div>
+                  </div>
+                  <div className="p-2.5 bg-slate-950 border border-slate-800 rounded-lg">
+                    <div className="text-slate-400">Signal Stability</div>
+                    <div className="text-sm font-mono font-bold text-slate-200">
+                      {renderFactorScore(
+                        inspectedRecord.confidence_breakdown.local_variance_score ??
+                          inspectedRecord.confidence_breakdown.local_stability_score,
+                        15
+                      )}
+                    </div>
+                  </div>
+                  <div className="p-2.5 bg-slate-950 border border-slate-800 rounded-lg">
+                    <div className="text-slate-400">Neighbor Cleanliness</div>
+                    <div className="text-sm font-mono font-bold text-slate-200">
+                      {renderFactorScore(inspectedRecord.confidence_breakdown.neighbor_cleanliness_score, 15)}
+                    </div>
+                  </div>
+                  <div className="p-2.5 bg-slate-950 border border-slate-800 rounded-lg">
+                    <div className="text-slate-400">Cross-Sensor Impact</div>
+                    <div className="text-sm font-mono font-bold text-slate-200">
+                      {renderCrossSensorScore(inspectedRecord.confidence_breakdown.cross_sensor_score)}
+                    </div>
                   </div>
                 </div>
-                <div className="p-2.5 bg-slate-950 border border-slate-800 rounded-lg">
-                  <div className="text-slate-400">Method Agreement</div>
-                  <div className="text-sm font-mono font-bold text-slate-200">
-                    +{(inspectedRecord.confidence_breakdown?.method_agreement_score ?? 0).toFixed(1)} / 25
-                  </div>
-                </div>
-                <div className="p-2.5 bg-slate-950 border border-slate-800 rounded-lg">
-                  <div className="text-slate-400">Temporal Proximity</div>
-                  <div className="text-sm font-mono font-bold text-slate-200">
-                    +{(inspectedRecord.confidence_breakdown?.temporal_proximity_score ?? 0).toFixed(1)} / 20
-                  </div>
-                </div>
-                <div className="p-2.5 bg-slate-950 border border-slate-800 rounded-lg">
-                  <div className="text-slate-400">Signal Stability</div>
-                  <div className="text-sm font-mono font-bold text-slate-200">
-                    +{((inspectedRecord.confidence_breakdown as unknown as { local_variance_score?: number })?.local_variance_score ?? inspectedRecord.confidence_breakdown?.local_stability_score ?? 0).toFixed(1)} / 15
-                  </div>
-                </div>
-                <div className="p-2.5 bg-slate-950 border border-slate-800 rounded-lg">
-                  <div className="text-slate-400">Neighbor Cleanliness</div>
-                  <div className="text-sm font-mono font-bold text-slate-200">
-                    +{(inspectedRecord.confidence_breakdown?.neighbor_cleanliness_score ?? 0).toFixed(1)} / 15
-                  </div>
-                </div>
-                <div className="p-2.5 bg-slate-950 border border-slate-800 rounded-lg">
-                  <div className="text-slate-400">Cross-Sensor Impact</div>
-                  <div className="text-sm font-mono font-bold text-slate-200">
-                    {(inspectedRecord.confidence_breakdown?.cross_sensor_score ?? 0) >= 0 ? '+' : ''}
-                    {(inspectedRecord.confidence_breakdown?.cross_sensor_score ?? 0).toFixed(1)}
-                  </div>
-                </div>
-              </div>
+              )}
 
               {/* Factors applied / penalty chips */}
-              {(((inspectedRecord.confidence_breakdown as unknown as { penalty_reasons?: string[] })?.penalty_reasons) || inspectedRecord.confidence_breakdown?.factors_applied || []).length > 0 && (
+              {(((inspectedRecord.confidence_breakdown?.penalty_reasons ||
+                inspectedRecord.confidence_breakdown?.factors_applied) ??
+                []).length > 0) && (
                 <div className="flex items-center gap-1.5 flex-wrap pt-1">
-                  {(((inspectedRecord.confidence_breakdown as unknown as { penalty_reasons?: string[] })?.penalty_reasons) || inspectedRecord.confidence_breakdown?.factors_applied || []).map((f, i) => (
+                  {((inspectedRecord.confidence_breakdown?.penalty_reasons ||
+                    inspectedRecord.confidence_breakdown?.factors_applied) ??
+                    []).map((f, i) => (
                     <span
                       key={i}
                       className="px-2 py-0.5 rounded-md bg-slate-800/80 text-[10px] text-slate-300 font-mono border border-slate-700/60"
@@ -984,7 +1020,7 @@ export const ReconstructionPage: React.FC = () => {
             </div>
 
             {/* Supporting Observations Table */}
-            {inspectedRecord.evidence_references.length > 0 && (
+            {inspectedRecord.evidence_references && inspectedRecord.evidence_references.length > 0 && (
               <div className="space-y-2">
                 <span className="text-xs font-semibold text-slate-200">
                   Supporting Neighbor Observations ({inspectedRecord.evidence_references.length})
@@ -996,8 +1032,9 @@ export const ReconstructionPage: React.FC = () => {
                         <th className="py-1.5 px-3">Row Index</th>
                         <th className="py-1.5 px-3">Sensor</th>
                         <th className="py-1.5 px-3">Value</th>
-                        <th className="py-1.5 px-3">Role</th>
+                        <th className="py-1.5 px-3">Distance</th>
                         <th className="py-1.5 px-3">Weight</th>
+                        <th className="py-1.5 px-3">Anomaly Status</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-800/50">
@@ -1005,9 +1042,32 @@ export const ReconstructionPage: React.FC = () => {
                         <tr key={i} className="hover:bg-slate-800/20">
                           <td className="py-1.5 px-3 text-slate-200">#{ev.source_row_index}</td>
                           <td className="py-1.5 px-3 text-slate-400">{ev.sensor_column}</td>
-                          <td className="py-1.5 px-3 text-cyan-300">{ev.value.toFixed(3)}</td>
-                          <td className="py-1.5 px-3 text-amber-300">{ev.role}</td>
-                          <td className="py-1.5 px-3 text-slate-400">{ev.weight.toFixed(2)}</td>
+                          <td className="py-1.5 px-3 text-cyan-300">
+                            {ev.value !== undefined && ev.value !== null && !isNaN(ev.value)
+                              ? ev.value.toFixed(3)
+                              : 'NaN'}
+                          </td>
+                          <td className="py-1.5 px-3 text-slate-300">
+                            {ev.distance !== undefined && ev.distance !== null && !isNaN(ev.distance)
+                              ? `${ev.distance.toFixed(1)} rows`
+                              : (ev.role || 'N/A')}
+                          </td>
+                          <td className="py-1.5 px-3 text-slate-400">
+                            {ev.weight !== undefined && ev.weight !== null && !isNaN(ev.weight)
+                              ? ev.weight.toFixed(2)
+                              : '1.00'}
+                          </td>
+                          <td className="py-1.5 px-3">
+                            {ev.is_anomaly ? (
+                              <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-rose-950/60 text-rose-400 border border-rose-800/50">
+                                Flagged
+                              </span>
+                            ) : (
+                              <span className="px-1.5 py-0.5 rounded text-[10px] bg-emerald-950/50 text-emerald-400 border border-emerald-800/40">
+                                Nominal
+                              </span>
+                            )}
+                          </td>
                         </tr>
                       ))}
                     </tbody>

@@ -26,13 +26,17 @@ export interface ConfidenceBreakdown {
   neighbor_count_score: number;
   method_agreement_score: number;
   temporal_proximity_score: number;
-  local_stability_score: number;
+  local_variance_score: number;
   neighbor_cleanliness_score: number;
   cross_sensor_score: number;
-  structural_penalty: number;
-  raw_total: number;
-  normalized_score: number;
-  factors_applied: string[];
+  total_score: number;
+  penalty_reasons: string[];
+  // Optional / backward-compatibility aliases
+  local_stability_score?: number;
+  factors_applied?: string[];
+  structural_penalty?: number;
+  raw_total?: number;
+  normalized_score?: number;
 }
 
 export interface EvidenceReference {
@@ -40,8 +44,10 @@ export interface EvidenceReference {
   source_row_index: number;
   timestamp?: string | null;
   value: number;
-  role: string;
+  distance: number;
   weight: number;
+  is_anomaly: boolean;
+  role?: string;
 }
 
 export interface ReconstructionRecord {
@@ -60,7 +66,7 @@ export interface ReconstructionRecord {
   method: ReconstructionMethod;
   status: ProcessingStatus;
   confidence_score: number; // 0.0 to 100.0
-  confidence_breakdown: ConfidenceBreakdown;
+  confidence_breakdown?: ConfidenceBreakdown | null;
   evidence_summary: string;
   evidence_references: EvidenceReference[];
   abstention_reason?: string | null;
