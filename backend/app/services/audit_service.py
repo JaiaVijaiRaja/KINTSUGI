@@ -749,6 +749,8 @@ class AuditService:
             "Hash chains detect post-hoc alterations within normal application access.",
             "Local file storage cannot prevent an administrator with direct filesystem write access from recomputing the entire chain.",
             "This cryptographic verification checks internal ledger consistency, not legal compliance or hardware-enforced immutability.",
+            "Internal chain verification cannot, by itself, detect truncation or deletion of the newest valid ledger suffix without an external checkpoint.",
+            "No external third-party trust anchor or hardware security module (HSM) is configured in this deployment.",
         ]
 
         if not events_file.exists():

@@ -377,8 +377,13 @@ class ReconstructionService:
                     time.sleep(0.05 * (attempt + 1))
 
             if not committed:
-                shutil.copytree(temp_dir, run_dir, dirs_exist_ok=True)
-                shutil.rmtree(temp_dir, ignore_errors=True)
+                try:
+                    shutil.copytree(temp_dir, run_dir, dirs_exist_ok=True)
+                    shutil.rmtree(temp_dir, ignore_errors=True)
+                except Exception:
+                    if run_dir.exists():
+                        shutil.rmtree(run_dir, ignore_errors=True)
+                    raise
 
             logger.info("Successfully persisted reconstruction run %s with %d records", rec_run_id, len(reconstruction_records))
 
@@ -462,7 +467,8 @@ class ReconstructionService:
             for item in sorted(rec_storage.iterdir(), key=lambda p: p.stat().st_mtime, reverse=True):
                 if item.is_dir() and item.name.startswith("rec_run_"):
                     run_file = item / "run.json"
-                    if run_file.exists():
+                    results_file = item / "results.json"
+                    if run_file.exists() and results_file.exists():
                         try:
                             with open(run_file, "r", encoding="utf-8") as f:
                                 data = json.load(f)

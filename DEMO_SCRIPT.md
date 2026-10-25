@@ -77,7 +77,7 @@
    - **Row 12 Inspection (Successful Repair)**:
      - Original Raw Measurement: `92.50 °C` (preserved!)
      - Proposed Reconstructed Value: `~52.35 °C` (interpolated from valid temporal brackets)
-     - Confidence Score: `~88 / 100` (High Confidence)
+     - Confidence Score: `~88 / 100` (Multi-factor evidence index: physical concordance, not calibrated probability)
      - Status: `CORRECTED` (Auto-Accepted under threshold $\ge 0.70$).
      - Factor Decomposition: Show the 6 transparent sub-scores (neighbor density: 25/25, temporal proximity: 20/20, stability: 15/15).
    - **Row 0 / Boundary Observation (Strict Abstention Demonstration)**:
@@ -97,7 +97,7 @@
    - The original dataset remains completely unaltered (verified via SHA-256).
 4. Show the genuine quantitative metrics:
    - **Confusion Matrix**: True Positives, False Positives, True Negatives, False Negatives.
-   - **Detection Metrics**: Precision, Recall, F1 Score.
+   - **Detection Metrics**: Precision, Recall, F1 Score (synthetic benchmark results).
    - **Signal Repair Accuracy**: Reconstruction MAE and RMSE.
    - Point out that denominator edge cases return `None` (undefined) rather than deceptive `0.0`.
 
@@ -110,7 +110,7 @@
    - Every state transition (`DATASET_UPLOADED`, `PIPELINE_CREATED`, `OBSERVATION_CORRECTED`).
 3. Point out the **Cryptographic Integrity Panel**:
    - Click **Verify Hash Chain**.
-   - Show: `"SHA-256 Hash Chain Integrity: VERIFIED (100% untampered continuity)"`.
+   - Show: `"SHA-256 Hash Chain Integrity: VERIFIED (Sequential cryptographic continuity verified; note: detects post-hoc alterations, but external anchor needed to prevent newest-suffix truncation)"`.
 4. Open the **Causal Lineage Search** for Row 12:
    - Show the 5-step causal graph: `Source Observation -> Detector Execution -> Anomaly Flag -> Reconstruction Proposal -> Confidence Factor Decomposition -> Final Commitment`.
 5. Export compliance report: Click **Download Verified CSV Export**.

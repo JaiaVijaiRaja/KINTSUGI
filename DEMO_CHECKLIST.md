@@ -27,18 +27,35 @@ Use this checklist 15 minutes before the hackathon demonstration or live jury wa
 
 ## 2. Automated Quality Gates
 
-- [ ] **Backend Test Suite (137 Tests Passing)**:
+- [ ] **Backend Test Suite (162 Tests Passing)**:
   ```powershell
   .\backend\.venv\Scripts\python.exe -m pytest backend/tests -v
   ```
-  *Expected Output: `137 passed in ~16s`*
-- [ ] **Frontend Production Type-Check & Build**:
+  *Expected Output: `162 passed in ~15s (0 failures)`*
+
+- [ ] **Frontend Linting (0 Errors)**:
+  ```powershell
+  cd frontend
+  npm run lint
+  cd ..
+  ```
+  *Expected Output: `0 errors across 56 files`*
+
+- [ ] **Frontend Production Type-Check & Build (0 Errors)**:
   ```powershell
   cd frontend
   npm run build
   cd ..
   ```
-  *Expected Output: `✓ built in ~1s (0 errors)`*
+  *Expected Output: `✓ built in ~500ms (0 errors)`*
+
+- [ ] **Playwright Browser E2E Test Suite (13 Tests Passing)**:
+  ```powershell
+  cd frontend
+  npm run test:e2e
+  cd ..
+  ```
+  *Expected Output: `13 passed in ~14s (0 failures)`*
 
 ---
 

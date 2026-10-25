@@ -58,3 +58,12 @@ Emergency quick-reference for the presenter if unexpected behavior occurs during
 * **Resolution**:
   1. Perform a hard refresh: `Ctrl + Shift + R` (Windows) or `Cmd + Shift + R` (Mac).
   2. Alternatively, open in an Incognito/Private window at `http://localhost:5173`.
+
+---
+
+### Incident 6: Interrupted Run or Missing Results
+* **Symptom**: A reconstruction or detection run was interrupted before disk finalization.
+* **Root Cause**: Process was terminated while writing results.
+* **Resolution**:
+  1. KINTSUGI's storage readers verify that both metadata (`run.json`) and results (`results.json`) exist before listing a run, preventing partial runs from being presented.
+  2. Re-trigger the run from the UI (e.g., click **Start Reconstruction Run** in `/reconstruction` or **Run Real Detection** in `/anomalies`).
