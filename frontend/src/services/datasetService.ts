@@ -122,4 +122,26 @@ export const datasetService = {
       throw new ApiServiceError(`Failed to fetch data quality summary: ${msg}`);
     }
   },
+
+  /**
+   * Pre-load deterministic Demo 1 or Demo 2 dataset into backend storage.
+   */
+  async loadDemoDataset(demoId: string): Promise<DatasetDetailResponse> {
+    const baseUrl = apiService.getBaseUrl();
+    try {
+      const res = await fetch(`${baseUrl}/api/datasets/load-demo`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+        body: JSON.stringify({ demo_id: demoId }),
+      });
+      return await handleResponse<DatasetDetailResponse>(res);
+    } catch (err: unknown) {
+      if (err instanceof ApiServiceError) throw err;
+      const msg = err instanceof Error ? err.message : String(err);
+      throw new ApiServiceError(`Failed to load demo dataset: ${msg}`);
+    }
+  },
 };

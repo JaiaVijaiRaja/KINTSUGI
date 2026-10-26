@@ -16,6 +16,7 @@ test.describe('Test Journey A: Application Navigation & Route Integrity', () => 
       { path: '/reconstruction', heading: 'Reconstruction Studio', label: 'Reconstruction Studio' },
       { path: '/audit', heading: 'Audit Trail & Explainability Engine', label: 'Audit Trail' },
       { path: '/evaluation', heading: 'Evaluation Center', label: 'Evaluation Center' },
+      { path: '/demos', heading: 'Live Demonstrations', label: 'Live Demonstrations' },
       { path: '/settings', heading: 'Settings & System Information', label: 'Settings & System Info' },
     ];
 

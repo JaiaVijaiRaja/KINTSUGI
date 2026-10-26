@@ -7,6 +7,7 @@ from app.schemas.dataset import (
     DatasetListResponse,
     DatasetMetadata,
     DatasetPreviewResponse,
+    LoadDemoRequest,
 )
 from app.services.dataset_service import dataset_service
 
@@ -23,6 +24,18 @@ router = APIRouter(prefix="/datasets", tags=["Datasets"])
 async def upload_dataset(file: UploadFile = File(...)) -> DatasetDetailResponse:
     """Accept multipart/form-data CSV, validate, store locally, and return computed quality metrics."""
     return await dataset_service.ingest_dataset(file)
+
+
+@router.post(
+    "/load-demo",
+    response_model=DatasetDetailResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Pre-load Deterministic Demo Dataset",
+    description="Ingest pre-configured Demo 1 or Demo 2 industrial telemetry dataset into local storage.",
+)
+def load_demo_dataset(payload: LoadDemoRequest) -> DatasetDetailResponse:
+    """Load and ingest Demo 1 or Demo 2 dataset into local storage."""
+    return dataset_service.ingest_demo_dataset(payload.demo_id)
 
 
 @router.get(

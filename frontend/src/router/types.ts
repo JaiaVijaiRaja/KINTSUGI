@@ -1,5 +1,6 @@
 export type AppRoute =
   | '/overview'
+  | '/demos'
   | '/datasets'
   | '/pipeline'
   | '/anomalies'
@@ -10,6 +11,7 @@ export type AppRoute =
 
 export const VALID_ROUTES: AppRoute[] = [
   '/overview',
+  '/demos',
   '/datasets',
   '/pipeline',
   '/anomalies',

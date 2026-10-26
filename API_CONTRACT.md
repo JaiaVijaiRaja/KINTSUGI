@@ -82,6 +82,16 @@ Uploads a raw CSV sensor telemetry file. Original bytes are stored immutably wit
 }
 ```
 
+### `POST /api/datasets/load-demo`
+Loads a pre-packaged deterministic hackathon demo dataset into the pipeline storage engine with full ingestion, SHA-256 hashing, and quality validation.
+* **Request Body (`application/json`):**
+```json
+{
+  "demo_id": "demo1" // "demo1" or "demo2"
+}
+```
+* **Response (HTTP 200 OK):** Full `DatasetDetailResponse` object.
+
 ### `GET /api/datasets`
 Lists all ingested datasets sorted by upload time (descending).
 * **Response (HTTP 200 OK):**
@@ -424,6 +434,11 @@ Records an explicit human operator review decision (`ACCEPT`, `REJECT`, or `MODI
 ```
 * **Response (HTTP 200 OK):** Updated `ReconstructionRecord` with `is_reviewed: true`.
 
+### `GET /api/reconstruction/runs/{reconstruction_run_id}/export`
+Exports a completed signal reconstruction run as a side-by-side CSV containing the original telemetry plus repaired values, assigned status, method, and confidence score.
+* **Query Params:** `format` (`csv` or `json`, default `csv`)
+* **Response (HTTP 200 OK):** Binary download attachment (`Content-Disposition: attachment; filename="kintsugi_reconstruction_export_*.csv"`).
+
 ---
 
 ## 7. Controlled Evaluation & Benchmarking
@@ -489,4 +504,61 @@ Exports audit ledger in `jsonl` or `csv` format.
 
 ---
 
+## 9. Live Hackathon Demonstration Scenarios
+
+### `GET /api/demos`
+Returns the catalog of available judge demonstration scenarios (`demo1_turbine`, `demo2_difficult`).
+* **Response (HTTP 200 OK):**
+```json
+[
+  {
+    "demo_id": "demo1_turbine",
+    "title": "Demo 1: Self-Healing Industrial Sensor Data",
+    "description": "Factory Gas Turbine: Spike Repair, Missing Value Estimation & Boundary Abstention",
+    "dataset_filename": "turbine_telemetry_demo.csv",
+    "row_count": 60,
+    "sensor_columns": ["temperature_bearing_c", "vibration_drive_end_g", "pressure_feed_bar"],
+    "injected_fault_summary": "Thermal spike at row 12, communication gap at rows 24-26, boundary gap at row 0"
+  },
+  {
+    "demo_id": "demo2_difficult",
+    "title": "Demo 2: Trust, Abstention, Hard Cases & Evaluation",
+    "description": "Stress Cases: Gap Limits, Conflicting Evidence, Isolated Ground Truth & Error Recovery",
+    "dataset_filename": "difficult_cases_demo.csv",
+    "row_count": 60,
+    "sensor_columns": ["temperature_bearing_c", "vibration_drive_end_g", "pressure_feed_bar", "constant_signal_ma"],
+    "injected_fault_summary": "Continuous gap > 5 rows, conflicting sensor evidence, boundary extrapolation, constant signal (MAD=0)"
+  }
+]
+```
+
+### `GET /api/demos/{demo_id}`
+Returns metadata and scenario details for a single demo scenario.
+
+### `GET /api/demos/{demo_id}/manifest`
+Returns the isolated ground truth manifest for the specified demo scenario. Ground truth values are never leaked into the reconstruction logic during pipeline execution.
+
+### `POST /api/demos/simulate-error`
+Safe error recovery sandbox endpoint verifying that invalid requests fail gracefully with user-friendly messages and without exposing Python tracebacks, internal file paths, or secrets.
+* **Request Body:**
+```json
+{
+  "error_type": "unsupported_file" // "unsupported_file" | "empty_file" | "missing_columns" | "malformed_csv"
+}
+```
+* **Response (HTTP 200 OK):**
+```json
+{
+  "simulated_error_type": "unsupported_file",
+  "expected_http_status": 400,
+  "user_facing_message": "Unable to process this file. Please upload a supported CSV file.",
+  "traceback_exposed": false,
+  "safe_recovery_action": "Save or export the industrial telemetry dataset as a standard comma-separated text file (.csv) and retry upload.",
+  "is_safe": true
+}
+```
+
+---
+
 *Specification verified against `backend/app/schemas/` and `backend/app/api/routes/`.*
+

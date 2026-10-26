@@ -84,3 +84,8 @@ class DatasetListResponse(BaseModel):
     """Collection of cataloged datasets."""
     datasets: List[DatasetMetadata]
     total: int
+
+
+class LoadDemoRequest(BaseModel):
+    """Request model for pre-loading a deterministic demonstration dataset."""
+    demo_id: str = Field(..., description="'demo1' or 'demo2' (or 'turbine_telemetry' / 'difficult_cases')")

@@ -199,4 +199,44 @@ export const reconstructionService = {
       throw new ApiServiceError(`Failed to record review decision: ${String(err)}`);
     }
   },
+
+  /**
+   * Trigger direct browser download of the reconstructed dataset export.
+   */
+  async downloadExport(
+    reconstructionRunId: string,
+    format: 'csv' | 'json' = 'csv'
+  ): Promise<void> {
+    const baseUrl = apiService.getBaseUrl();
+    const url = `${baseUrl}/api/reconstruction/runs/${encodeURIComponent(reconstructionRunId)}/export?format=${format}`;
+    const res = await fetch(url);
+    if (!res.ok) {
+      let msg = `Failed to export reconstructed dataset (HTTP ${res.status})`;
+      try {
+        const err = await res.json();
+        if (err?.error?.message) msg = err.error.message;
+        else if (err?.detail) msg = typeof err.detail === 'string' ? err.detail : JSON.stringify(err.detail);
+      } catch {
+        // non-JSON
+      }
+      throw new ApiServiceError(msg, res.status);
+    }
+
+    const blob = await res.blob();
+    const disposition = res.headers.get('Content-Disposition');
+    let filename = `kintsugi_reconstruction_${reconstructionRunId}.${format}`;
+    if (disposition && disposition.includes('filename=')) {
+      const match = disposition.match(/filename="?([^"]+)"?/);
+      if (match && match[1]) filename = match[1];
+    }
+
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(link.href);
+  },
 };
+

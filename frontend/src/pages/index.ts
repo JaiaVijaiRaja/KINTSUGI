@@ -1,4 +1,5 @@
 export * from './OverviewPage';
+export * from './DemosPage';
 export * from './DatasetsPage';
 export * from './PipelinePage';
 export * from './AnomaliesPage';

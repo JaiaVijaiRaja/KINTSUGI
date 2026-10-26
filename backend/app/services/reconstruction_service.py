@@ -1,5 +1,6 @@
 """Orchestrator and persistence service for KINTSUGI signal reconstruction runs."""
 
+import io
 import json
 import logging
 import math
@@ -732,6 +733,96 @@ class ReconstructionService:
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Reconstruction record with ID '{result_id}' not found.",
         )
+
+    def export_reconstructed_dataset(
+        self,
+        reconstruction_run_id: str,
+        format_type: str = "csv",
+    ) -> Tuple[str, str]:
+        """
+        Export complete dataset incorporating verified signal reconstructions and provenance status columns.
+        Preserves original raw telemetry columns while adding transparent status and repaired value columns.
+        Returns: (file_content_str, media_type)
+        """
+        rec_run = self.get_reconstruction_run(reconstruction_run_id)
+        results = self.get_reconstruction_results(reconstruction_run_id, limit=50000, offset=0).results
+
+        # Load original raw dataset CSV
+        dataset_storage = get_storage_path()
+        csv_path = dataset_storage / rec_run.dataset_id / "data.csv"
+        if not csv_path.exists():
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Source CSV dataset for run '{reconstruction_run_id}' not found at {csv_path}.",
+            )
+
+        try:
+            df = pd.read_csv(csv_path)
+        except Exception as e:
+            logger.exception("Failed to load source CSV %s: %s", csv_path, str(e))
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Failed to read source CSV dataset: {str(e)}",
+            )
+
+        # Build mapping of (sensor_col, row_index) -> ReconstructionRecord
+        repairs_by_cell: Dict[Tuple[str, int], ReconstructionRecord] = {}
+        affected_sensors = set()
+        for r in results:
+            repairs_by_cell[(r.sensor_column, r.source_row_index)] = r
+            affected_sensors.add(r.sensor_column)
+
+        # Build output dataframe
+        export_df = df.copy()
+
+        # For every sensor column that has any reconstruction evaluated:
+        for sensor in sorted(list(affected_sensors)):
+            if sensor not in export_df.columns:
+                continue
+
+            repaired_col = f"{sensor}_repaired"
+            status_col = f"{sensor}_status"
+            method_col = f"{sensor}_method"
+            confidence_col = f"{sensor}_confidence"
+
+            repaired_vals = []
+            status_vals = []
+            method_vals = []
+            confidence_vals = []
+
+            for row_idx in range(len(export_df)):
+                cell_key = (sensor, row_idx)
+                if cell_key in repairs_by_cell:
+                    rec = repairs_by_cell[cell_key]
+                    final_val = rec.final_value if rec.status in ["CORRECTED", "ESTIMATED"] else rec.original_value
+                    repaired_vals.append(final_val)
+                    status_vals.append(rec.status)
+                    method_vals.append(rec.method)
+                    confidence_vals.append(round(rec.confidence_score, 1))
+                else:
+                    orig_val = export_df.at[row_idx, sensor]
+                    is_missing = pd.isna(orig_val)
+                    repaired_vals.append(orig_val)
+                    status_vals.append("UNRESOLVED" if is_missing else "MEASURED")
+                    method_vals.append("none")
+                    confidence_vals.append(None)
+
+            export_df[repaired_col] = repaired_vals
+            export_df[status_col] = status_vals
+            export_df[method_col] = method_vals
+            export_df[confidence_col] = confidence_vals
+
+        if format_type.lower() == "csv":
+            buf = io.StringIO()
+            export_df.to_csv(buf, index=False)
+            return buf.getvalue(), "text/csv"
+        elif format_type.lower() == "json":
+            return export_df.to_json(orient="records", indent=2), "application/json"
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Unsupported export format '{format_type}'. Expected 'csv' or 'json'.",
+            )
 
 
 reconstruction_service = ReconstructionService()

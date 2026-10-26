@@ -20,6 +20,7 @@ import {
   Eye,
   AlertTriangle,
   Upload,
+  Sparkles,
 } from 'lucide-react';
 import { apiService } from '../services/api';
 import { datasetService } from '../services/datasetService';
@@ -383,6 +384,81 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({ connection, onRetry 
               Like the Japanese art of <em>Kintsugi</em> (repairing broken ceramics with gold lacquer), KINTSUGI treats signal repairs with complete transparency. 
               <strong> Original raw sensor telemetry is never overwritten or discarded.</strong> Every proposed reconstruction carries an evidence-based confidence score, and when evidence is insufficient, the pipeline strictly abstains by recording <span className="text-amber-300 font-semibold font-mono">UNRESOLVED</span> rather than guessing.
             </p>
+          </div>
+        </div>
+      </div>
+
+      {/* ========================================================================= */}
+      {/* JUDGE & LIVE DEMONSTRATION SHOWCASE CARDS */}
+      {/* ========================================================================= */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Sparkles className="w-4 h-4 text-amber-400" />
+            <h2 className="text-sm font-semibold text-slate-200 uppercase tracking-wide font-mono">
+              Live Hackathon Demonstrations
+            </h2>
+          </div>
+          <span className="text-[11px] font-mono text-amber-400 font-medium">
+            2 Interactive Real-Pipeline Scenarios
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Demo 1 Card */}
+          <div
+            onClick={() => navigate('/demos')}
+            className="p-5 rounded-xl border border-amber-500/30 bg-gradient-to-br from-amber-500/10 via-slate-900/60 to-slate-950 hover:border-amber-500/60 transition-all cursor-pointer group flex flex-col justify-between space-y-4"
+          >
+            <div className="space-y-2.5">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40 uppercase font-semibold">
+                  Demo 1 • Core Self-Healing
+                </span>
+                <span className="text-xs font-mono text-slate-400 group-hover:text-amber-400 flex items-center gap-1 transition-colors">
+                  Run Demo <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+                </span>
+              </div>
+              <h3 className="text-base font-bold text-slate-100 group-hover:text-amber-300 transition-colors">
+                Gas Turbine Sensor Stream Healing
+              </h3>
+              <p className="text-xs text-slate-300 leading-relaxed">
+                Experience real-time telemetry validation, Rolling MAD and Isolation Forest detection, thermal spike repair, missing sensor reconstruction, raw value preservation, and export to repaired CSV.
+              </p>
+            </div>
+            <div className="pt-3 border-t border-slate-800/80 flex items-center gap-3 text-[11px] font-mono text-slate-400">
+              <span className="text-emerald-400 font-semibold">• 60 Rows Real Telemetry</span>
+              <span>• Spike Repair</span>
+              <span>• Raw Preserved</span>
+            </div>
+          </div>
+
+          {/* Demo 2 Card */}
+          <div
+            onClick={() => navigate('/demos')}
+            className="p-5 rounded-xl border border-rose-500/30 bg-gradient-to-br from-rose-500/10 via-slate-900/60 to-slate-950 hover:border-rose-500/60 transition-all cursor-pointer group flex flex-col justify-between space-y-4"
+          >
+            <div className="space-y-2.5">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-rose-500/20 text-rose-300 border border-rose-500/40 uppercase font-semibold">
+                  Demo 2 • Trust & Safety
+                </span>
+                <span className="text-xs font-mono text-slate-400 group-hover:text-rose-400 flex items-center gap-1 transition-colors">
+                  Run Demo <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+                </span>
+              </div>
+              <h3 className="text-base font-bold text-slate-100 group-hover:text-rose-300 transition-colors">
+                Safety Abstention, Benchmark & Error Recovery
+              </h3>
+              <p className="text-xs text-slate-300 leading-relaxed">
+                Demonstrate strict abstention on insufficient evidence (gaps &gt; 5, boundary extrapolation, conflicting sensors), Mode A ground truth benchmark evaluation, and safe error recovery testing.
+              </p>
+            </div>
+            <div className="pt-3 border-t border-slate-800/80 flex items-center gap-3 text-[11px] font-mono text-slate-400">
+              <span className="text-rose-400 font-semibold">• UNRESOLVED Abstention</span>
+              <span>• Mode A Benchmark</span>
+              <span>• Safe Error Sandbox</span>
+            </div>
           </div>
         </div>
       </div>

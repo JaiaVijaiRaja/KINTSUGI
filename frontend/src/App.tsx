@@ -10,6 +10,7 @@ import {
   AuditPage,
   EvaluationPage,
   SettingsPage,
+  DemosPage,
 } from './pages';
 import { NotFoundPage } from './components/common/NotFoundPage';
 import type { ConnectionState } from './types/api';
@@ -127,6 +128,8 @@ const AppContent: React.FC = () => {
             onRefreshHealth={handleManualRefresh}
           />
         );
+      case '/demos':
+        return <DemosPage />;
       default:
         return <NotFoundPage />;
     }

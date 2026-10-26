@@ -1,6 +1,8 @@
 {
-  "manifest_version": "1.0.0",
-  "dataset_name": "synthetic_industrial_telemetry_fixture",
+  "manifest_version": "2.0.0",
+  "demo_id": "demo1_self_healing",
+  "dataset_name": "gas_turbine_motor_telemetry_demo1",
+  "scenario": "Gas Turbine Bearing & Feed System Monitoring",
   "n_rows": 60,
   "sensor_columns": [
     "temperature_bearing_c",
@@ -11,29 +13,25 @@
     "ambient_temp_c"
   ],
   "timestamp_column": "timestamp",
-  "clean_intervals": [
-    {
-      "start_row": 0,
-      "end_row": 11,
-      "length": 12
-    },
-    {
-      "start_row": 13,
-      "end_row": 23,
-      "length": 11
-    },
-    {
-      "start_row": 27,
-      "end_row": 35,
-      "length": 9
-    },
-    {
-      "start_row": 40,
-      "end_row": 59,
-      "length": 20
-    }
-  ],
+  "units": {
+    "temperature_bearing_c": "Degrees Celsius (\u00b0C)",
+    "vibration_drive_end_g": "Acceleration Gravity (g)",
+    "pressure_feed_bar": "Pressure Bar (bar)",
+    "ambient_temp_c": "Degrees Celsius (\u00b0C)"
+  },
   "injected_faults": [
+    {
+      "fault_id": "fault_boundary_abstain_00",
+      "fault_type": "MISSING_BOUNDARY",
+      "sensor_column": "vibration_drive_end_g",
+      "source_row_index": 0,
+      "timestamp": "2026-10-24 08:00:00+00:00",
+      "ground_truth_value": 2.7872,
+      "corrupted_value": null,
+      "expected_status": "UNRESOLVED",
+      "abstention_reason": "Observation at row 0 has no valid preceding observation; extrapolation is strictly prohibited.",
+      "description": "Boundary missing value demonstrating strict system abstention without guessing"
+    },
     {
       "fault_id": "fault_spike_01",
       "fault_type": "SPIKE",
@@ -42,7 +40,8 @@
       "timestamp": "2026-10-24 08:12:00+00:00",
       "ground_truth_value": 67.2938,
       "corrupted_value": 158.4,
-      "description": "Extreme impulse excursion on bearing temperature"
+      "expected_status": "CORRECTED",
+      "description": "Extreme impulse excursion on bearing temperature successfully reconstructed via temporal interpolation"
     },
     {
       "fault_id": "fault_missing_24",
@@ -52,7 +51,8 @@
       "timestamp": "2026-10-24 08:24:00+00:00",
       "ground_truth_value": 2.5187,
       "corrupted_value": null,
-      "description": "Transient communication loss / NaN packet drop"
+      "expected_status": "ESTIMATED",
+      "description": "Transient communication loss / NaN packet drop within acceptable gap limit"
     },
     {
       "fault_id": "fault_missing_25",
@@ -62,7 +62,8 @@
       "timestamp": "2026-10-24 08:25:00+00:00",
       "ground_truth_value": 2.5942,
       "corrupted_value": null,
-      "description": "Transient communication loss / NaN packet drop"
+      "expected_status": "ESTIMATED",
+      "description": "Transient communication loss / NaN packet drop within acceptable gap limit"
     },
     {
       "fault_id": "fault_missing_26",
@@ -72,7 +73,8 @@
       "timestamp": "2026-10-24 08:26:00+00:00",
       "ground_truth_value": 2.6625,
       "corrupted_value": null,
-      "description": "Transient communication loss / NaN packet drop"
+      "expected_status": "ESTIMATED",
+      "description": "Transient communication loss / NaN packet drop within acceptable gap limit"
     },
     {
       "fault_id": "fault_frozen_36",
@@ -82,7 +84,8 @@
       "timestamp": "2026-10-24 08:36:00+00:00",
       "ground_truth_value": 4.1051,
       "corrupted_value": 4.215,
-      "description": "Pressure transducer frozen output interval"
+      "expected_status": "CORRECTED",
+      "description": "Pressure transducer frozen output interval detected by multi-detector ensemble"
     },
     {
       "fault_id": "fault_frozen_37",
@@ -92,7 +95,8 @@
       "timestamp": "2026-10-24 08:37:00+00:00",
       "ground_truth_value": 4.1656,
       "corrupted_value": 4.215,
-      "description": "Pressure transducer frozen output interval"
+      "expected_status": "CORRECTED",
+      "description": "Pressure transducer frozen output interval detected by multi-detector ensemble"
     },
     {
       "fault_id": "fault_frozen_38",
@@ -102,7 +106,8 @@
       "timestamp": "2026-10-24 08:38:00+00:00",
       "ground_truth_value": 4.1598,
       "corrupted_value": 4.215,
-      "description": "Pressure transducer frozen output interval"
+      "expected_status": "CORRECTED",
+      "description": "Pressure transducer frozen output interval detected by multi-detector ensemble"
     },
     {
       "fault_id": "fault_frozen_39",
@@ -112,8 +117,9 @@
       "timestamp": "2026-10-24 08:39:00+00:00",
       "ground_truth_value": 4.2987,
       "corrupted_value": 4.215,
-      "description": "Pressure transducer frozen output interval"
+      "expected_status": "CORRECTED",
+      "description": "Pressure transducer frozen output interval detected by multi-detector ensemble"
     }
   ],
-  "total_injected_faults": 8
+  "total_injected_faults": 9
 }

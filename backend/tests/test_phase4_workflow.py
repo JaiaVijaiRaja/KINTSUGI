@@ -24,7 +24,7 @@ def test_end_to_end_pipeline_configuration_workflow(tmp_path: Path, monkeypatch)
     monkeypatch.setattr(settings, "PIPELINE_STORAGE_DIR", str(pipeline_storage))
 
     client = TestClient(app)
-    sample_csv_path = Path("backend/samples/industrial_telemetry_sample.csv")
+    sample_csv_path = backend_dir / "samples" / "industrial_telemetry_sample.csv"
     assert sample_csv_path.exists(), f"Sample file not found at {sample_csv_path}"
 
     # 1. Upload sample dataset

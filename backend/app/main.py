@@ -12,6 +12,7 @@ from app.api.routes.anomalies import router as anomalies_router
 from app.api.routes.reconstruction import router as reconstruction_router
 from app.api.routes.evaluations import router as evaluations_router
 from app.api.routes.audit import router as audit_router
+from app.api.routes.demos import router as demos_router
 from app.core.config import settings
 
 # Configure logging
@@ -50,6 +51,7 @@ def create_application() -> FastAPI:
     app.include_router(reconstruction_router, prefix=settings.API_PREFIX)
     app.include_router(evaluations_router, prefix=settings.API_PREFIX)
     app.include_router(audit_router, prefix=settings.API_PREFIX)
+    app.include_router(demos_router, prefix=settings.API_PREFIX)
 
     # Global Exception Handlers
     @app.exception_handler(StarletteHTTPException)

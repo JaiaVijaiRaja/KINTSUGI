@@ -5,3 +5,4 @@ export * from './anomalyService';
 export * from './reconstructionService';
 export * from './auditService';
 export * from './evaluationService';
+export * from './demoService';

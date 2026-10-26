@@ -1,7 +1,7 @@
 """API endpoints for KINTSUGI signal reconstruction runs, results, and operator review decisions."""
 
 from typing import Optional
-from fastapi import APIRouter, HTTPException, Query, status
+from fastapi import APIRouter, HTTPException, Query, Response, status
 
 from app.schemas.reconstruction import (
     ReconstructionRecord,
@@ -95,4 +95,27 @@ async def review_reconstruction_result(
     return reconstruction_service.review_result(
         result_id=result_id,
         decision_req=decision_payload,
+    )
+
+
+@router.get(
+    "/runs/{reconstruction_run_id}/export",
+    summary="Export reconstructed dataset",
+    description="Export full dataset incorporating genuine signal repairs, provenance status columns, and confidence evidence.",
+)
+async def export_reconstructed_dataset(
+    reconstruction_run_id: str,
+    format: str = Query("csv", pattern="^(csv|json)$", description="Export format: 'csv' or 'json'"),
+) -> Response:
+    """Download export of repaired dataset with provenance statuses."""
+    content, media_type = reconstruction_service.export_reconstructed_dataset(
+        reconstruction_run_id=reconstruction_run_id,
+        format_type=format,
+    )
+    ext = "csv" if format == "csv" else "json"
+    filename = f"kintsugi_reconstruction_{reconstruction_run_id}.{ext}"
+    return Response(
+        content=content,
+        media_type=media_type,
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
     )

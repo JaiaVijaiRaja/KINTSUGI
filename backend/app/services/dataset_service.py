@@ -212,16 +212,54 @@ class DatasetService:
 
     async def ingest_dataset(self, file: UploadFile) -> DatasetDetailResponse:
         """Validate, parse, store CSV file, and compute data quality summary."""
+        content = await file.read()
+        return self.ingest_dataset_bytes(content, file.filename)
+
+    def ingest_demo_dataset(self, demo_id: str) -> DatasetDetailResponse:
+        """Load and ingest a deterministic demonstration CSV dataset into local storage."""
+        cwd = Path.cwd()
+        if (cwd / "demo").is_dir():
+            demo_base = cwd / "demo"
+        elif (cwd.parent / "demo").is_dir():
+            demo_base = cwd.parent / "demo"
+        else:
+            demo_base = Path(__file__).resolve().parent.parent.parent.parent / "demo"
+
+        clean_id = demo_id.lower().strip()
+        if clean_id in ["demo1", "turbine_telemetry", "turbine", "turbine_telemetry_demo"]:
+            csv_path = demo_base / "turbine_telemetry_demo.csv"
+            filename = "turbine_telemetry_demo.csv"
+        elif clean_id in ["demo2", "difficult_cases", "difficult", "difficult_cases_demo"]:
+            csv_path = demo_base / "difficult_cases_demo.csv"
+            filename = "difficult_cases_demo.csv"
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Unknown demonstration dataset identifier '{demo_id}'. Expected 'demo1' or 'demo2'.",
+            )
+
+        if not csv_path.exists():
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Demonstration fixture '{filename}' not found at {csv_path}.",
+            )
+
+        with open(csv_path, "rb") as f:
+            content = f.read()
+
+        return self.ingest_dataset_bytes(content, filename)
+
+    def ingest_dataset_bytes(self, content: bytes, raw_filename: Optional[str]) -> DatasetDetailResponse:
+        """Validate, parse, store CSV bytes, and compute data quality summary."""
         # 1. Filename validation
-        filename = sanitize_filename(file.filename)
+        filename = sanitize_filename(raw_filename)
         if not filename.lower().endswith(".csv"):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=f"Invalid file extension for '{filename}'. Only .csv files are supported.",
             )
 
-        # 2. Read and size validation
-        content = await file.read()
+        # 2. Size validation
         file_size = len(content)
 
         if file_size == 0:

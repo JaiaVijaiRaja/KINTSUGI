@@ -11,6 +11,7 @@ import {
   Cpu,
   Layers,
   ChevronRight,
+  Sparkles,
 } from 'lucide-react';
 import { useRouter, type AppRoute } from '../../router';
 
@@ -50,6 +51,14 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
       phase: 'Phase 1',
       badge: 'Active',
       description: 'System health & pipeline roadmap',
+    },
+    {
+      path: '/demos',
+      label: 'Live Demonstrations',
+      icon: Sparkles,
+      phase: 'Demos',
+      badge: '2 Demos',
+      description: 'Judge-Ready Demo 1 & Demo 2 Interactive Showcases',
     },
     {
       path: '/datasets',

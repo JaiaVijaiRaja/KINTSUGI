@@ -1,0 +1,169 @@
+{
+  "manifest_version": "2.0.0",
+  "demo_id": "demo2_trust_and_abstention",
+  "dataset_name": "difficult_cases_industrial_telemetry_demo2",
+  "scenario": "Edge-Case Resilience, Strict Abstention & Ground Truth Evaluation",
+  "n_rows": 60,
+  "sensor_columns": [
+    "temperature_bearing_c",
+    "vibration_drive_end_g",
+    "pressure_feed_bar"
+  ],
+  "ignored_columns": [
+    "ambient_temp_c"
+  ],
+  "timestamp_column": "timestamp",
+  "units": {
+    "temperature_bearing_c": "Degrees Celsius (\u00b0C)",
+    "vibration_drive_end_g": "Acceleration Gravity (g)",
+    "pressure_feed_bar": "Pressure Bar (bar)",
+    "ambient_temp_c": "Degrees Celsius (\u00b0C)"
+  },
+  "injected_faults": [
+    {
+      "fault_id": "case_a_boundary_abstention",
+      "case_name": "Boundary Extrapolation Prohibited",
+      "sensor_column": "vibration_drive_end_g",
+      "source_row_index": 0,
+      "timestamp": "2026-10-25 12:00:00+00:00",
+      "ground_truth_value": 2.0563,
+      "corrupted_value": null,
+      "expected_status": "UNRESOLVED",
+      "expected_rule": "Linear interpolation prohibits boundary extrapolation. System strictly abstains.",
+      "description": "Row 0 has no preceding observation; algorithm declines to extrapolate."
+    },
+    {
+      "fault_id": "case_b_exceeded_gap_15",
+      "case_name": "Gap Exceeds Permitted Limit",
+      "sensor_column": "temperature_bearing_c",
+      "source_row_index": 15,
+      "timestamp": "2026-10-25 12:15:00+00:00",
+      "ground_truth_value": 60.1576,
+      "corrupted_value": null,
+      "expected_status": "UNRESOLVED",
+      "expected_rule": "Gap of 8 samples exceeds max_gap_size=5. Reconstruction declined.",
+      "description": "Continuous telemetry blackout exceeding maximum interpolation threshold."
+    },
+    {
+      "fault_id": "case_b_exceeded_gap_16",
+      "case_name": "Gap Exceeds Permitted Limit",
+      "sensor_column": "temperature_bearing_c",
+      "source_row_index": 16,
+      "timestamp": "2026-10-25 12:16:00+00:00",
+      "ground_truth_value": 59.8396,
+      "corrupted_value": null,
+      "expected_status": "UNRESOLVED",
+      "expected_rule": "Gap of 8 samples exceeds max_gap_size=5. Reconstruction declined.",
+      "description": "Continuous telemetry blackout exceeding maximum interpolation threshold."
+    },
+    {
+      "fault_id": "case_b_exceeded_gap_17",
+      "case_name": "Gap Exceeds Permitted Limit",
+      "sensor_column": "temperature_bearing_c",
+      "source_row_index": 17,
+      "timestamp": "2026-10-25 12:17:00+00:00",
+      "ground_truth_value": 58.9887,
+      "corrupted_value": null,
+      "expected_status": "UNRESOLVED",
+      "expected_rule": "Gap of 8 samples exceeds max_gap_size=5. Reconstruction declined.",
+      "description": "Continuous telemetry blackout exceeding maximum interpolation threshold."
+    },
+    {
+      "fault_id": "case_b_exceeded_gap_18",
+      "case_name": "Gap Exceeds Permitted Limit",
+      "sensor_column": "temperature_bearing_c",
+      "source_row_index": 18,
+      "timestamp": "2026-10-25 12:18:00+00:00",
+      "ground_truth_value": 58.6554,
+      "corrupted_value": null,
+      "expected_status": "UNRESOLVED",
+      "expected_rule": "Gap of 8 samples exceeds max_gap_size=5. Reconstruction declined.",
+      "description": "Continuous telemetry blackout exceeding maximum interpolation threshold."
+    },
+    {
+      "fault_id": "case_b_exceeded_gap_19",
+      "case_name": "Gap Exceeds Permitted Limit",
+      "sensor_column": "temperature_bearing_c",
+      "source_row_index": 19,
+      "timestamp": "2026-10-25 12:19:00+00:00",
+      "ground_truth_value": 57.7871,
+      "corrupted_value": null,
+      "expected_status": "UNRESOLVED",
+      "expected_rule": "Gap of 8 samples exceeds max_gap_size=5. Reconstruction declined.",
+      "description": "Continuous telemetry blackout exceeding maximum interpolation threshold."
+    },
+    {
+      "fault_id": "case_b_exceeded_gap_20",
+      "case_name": "Gap Exceeds Permitted Limit",
+      "sensor_column": "temperature_bearing_c",
+      "source_row_index": 20,
+      "timestamp": "2026-10-25 12:20:00+00:00",
+      "ground_truth_value": 57.0864,
+      "corrupted_value": null,
+      "expected_status": "UNRESOLVED",
+      "expected_rule": "Gap of 8 samples exceeds max_gap_size=5. Reconstruction declined.",
+      "description": "Continuous telemetry blackout exceeding maximum interpolation threshold."
+    },
+    {
+      "fault_id": "case_b_exceeded_gap_21",
+      "case_name": "Gap Exceeds Permitted Limit",
+      "sensor_column": "temperature_bearing_c",
+      "source_row_index": 21,
+      "timestamp": "2026-10-25 12:21:00+00:00",
+      "ground_truth_value": 56.5732,
+      "corrupted_value": null,
+      "expected_status": "UNRESOLVED",
+      "expected_rule": "Gap of 8 samples exceeds max_gap_size=5. Reconstruction declined.",
+      "description": "Continuous telemetry blackout exceeding maximum interpolation threshold."
+    },
+    {
+      "fault_id": "case_b_exceeded_gap_22",
+      "case_name": "Gap Exceeds Permitted Limit",
+      "sensor_column": "temperature_bearing_c",
+      "source_row_index": 22,
+      "timestamp": "2026-10-25 12:22:00+00:00",
+      "ground_truth_value": 56.0742,
+      "corrupted_value": null,
+      "expected_status": "UNRESOLVED",
+      "expected_rule": "Gap of 8 samples exceeds max_gap_size=5. Reconstruction declined.",
+      "description": "Continuous telemetry blackout exceeding maximum interpolation threshold."
+    },
+    {
+      "fault_id": "case_c_conflicting_evidence",
+      "case_name": "Conflicting Cross-Sensor Evidence",
+      "sensor_column": "temperature_bearing_c",
+      "source_row_index": 32,
+      "timestamp": "2026-10-25 12:32:00+00:00",
+      "ground_truth_value": 54.6699,
+      "corrupted_value": 135.0,
+      "expected_status": "UNRESOLVED",
+      "expected_rule": "Corroborating sensors contradict proposal; severe cross-sensor penalty triggers UNRESOLVED.",
+      "description": "Bearing temperature indicates extreme overheating but physical motor vibration contradicts."
+    },
+    {
+      "fault_id": "case_d_insufficient_neighbors",
+      "case_name": "Insufficient Trusted Neighbors",
+      "sensor_column": "vibration_drive_end_g",
+      "source_row_index": 45,
+      "timestamp": "2026-10-25 12:45:00+00:00",
+      "ground_truth_value": 2.7155,
+      "corrupted_value": null,
+      "expected_status": "UNRESOLVED",
+      "expected_rule": "Neighborhood lacks minimum required 3 valid finite observations.",
+      "description": "Telemetry burst loss leaves target reading with insufficient neighbor context."
+    },
+    {
+      "fault_id": "case_e_constant_signal",
+      "case_name": "Zero-MAD Constant Signal Handling",
+      "sensor_column": "pressure_feed_bar",
+      "source_row_index": 50,
+      "timestamp": "2026-10-25 12:50:00+00:00",
+      "ground_truth_value": 4.1431,
+      "corrupted_value": 4.2,
+      "expected_status": "MEASURED",
+      "expected_rule": "Zero dispersion handled safely without false positive storm or divide-by-zero.",
+      "description": "Constant signal interval demonstrating zero-MAD stability."
+    }
+  ],
+  "total_injected_faults": 12
+}
