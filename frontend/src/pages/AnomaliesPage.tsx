@@ -74,11 +74,28 @@ export const AnomaliesPage: React.FC = () => {
         pipelineService.listConfigs(),
         datasetService.listDatasets(),
       ]);
+
+      const activeDsId =
+        new URLSearchParams(window.location.search).get('dataset_id') ||
+        localStorage.getItem('kintsugi_active_dataset_id');
+
+      let matchedPipeId = selectedPipelineId;
+
+      if (activeDsId) {
+        const match = pipeRes.pipelines.find((p) => p.dataset_id === activeDsId);
+        if (match) {
+          matchedPipeId = match.configuration_id;
+        }
+      }
+
+      if (!matchedPipeId && pipeRes.pipelines.length > 0) {
+        matchedPipeId = pipeRes.pipelines[0].configuration_id;
+      }
+
       setPipelines(pipeRes.pipelines);
       setDatasets(dataRes.datasets);
-
-      if (pipeRes.pipelines.length > 0 && !selectedPipelineId) {
-        setSelectedPipelineId(pipeRes.pipelines[0].configuration_id);
+      if (matchedPipeId) {
+        setSelectedPipelineId(matchedPipeId);
       }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
@@ -91,6 +108,87 @@ export const AnomaliesPage: React.FC = () => {
   useEffect(() => {
     loadCatalogs();
   }, [loadCatalogs]);
+
+  // Dataset lookup map for quick metadata access
+  const datasetMap = useMemo(() => {
+    const map = new Map<string, DatasetMetadata>();
+    datasets.forEach((ds) => map.set(ds.dataset_id, ds));
+    return map;
+  }, [datasets]);
+
+  // Unconfigured datasets that can be auto-provisioned
+  const unconfiguredDatasets = useMemo(() => {
+    const configuredIds = new Set(pipelines.map((p) => p.dataset_id));
+    return datasets.filter((ds) => !configuredIds.has(ds.dataset_id));
+  }, [datasets, pipelines]);
+
+  // Sorted pipelines showing recent/active datasets first
+  const sortedPipelines = useMemo(() => {
+    const activeDsId = localStorage.getItem('kintsugi_active_dataset_id');
+    return [...pipelines].sort((a, b) => {
+      if (a.dataset_id === activeDsId) return -1;
+      if (b.dataset_id === activeDsId) return 1;
+      const nameA = datasetMap.get(a.dataset_id)?.filename || a.configuration_name;
+      const nameB = datasetMap.get(b.dataset_id)?.filename || b.configuration_name;
+      return nameA.localeCompare(nameB);
+    });
+  }, [pipelines, datasetMap]);
+
+  // Handle pipeline selection including on-the-fly auto-configuration
+  const handleSelectPipelineOrDataset = async (value: string) => {
+    if (value.startsWith('auto_create:')) {
+      const dsId = value.replace('auto_create:', '');
+      setIsExecuting(true);
+      try {
+        const dsMeta = datasetMap.get(dsId);
+        const q = await datasetService.getDatasetQuality(dsId);
+        const tsCol = q.timestamp_candidates.length > 0 ? q.timestamp_candidates[0].column_name : 'timestamp';
+        const sensorCols = q.columns.filter((c) => c.is_numeric && c.name !== tsCol).map((c) => c.name);
+        const ignoredCols = q.columns.filter((c) => !c.is_numeric && c.name !== tsCol).map((c) => c.name);
+
+        const newConfig = await pipelineService.createConfig({
+          configuration_name: `Pipeline — ${dsMeta?.filename || dsId}`,
+          description: `Auto-configured telemetry anomaly detection pipeline for ${dsMeta?.filename || dsId}`,
+          dataset_id: dsId,
+          timestamp_column: tsCol,
+          sensor_columns: sensorCols,
+          ignored_columns: ignoredCols,
+          detection_settings: {
+            statistical: { enabled: true, window_size: 15, mad_threshold: 3.0, min_observations: 10 },
+            isolation_forest: { enabled: true, contamination: 0.05, min_observations: 10, random_seed: 42 },
+          },
+          reconstruction_settings: {
+            allow_linear_interpolation: true,
+            max_gap_size: 5,
+            require_cross_sensor_validation: true,
+            preserve_original_readings: true,
+            allow_automatic_correction: true,
+            fallback_behavior: 'abstain_unresolved',
+          },
+          confidence_policy: {
+            review_threshold: 0.70,
+            human_review_required: false,
+            min_evidence_sensors: 1,
+            unjustified_behavior: 'abstain_unresolved',
+          },
+        });
+
+        setPipelines((prev) => [newConfig, ...prev]);
+        setSelectedPipelineId(newConfig.configuration_id);
+        localStorage.setItem('kintsugi_active_dataset_id', dsId);
+      } catch (err) {
+        console.error('Failed to auto-create pipeline:', err);
+      } finally {
+        setIsExecuting(false);
+      }
+    } else {
+      setSelectedPipelineId(value);
+      const pipe = pipelines.find((p) => p.configuration_id === value);
+      if (pipe) {
+        localStorage.setItem('kintsugi_active_dataset_id', pipe.dataset_id);
+      }
+    }
+  };
 
   // Current selected pipeline object
   const selectedPipeline = useMemo(() => {
@@ -312,21 +410,39 @@ export const AnomaliesPage: React.FC = () => {
                 </label>
                 {isLoadingCatalogs ? (
                   <div className="h-10 bg-stone-100 border border-stone-200 rounded-xl animate-pulse" />
-                ) : pipelines.length === 0 ? (
+                ) : pipelines.length === 0 && unconfiguredDatasets.length === 0 ? (
                   <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-800 font-medium">
                     No pipeline configurations found. Create and save a pipeline in the Pipeline Configuration page first.
                   </div>
                 ) : (
                   <select
                     value={selectedPipelineId}
-                    onChange={(e) => setSelectedPipelineId(e.target.value)}
+                    onChange={(e) => handleSelectPipelineOrDataset(e.target.value)}
                     className="w-full bg-white border border-stone-300 rounded-xl px-3.5 py-2.5 text-xs text-stone-900 font-medium shadow-2xs focus:outline-hidden focus:border-[#EE602C] focus:ring-2 focus:ring-[#EE602C]/20 transition-all cursor-pointer"
                   >
-                    {pipelines.map((p) => (
-                      <option key={p.configuration_id} value={p.configuration_id} className="bg-white text-stone-900">
-                        {p.configuration_name} (v{p.configuration_version}) — Dataset: {p.dataset_id}
-                      </option>
-                    ))}
+                    <optgroup label="Ready for Anomaly Detection (Datasets & Pipelines)">
+                      {sortedPipelines.map((p) => {
+                        const ds = datasetMap.get(p.dataset_id);
+                        return (
+                          <option key={p.configuration_id} value={p.configuration_id} className="bg-white text-stone-900 font-medium">
+                            {ds ? `📁 ${ds.filename} — ${p.configuration_name}` : `${p.configuration_name} (${p.dataset_id})`}
+                          </option>
+                        );
+                      })}
+                    </optgroup>
+                    {unconfiguredDatasets.length > 0 && (
+                      <optgroup label="Custom Uploaded Datasets (Auto-Configure on Select)">
+                        {unconfiguredDatasets.map((ds) => (
+                          <option
+                            key={`auto_create:${ds.dataset_id}`}
+                            value={`auto_create:${ds.dataset_id}`}
+                            className="bg-amber-50 text-amber-900 font-medium"
+                          >
+                            ⚡ {ds.filename} ({ds.dataset_id}) — Auto-Setup Pipeline
+                          </option>
+                        ))}
+                      </optgroup>
+                    )}
                   </select>
                 )}
               </div>

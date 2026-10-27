@@ -107,11 +107,27 @@ export const ReconstructionPage: React.FC = () => {
         pipelineService.listConfigs(),
         datasetService.listDatasets(),
       ]);
+      const activeDsId =
+        new URLSearchParams(window.location.search).get('dataset_id') ||
+        localStorage.getItem('kintsugi_active_dataset_id');
+
+      let matchedPipeId = selectedPipelineId;
+      if (activeDsId) {
+        const match = pipeRes.pipelines.find((p) => p.dataset_id === activeDsId);
+        if (match) {
+          matchedPipeId = match.configuration_id;
+        }
+      }
+
+      if (!matchedPipeId && pipeRes.pipelines.length > 0) {
+        matchedPipeId = pipeRes.pipelines[0].configuration_id;
+      }
+
       setPipelines(pipeRes.pipelines);
       setDatasets(dataRes.datasets);
 
-      if (pipeRes.pipelines.length > 0 && !selectedPipelineId) {
-        setSelectedPipelineId(pipeRes.pipelines[0].configuration_id);
+      if (matchedPipeId) {
+        setSelectedPipelineId(matchedPipeId);
       }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
@@ -425,11 +441,14 @@ export const ReconstructionPage: React.FC = () => {
                     No pipelines configured — please configure a pipeline first
                   </option>
                 ) : (
-                  pipelines.map((p) => (
-                    <option key={p.configuration_id} value={p.configuration_id} className="bg-white text-stone-900">
-                      {p.configuration_name} (v{p.configuration_version}) — {p.sensor_columns.length} sensors
-                    </option>
-                  ))
+                  pipelines.map((p) => {
+                    const ds = datasets.find((d) => d.dataset_id === p.dataset_id);
+                    return (
+                      <option key={p.configuration_id} value={p.configuration_id} className="bg-white text-stone-900">
+                        {ds ? `📁 ${ds.filename} — ${p.configuration_name}` : `${p.configuration_name} (v${p.configuration_version})`}
+                      </option>
+                    );
+                  })
                 )}
               </select>
               {selectedPipeline && (

@@ -19,12 +19,15 @@ import {
   ChevronLeft,
   ChevronRight,
   ArrowDown,
+  Activity,
 } from 'lucide-react';
+import { useRouter } from '../router';
 import { PageHeader } from '../components/common/PageHeader';
 import { Card, CardHeader, CardContent } from '../components/common/Card';
 import { EmptyState } from '../components/common/EmptyState';
 import { Button } from '../components/common/Button';
 import { datasetService } from '../services/datasetService';
+import { pipelineService } from '../services/pipelineService';
 import type {
   DatasetMetadata,
   DataQualitySummary,
@@ -32,6 +35,7 @@ import type {
 } from '../types/dataset';
 
 export const DatasetsPage: React.FC = () => {
+  const { navigate } = useRouter();
   // State for dataset catalog
   const [datasets, setDatasets] = useState<DatasetMetadata[]>([]);
   const [isLoadingDatasets, setIsLoadingDatasets] = useState<boolean>(true);
@@ -179,8 +183,56 @@ export const DatasetsPage: React.FC = () => {
     try {
       const result = await datasetService.uploadDataset(file);
       setUploadSuccessMsg(
-        `Successfully ingested '${result.metadata.filename}' (${result.metadata.row_count.toLocaleString()} rows, ${result.metadata.column_count} columns).`
+        `Successfully ingested '${result.metadata.filename}' (${result.metadata.row_count.toLocaleString()} rows, ${result.metadata.column_count} columns). Quality verification completed.`
       );
+
+      // Store as active dataset for immediate access in Anomaly Explorer
+      localStorage.setItem('kintsugi_active_dataset_id', result.metadata.dataset_id);
+
+      // Auto-provision a default pipeline configuration so Anomaly Explorer is ready immediately
+      try {
+        const tsCol = result.quality?.timestamp_candidates?.length > 0
+          ? result.quality.timestamp_candidates[0].column_name
+          : 'timestamp';
+        const sensorCols = (result.quality?.columns || [])
+          .filter((c) => c.is_numeric && c.name !== tsCol)
+          .map((c) => c.name);
+        const ignoredCols = (result.quality?.columns || [])
+          .filter((c) => !c.is_numeric && c.name !== tsCol)
+          .map((c) => c.name);
+
+        if (sensorCols.length > 0) {
+          await pipelineService.createConfig({
+            configuration_name: `Pipeline — ${result.metadata.filename}`,
+            description: `Auto-configured telemetry pipeline for ${result.metadata.filename}`,
+            dataset_id: result.metadata.dataset_id,
+            timestamp_column: tsCol,
+            sensor_columns: sensorCols,
+            ignored_columns: ignoredCols,
+            detection_settings: {
+              statistical: { enabled: true, window_size: 15, mad_threshold: 3.0, min_observations: 10 },
+              isolation_forest: { enabled: true, contamination: 0.05, min_observations: 10, random_seed: 42 },
+            },
+            reconstruction_settings: {
+              allow_linear_interpolation: true,
+              max_gap_size: 5,
+              require_cross_sensor_validation: true,
+              preserve_original_readings: true,
+              allow_automatic_correction: true,
+              fallback_behavior: 'abstain_unresolved',
+            },
+            confidence_policy: {
+              review_threshold: 0.70,
+              human_review_required: false,
+              min_evidence_sensors: 1,
+              unjustified_behavior: 'abstain_unresolved',
+            },
+          });
+        }
+      } catch (pipeErr) {
+        console.warn('Auto pipeline creation notice:', pipeErr);
+      }
+
       // Reload catalog and auto-inspect newly uploaded dataset
       await loadDatasets();
       await selectDataset(result.metadata.dataset_id, 50, 0, true);
@@ -584,14 +636,28 @@ export const DatasetsPage: React.FC = () => {
                             </span>
                           </td>
                           <td className="py-3 px-3.5 text-right">
-                            <Button
-                              variant={isSelected ? 'primary' : 'secondary'}
-                              size="sm"
-                              icon={Eye}
-                              onClick={() => selectDataset(ds.dataset_id, 50, 0, true)}
-                            >
-                              {isSelected ? 'Inspecting' : 'Inspect'}
-                            </Button>
+                            <div className="flex items-center justify-end gap-1.5">
+                              <Button
+                                variant="secondary"
+                                size="sm"
+                                icon={Activity}
+                                onClick={() => {
+                                  localStorage.setItem('kintsugi_active_dataset_id', ds.dataset_id);
+                                  navigate('/anomalies');
+                                }}
+                                title="Check Anomalies in Anomaly Explorer"
+                              >
+                                Anomalies
+                              </Button>
+                              <Button
+                                variant={isSelected ? 'primary' : 'secondary'}
+                                size="sm"
+                                icon={Eye}
+                                onClick={() => selectDataset(ds.dataset_id, 50, 0, true)}
+                              >
+                                {isSelected ? 'Inspecting' : 'Inspect'}
+                              </Button>
+                            </div>
                           </td>
                         </tr>
                       );
@@ -659,19 +725,34 @@ export const DatasetsPage: React.FC = () => {
               </div>
             </div>
 
-            <Button
-              variant="outline"
-              size="sm"
-              icon={X}
-              onClick={() => {
-                setSelectedDatasetId(null);
-                setSelectedMetadata(null);
-                setSelectedQuality(null);
-                setSelectedPreview(null);
-              }}
-            >
-              Close Inspection
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="primary"
+                size="sm"
+                icon={Activity}
+                onClick={() => {
+                  if (selectedDatasetId) {
+                    localStorage.setItem('kintsugi_active_dataset_id', selectedDatasetId);
+                    navigate('/anomalies');
+                  }
+                }}
+              >
+                Inspect Anomalies
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                icon={X}
+                onClick={() => {
+                  setSelectedDatasetId(null);
+                  setSelectedMetadata(null);
+                  setSelectedQuality(null);
+                  setSelectedPreview(null);
+                }}
+              >
+                Close Inspection
+              </Button>
+            </div>
           </div>
 
           {detailsError && (
