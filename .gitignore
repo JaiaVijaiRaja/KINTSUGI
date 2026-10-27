@@ -20,6 +20,10 @@ nosetests.xml
 coverage.xml
 *.cover
 *.py,cover
+playwright-report/
+test-results/
+frontend/playwright-report/
+frontend/test-results/
 
 # Node & Frontend dependencies
 node_modules/
