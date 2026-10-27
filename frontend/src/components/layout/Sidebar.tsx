@@ -53,16 +53,16 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
       description: 'Ingest industrial CSVs & schema validation',
     },
     {
-      path: '/pipeline',
-      label: 'Pipeline Configuration',
-      icon: Sliders,
-      description: 'Multi-sensor detection & repair settings',
-    },
-    {
       path: '/anomalies',
       label: 'Anomaly Explorer',
       icon: ShieldAlert,
       description: 'Statistical MAD & Isolation Forest detections',
+    },
+    {
+      path: '/pipeline',
+      label: 'Pipeline Configuration',
+      icon: Sliders,
+      description: 'Multi-sensor detection & repair settings',
     },
     {
       path: '/reconstruction',

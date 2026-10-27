@@ -1,0 +1,31 @@
+{
+  "demo_1": {
+    "dataset": "demo_1",
+    "detection": {
+      "tp": 4,
+      "fp": 176,
+      "fn": 1,
+      "tn": 779,
+      "precision": 0.022222222222222223,
+      "recall": 0.8,
+      "f1": 0.04324324324324324
+    },
+    "reconstruction": {
+      "reconstructed": 112,
+      "unresolved": 78,
+      "mae": 0.2597500000000008,
+      "rmse": 0.2797036378025868,
+      "errors": [
+        0.36350000000000193,
+        0.1559999999999997
+      ]
+    }
+  },
+  "demo_2": {
+    "dataset": "demo_2",
+    "total_anomalies": 156,
+    "abstentions": 79,
+    "large_gap_abstentions": 10,
+    "corrected": 101
+  }
+}
