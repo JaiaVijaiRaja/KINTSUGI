@@ -31,13 +31,13 @@ export const Button: React.FC<ButtonProps> = ({
     primary:
       'bg-[#EE602C] hover:bg-[#D95322] text-white font-semibold shadow-xs shadow-[#EE602C]/25 active:bg-[#C44617]',
     secondary:
-      'bg-white hover:bg-stone-50 text-stone-800 border border-stone-200 shadow-2xs active:bg-stone-100',
+      'bg-white hover:bg-stone-100 text-stone-900 font-medium border border-stone-300 shadow-2xs active:bg-stone-200',
     outline:
-      'bg-transparent hover:bg-stone-100 text-stone-700 border border-stone-300 active:bg-stone-200',
+      'bg-white hover:bg-stone-50 text-stone-800 font-medium border border-stone-300 active:bg-stone-100',
     ghost:
-      'bg-transparent hover:bg-stone-100/80 text-stone-600 hover:text-stone-900',
+      'bg-transparent hover:bg-stone-200/70 text-stone-700 hover:text-stone-950 font-medium active:bg-stone-200',
     danger:
-      'bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 active:bg-rose-200',
+      'bg-rose-50 hover:bg-rose-100 text-rose-800 font-medium border border-rose-300 active:bg-rose-200',
     dark:
       'bg-stone-900 hover:bg-black text-white font-semibold shadow-xs active:bg-stone-950',
   }[variant];

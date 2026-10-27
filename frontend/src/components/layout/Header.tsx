@@ -2,8 +2,6 @@ import React, { useEffect, useState } from 'react';
 import type { ConnectionStatus } from '../../types/api';
 import { ConnectionBadge } from '../common/ConnectionBadge';
 import {
-  Menu,
-  X,
   LayoutDashboard,
   Database,
   Sliders,
@@ -26,8 +24,8 @@ interface HeaderProps {
   connectionStatus: ConnectionStatus;
   latencyMs: number | null;
   onRefreshHealth: () => void;
-  sidebarOpen: boolean;
-  onToggleSidebar: () => void;
+  sidebarOpen?: boolean;
+  onToggleSidebar?: () => void;
 }
 
 interface NavTab {
@@ -40,8 +38,6 @@ export const Header: React.FC<HeaderProps> = ({
   connectionStatus,
   latencyMs,
   onRefreshHealth,
-  sidebarOpen,
-  onToggleSidebar,
 }) => {
   const [currentUtc, setCurrentUtc] = useState<string>('');
   const [dayOfMonth, setDayOfMonth] = useState<number>(27);
@@ -87,17 +83,6 @@ export const Header: React.FC<HeaderProps> = ({
         <div className="flex items-center gap-2.5 shrink-0">
           <button
             type="button"
-            onClick={onToggleSidebar}
-            className="inline-flex md:hidden items-center justify-center p-1.5 rounded-lg text-stone-600 hover:text-stone-900 hover:bg-stone-200/60 transition-colors cursor-pointer"
-            aria-label="Toggle navigation menu"
-            aria-expanded={sidebarOpen}
-            aria-controls="kintsugi-sidebar"
-          >
-            {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-          </button>
-
-          <button
-            type="button"
             onClick={() => navigate('/overview')}
             className="flex items-center gap-2.5 text-left cursor-pointer group focus:outline-hidden"
             title="KINTSUGI — Telemetry & Fault Dashboard"
@@ -125,9 +110,9 @@ export const Header: React.FC<HeaderProps> = ({
           </button>
         </div>
 
-        {/* Horizontal Navigation Pills matching reference */}
+        {/* Horizontal Navigation Pills */}
         <nav
-          className="hidden xl:flex items-center gap-1 bg-[#EFECE6]/80 p-1 rounded-full border border-[#E5E0D6] overflow-x-auto"
+          className="hidden md:flex items-center gap-1 bg-[#EFECE6]/80 p-1 rounded-full border border-[#E5E0D6] overflow-x-auto"
           aria-label="Primary Header Navigation"
         >
           {navTabs.map((tab) => {

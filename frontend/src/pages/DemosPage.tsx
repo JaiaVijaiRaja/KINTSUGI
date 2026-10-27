@@ -320,20 +320,20 @@ export const DemosPage: React.FC = () => {
       />
 
       {/* Demo Tab Selector */}
-      <div className="flex flex-col sm:flex-row gap-3 p-1.5 bg-slate-900/80 border border-slate-800 rounded-xl">
+      <div className="flex flex-col sm:flex-row gap-3 p-1.5 bg-stone-100 border border-stone-200 rounded-xl">
         <button
           type="button"
           onClick={() => handleSwitchTab('demo1')}
           className={`flex-1 flex items-center justify-center gap-3 py-3 px-4 rounded-lg font-mono text-sm transition-all cursor-pointer ${
             activeTab === 'demo1'
-              ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 font-semibold shadow-xs shadow-amber-500/10'
-              : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40 border border-transparent'
+              ? 'bg-white text-stone-900 border border-stone-300 font-bold shadow-xs'
+              : 'text-stone-600 hover:text-stone-900 hover:bg-white/60 border border-transparent'
           }`}
         >
-          <Sparkles className="w-4 h-4 text-amber-400 shrink-0" />
+          <Sparkles className="w-4 h-4 text-[#EE602C] shrink-0" />
           <div className="text-left truncate">
             <span className="block font-semibold">Demo 1: Self-Healing Telemetry</span>
-            <span className="text-[11px] text-slate-400 font-sans block truncate">
+            <span className="text-[11px] text-stone-500 font-sans block truncate">
               Factory Gas Turbine: Spike Repair, Missing Value Estimation & Boundary Abstention
             </span>
           </div>
@@ -344,14 +344,14 @@ export const DemosPage: React.FC = () => {
           onClick={() => handleSwitchTab('demo2')}
           className={`flex-1 flex items-center justify-center gap-3 py-3 px-4 rounded-lg font-mono text-sm transition-all cursor-pointer ${
             activeTab === 'demo2'
-              ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 font-semibold shadow-xs shadow-amber-500/10'
-              : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40 border border-transparent'
+              ? 'bg-white text-stone-900 border border-stone-300 font-bold shadow-xs'
+              : 'text-stone-600 hover:text-stone-900 hover:bg-white/60 border border-transparent'
           }`}
         >
-          <ShieldCheck className="w-4 h-4 text-cyan-400 shrink-0" />
+          <ShieldCheck className="w-4 h-4 text-cyan-700 shrink-0" />
           <div className="text-left truncate">
             <span className="block font-semibold">Demo 2: Trust, Abstention & Evaluation</span>
-            <span className="text-[11px] text-slate-400 font-sans block truncate">
+            <span className="text-[11px] text-stone-500 font-sans block truncate">
               Stress Cases: Gap Limits, Conflicting Evidence, Isolated Ground Truth & Error Recovery
             </span>
           </div>

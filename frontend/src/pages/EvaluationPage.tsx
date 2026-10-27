@@ -381,60 +381,60 @@ export const EvaluationPage: React.FC = () => {
       </div>
 
       {/* Tab Navigation */}
-      <div className="flex border-b border-slate-800 text-xs font-medium">
+      <div className="flex border-b border-stone-200 text-xs font-medium bg-stone-100/60 p-1 rounded-t-xl gap-1">
         <button
           onClick={() => setActiveTab('overview')}
-          className={`px-4 py-2.5 border-b-2 transition-colors flex items-center gap-2 cursor-pointer ${
+          className={`px-4 py-2 rounded-lg transition-all flex items-center gap-2 cursor-pointer ${
             activeTab === 'overview'
-              ? 'border-amber-400 text-amber-300 bg-slate-900/40'
-              : 'border-transparent text-slate-400 hover:text-slate-200'
+              ? 'bg-white text-stone-900 border border-stone-300 font-bold shadow-xs'
+              : 'text-stone-600 hover:text-stone-900 hover:bg-white/60 border border-transparent'
           }`}
         >
-          <BarChart2 className="w-3.5 h-3.5" />
+          <BarChart2 className="w-3.5 h-3.5 text-[#EE602C]" />
           <span>Evaluation Overview</span>
         </button>
         <button
           onClick={() => setActiveTab('visuals')}
-          className={`px-4 py-2.5 border-b-2 transition-colors flex items-center gap-2 cursor-pointer ${
+          className={`px-4 py-2 rounded-lg transition-all flex items-center gap-2 cursor-pointer ${
             activeTab === 'visuals'
-              ? 'border-amber-400 text-amber-300 bg-slate-900/40'
-              : 'border-transparent text-slate-400 hover:text-slate-200'
+              ? 'bg-white text-stone-900 border border-stone-300 font-bold shadow-xs'
+              : 'text-stone-600 hover:text-stone-900 hover:bg-white/60 border border-transparent'
           }`}
         >
-          <TrendingUp className="w-3.5 h-3.5" />
+          <TrendingUp className="w-3.5 h-3.5 text-[#EE602C]" />
           <span>Visual Analytics</span>
         </button>
         <button
           onClick={() => setActiveTab('setup')}
-          className={`px-4 py-2.5 border-b-2 transition-colors flex items-center gap-2 cursor-pointer ${
+          className={`px-4 py-2 rounded-lg transition-all flex items-center gap-2 cursor-pointer ${
             activeTab === 'setup'
-              ? 'border-amber-400 text-amber-300 bg-slate-900/40'
-              : 'border-transparent text-slate-400 hover:text-slate-200'
+              ? 'bg-white text-stone-900 border border-stone-300 font-bold shadow-xs'
+              : 'text-stone-600 hover:text-stone-900 hover:bg-white/60 border border-transparent'
           }`}
         >
-          <Sliders className="w-3.5 h-3.5" />
+          <Sliders className="w-3.5 h-3.5 text-[#EE602C]" />
           <span>Benchmark Studio</span>
         </button>
         <button
           onClick={() => setActiveTab('history')}
-          className={`px-4 py-2.5 border-b-2 transition-colors flex items-center gap-2 cursor-pointer ${
+          className={`px-4 py-2 rounded-lg transition-all flex items-center gap-2 cursor-pointer ${
             activeTab === 'history'
-              ? 'border-amber-400 text-amber-300 bg-slate-900/40'
-              : 'border-transparent text-slate-400 hover:text-slate-200'
+              ? 'bg-white text-stone-900 border border-stone-300 font-bold shadow-xs'
+              : 'text-stone-600 hover:text-stone-900 hover:bg-white/60 border border-transparent'
           }`}
         >
-          <History className="w-3.5 h-3.5" />
+          <History className="w-3.5 h-3.5 text-[#EE602C]" />
           <span>Run History ({historyRuns.length})</span>
         </button>
         <button
           onClick={() => setActiveTab('methodology')}
-          className={`px-4 py-2.5 border-b-2 transition-colors flex items-center gap-2 cursor-pointer ${
+          className={`px-4 py-2 rounded-lg transition-all flex items-center gap-2 cursor-pointer ${
             activeTab === 'methodology'
-              ? 'border-amber-400 text-amber-300 bg-slate-900/40'
-              : 'border-transparent text-slate-400 hover:text-slate-200'
+              ? 'bg-white text-stone-900 border border-stone-300 font-bold shadow-xs'
+              : 'text-stone-600 hover:text-stone-900 hover:bg-white/60 border border-transparent'
           }`}
         >
-          <HelpCircle className="w-3.5 h-3.5" />
+          <HelpCircle className="w-3.5 h-3.5 text-[#EE602C]" />
           <span>Methodology & Math</span>
         </button>
       </div>

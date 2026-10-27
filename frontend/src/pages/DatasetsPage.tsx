@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import {
   Database,
   Upload,
@@ -15,6 +15,10 @@ import {
   X,
   FileText,
   Sliders,
+  Search,
+  ChevronLeft,
+  ChevronRight,
+  ArrowDown,
 } from 'lucide-react';
 import { PageHeader } from '../components/common/PageHeader';
 import { Card, CardHeader, CardContent } from '../components/common/Card';
@@ -32,6 +36,9 @@ export const DatasetsPage: React.FC = () => {
   const [datasets, setDatasets] = useState<DatasetMetadata[]>([]);
   const [isLoadingDatasets, setIsLoadingDatasets] = useState<boolean>(true);
   const [datasetListError, setDatasetListError] = useState<string | null>(null);
+  const [catalogSearch, setCatalogSearch] = useState<string>('');
+  const [catalogPage, setCatalogPage] = useState<number>(1);
+  const catalogPageSize = 10;
 
   // State for upload workflow
   const [isDragging, setIsDragging] = useState<boolean>(false);
@@ -49,6 +56,7 @@ export const DatasetsPage: React.FC = () => {
   const [detailsError, setDetailsError] = useState<string | null>(null);
   const [previewLimit, setPreviewLimit] = useState<number>(50);
   const [previewOffset, setPreviewOffset] = useState<number>(0);
+  const inspectionRef = useRef<HTMLDivElement>(null);
 
   // Fetch all datasets from backend
   const loadDatasets = useCallback(async (showLoading: boolean = true) => {
@@ -90,10 +98,16 @@ export const DatasetsPage: React.FC = () => {
 
   // Load details and preview when a dataset is selected
   const selectDataset = useCallback(
-    async (datasetId: string, limit: number = 50, offset: number = 0) => {
+    async (datasetId: string, limit: number = 50, offset: number = 0, shouldScroll: boolean = true) => {
       setSelectedDatasetId(datasetId);
       setIsLoadingDetails(true);
       setDetailsError(null);
+
+      if (shouldScroll) {
+        setTimeout(() => {
+          inspectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 80);
+      }
 
       try {
         const [meta, qual, prev] = await Promise.all([
@@ -115,6 +129,26 @@ export const DatasetsPage: React.FC = () => {
     },
     []
   );
+
+  // Filtered & Paginated Datasets
+  const filteredDatasets = useMemo(() => {
+    if (!catalogSearch.trim()) return datasets;
+    const q = catalogSearch.toLowerCase().trim();
+    return datasets.filter(
+      (ds) =>
+        ds.filename.toLowerCase().includes(q) ||
+        ds.dataset_id.toLowerCase().includes(q)
+    );
+  }, [datasets, catalogSearch]);
+
+  const totalCatalogPages = useMemo(() => {
+    return Math.max(1, Math.ceil(filteredDatasets.length / catalogPageSize));
+  }, [filteredDatasets.length, catalogPageSize]);
+
+  const pagedDatasets = useMemo(() => {
+    const start = (catalogPage - 1) * catalogPageSize;
+    return filteredDatasets.slice(start, start + catalogPageSize);
+  }, [filteredDatasets, catalogPage, catalogPageSize]);
 
   // File upload handler with frontend pre-validation
   const handleUploadFile = async (file: File) => {
@@ -149,7 +183,7 @@ export const DatasetsPage: React.FC = () => {
       );
       // Reload catalog and auto-inspect newly uploaded dataset
       await loadDatasets();
-      await selectDataset(result.metadata.dataset_id);
+      await selectDataset(result.metadata.dataset_id, 50, 0, true);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
       setUploadErrorMsg(msg);
@@ -390,19 +424,31 @@ export const DatasetsPage: React.FC = () => {
           icon={Database}
           badge={
             <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-stone-100 text-stone-700 border border-stone-200 font-semibold">
-              {datasets.length} Total
+              {filteredDatasets.length} of {datasets.length} Total
             </span>
           }
           action={
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => loadDatasets()}
-              loading={isLoadingDatasets}
-              icon={RefreshCw}
-            >
-              Refresh
-            </Button>
+            <div className="flex items-center gap-2">
+              {selectedDatasetId && (
+                <Button
+                  variant="primary"
+                  size="sm"
+                  icon={ArrowDown}
+                  onClick={() => inspectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+                >
+                  View Inspected Dataset
+                </Button>
+              )}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => loadDatasets()}
+                loading={isLoadingDatasets}
+                icon={RefreshCw}
+              >
+                Refresh
+              </Button>
+            </div>
           }
         />
         <CardContent>
@@ -412,6 +458,50 @@ export const DatasetsPage: React.FC = () => {
               <span>{datasetListError}</span>
             </div>
           )}
+
+          {/* Search Bar & Active Inspection Indicator */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 mb-4">
+            <div className="relative flex-1 max-w-md">
+              <Search className="w-4 h-4 text-stone-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <input
+                type="text"
+                value={catalogSearch}
+                onChange={(e) => {
+                  setCatalogSearch(e.target.value);
+                  setCatalogPage(1);
+                }}
+                placeholder="Search datasets by filename or ID..."
+                className="w-full bg-white border border-stone-300 rounded-xl pl-9 pr-8 py-1.5 text-xs font-mono text-stone-800 placeholder:text-stone-400 focus:outline-hidden focus:ring-2 focus:ring-[#EE602C]/30 focus:border-[#EE602C] shadow-2xs"
+              />
+              {catalogSearch && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCatalogSearch('');
+                    setCatalogPage(1);
+                  }}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-700 text-xs cursor-pointer p-0.5"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
+
+            {selectedDatasetId && (
+              <div className="flex items-center gap-2 px-3 py-1.5 bg-orange-50 border border-orange-200 rounded-xl text-xs font-mono text-[#EE602C]">
+                <Eye className="w-3.5 h-3.5 shrink-0" />
+                <span className="truncate max-w-[220px]">
+                  Inspecting: <strong className="text-stone-900">{selectedMetadata?.filename || selectedDatasetId}</strong>
+                </span>
+                <button
+                  onClick={() => inspectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+                  className="underline hover:text-[#D95322] cursor-pointer ml-1 font-bold text-[11px]"
+                >
+                  Scroll Down ↓
+                </button>
+              </div>
+            )}
+          </div>
 
           {isLoadingDatasets ? (
             <div className="py-12 flex flex-col items-center justify-center space-y-3">
@@ -431,78 +521,116 @@ export const DatasetsPage: React.FC = () => {
                 'GET /api/datasets/{id}',
               ]}
             />
+          ) : filteredDatasets.length === 0 ? (
+            <div className="py-12 text-center text-xs text-stone-500 font-mono">
+              No datasets found matching &quot;{catalogSearch}&quot;.
+            </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs border border-stone-200 rounded-xl overflow-hidden">
-                <thead className="bg-[#FAF8F5] text-stone-600 uppercase font-mono text-[10px] border-b border-stone-200">
-                  <tr>
-                    <th className="py-3 px-3.5">Filename</th>
-                    <th className="py-3 px-3.5">Dataset ID</th>
-                    <th className="py-3 px-3.5">Rows</th>
-                    <th className="py-3 px-3.5">Columns</th>
-                    <th className="py-3 px-3.5">File Size</th>
-                    <th className="py-3 px-3.5">Uploaded</th>
-                    <th className="py-3 px-3.5">Status</th>
-                    <th className="py-3 px-3.5 text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-stone-200/80 font-mono">
-                  {datasets.map((ds) => {
-                    const isSelected = selectedDatasetId === ds.dataset_id;
-                    return (
-                      <tr
-                        key={ds.dataset_id}
-                        className={`transition-colors ${
-                          isSelected
-                            ? 'bg-orange-50/50 text-stone-900 font-medium'
-                            : 'hover:bg-stone-50 text-stone-700'
-                        }`}
-                      >
-                        <td className="py-3 px-3.5 font-medium flex items-center gap-2">
-                          <FileSpreadsheet className="w-4 h-4 text-[#EE602C] shrink-0" />
-                          <span className="truncate max-w-[200px]" title={ds.filename}>
-                            {ds.filename}
-                          </span>
-                        </td>
-                        <td className="py-3 px-3.5 text-stone-500">
-                          <span
-                            className="bg-stone-100 px-2 py-0.5 rounded border border-stone-200 text-[11px]"
-                            title={ds.dataset_id}
-                          >
-                            {ds.dataset_id}
-                          </span>
-                        </td>
-                        <td className="py-3 px-3.5 text-stone-900 font-semibold">
-                          {ds.row_count.toLocaleString()}
-                        </td>
-                        <td className="py-3 px-3.5 text-stone-600">{ds.column_count}</td>
-                        <td className="py-3 px-3.5 text-stone-600">
-                          {formatBytes(ds.file_size_bytes)}
-                        </td>
-                        <td className="py-3 px-3.5 text-stone-500 text-[11px]">
-                          {formatDate(ds.uploaded_at)}
-                        </td>
-                        <td className="py-3 px-3.5">
-                          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 text-[10px] uppercase font-semibold">
-                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                            Ready
-                          </span>
-                        </td>
-                        <td className="py-3 px-3.5 text-right">
-                          <Button
-                            variant={isSelected ? 'primary' : 'secondary'}
-                            size="sm"
-                            icon={Eye}
-                            onClick={() => selectDataset(ds.dataset_id)}
-                          >
-                            {isSelected ? 'Inspecting' : 'Inspect'}
-                          </Button>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+            <div className="space-y-3">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs border border-stone-200 rounded-xl overflow-hidden">
+                  <thead className="bg-[#FAF8F5] text-stone-600 uppercase font-mono text-[10px] border-b border-stone-200">
+                    <tr>
+                      <th className="py-3 px-3.5">Filename</th>
+                      <th className="py-3 px-3.5">Dataset ID</th>
+                      <th className="py-3 px-3.5">Rows</th>
+                      <th className="py-3 px-3.5">Columns</th>
+                      <th className="py-3 px-3.5">File Size</th>
+                      <th className="py-3 px-3.5">Uploaded</th>
+                      <th className="py-3 px-3.5">Status</th>
+                      <th className="py-3 px-3.5 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-stone-200/80 font-mono">
+                    {pagedDatasets.map((ds) => {
+                      const isSelected = selectedDatasetId === ds.dataset_id;
+                      return (
+                        <tr
+                          key={ds.dataset_id}
+                          className={`transition-colors ${
+                            isSelected
+                              ? 'bg-orange-50/70 text-stone-900 font-medium'
+                              : 'hover:bg-stone-50 text-stone-700'
+                          }`}
+                        >
+                          <td className="py-3 px-3.5 font-medium flex items-center gap-2">
+                            <FileSpreadsheet className="w-4 h-4 text-[#EE602C] shrink-0" />
+                            <span className="truncate max-w-[200px]" title={ds.filename}>
+                              {ds.filename}
+                            </span>
+                          </td>
+                          <td className="py-3 px-3.5 text-stone-500">
+                            <span
+                              className="bg-stone-100 px-2 py-0.5 rounded border border-stone-200 text-[11px]"
+                              title={ds.dataset_id}
+                            >
+                              {ds.dataset_id}
+                            </span>
+                          </td>
+                          <td className="py-3 px-3.5 text-stone-900 font-semibold">
+                            {ds.row_count.toLocaleString()}
+                          </td>
+                          <td className="py-3 px-3.5 text-stone-600">{ds.column_count}</td>
+                          <td className="py-3 px-3.5 text-stone-600">
+                            {formatBytes(ds.file_size_bytes)}
+                          </td>
+                          <td className="py-3 px-3.5 text-stone-500 text-[11px]">
+                            {formatDate(ds.uploaded_at)}
+                          </td>
+                          <td className="py-3 px-3.5">
+                            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 text-[10px] uppercase font-semibold">
+                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                              Ready
+                            </span>
+                          </td>
+                          <td className="py-3 px-3.5 text-right">
+                            <Button
+                              variant={isSelected ? 'primary' : 'secondary'}
+                              size="sm"
+                              icon={Eye}
+                              onClick={() => selectDataset(ds.dataset_id, 50, 0, true)}
+                            >
+                              {isSelected ? 'Inspecting' : 'Inspect'}
+                            </Button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Pagination Controls */}
+              {totalCatalogPages > 1 && (
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2 text-xs font-mono text-stone-500">
+                  <span>
+                    Showing {(catalogPage - 1) * catalogPageSize + 1}–{Math.min(catalogPage * catalogPageSize, filteredDatasets.length)} of {filteredDatasets.length} datasets
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={catalogPage <= 1}
+                      onClick={() => setCatalogPage((p) => Math.max(1, p - 1))}
+                      icon={ChevronLeft}
+                    >
+                      Previous
+                    </Button>
+                    <span className="px-3 py-1 rounded-lg bg-stone-100 border border-stone-200 font-semibold text-stone-800">
+                      {catalogPage} / {totalCatalogPages}
+                    </span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={catalogPage >= totalCatalogPages}
+                      onClick={() => setCatalogPage((p) => Math.min(totalCatalogPages, p + 1))}
+                    >
+                      Next
+                      <ChevronRight className="w-3.5 h-3.5 ml-1" />
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </CardContent>
@@ -510,7 +638,7 @@ export const DatasetsPage: React.FC = () => {
 
       {/* Selected Dataset Inspection Section */}
       {selectedDatasetId && (
-        <div id="dataset-inspection" className="space-y-6 pt-2">
+        <div id="dataset-inspection" ref={inspectionRef} className="space-y-6 pt-4 scroll-mt-6 border-2 border-[#EE602C]/30 rounded-3xl p-5 sm:p-6 bg-gradient-to-b from-orange-50/20 to-transparent shadow-xs">
           <div className="flex items-center justify-between pb-3 border-b border-stone-200">
             <div className="flex items-center gap-3">
               <div className="p-2.5 rounded-2xl bg-orange-50 border border-orange-200 text-[#EE602C]">
@@ -768,16 +896,16 @@ export const DatasetsPage: React.FC = () => {
                                 {col.unique_count.toLocaleString()}
                               </td>
                               <td className="py-2.5 px-3 text-stone-700">
-                                {col.numeric_stats ? col.numeric_stats.min : '—'}
+                                {col.numeric_stats && col.numeric_stats.min !== null && col.numeric_stats.min !== undefined ? col.numeric_stats.min : '—'}
                               </td>
                               <td className="py-2.5 px-3 text-stone-700">
-                                {col.numeric_stats ? col.numeric_stats.max : '—'}
+                                {col.numeric_stats && col.numeric_stats.max !== null && col.numeric_stats.max !== undefined ? col.numeric_stats.max : '—'}
                               </td>
                               <td className="py-2.5 px-3 text-stone-700">
-                                {col.numeric_stats ? col.numeric_stats.mean : '—'}
+                                {col.numeric_stats && col.numeric_stats.mean !== null && col.numeric_stats.mean !== undefined ? col.numeric_stats.mean : '—'}
                               </td>
                               <td className="py-2.5 px-3 text-stone-700">
-                                {col.numeric_stats ? col.numeric_stats.median : '—'}
+                                {col.numeric_stats && col.numeric_stats.median !== null && col.numeric_stats.median !== undefined ? col.numeric_stats.median : '—'}
                               </td>
                               <td className="py-2.5 px-3 text-stone-600">
                                 {col.numeric_stats && col.numeric_stats.std !== null

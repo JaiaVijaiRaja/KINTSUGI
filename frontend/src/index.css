@@ -54,32 +54,151 @@ body {
 .bg-slate-900\/40,
 .bg-slate-900\/50,
 .bg-slate-900\/60,
-.bg-slate-900\/80 {
+.bg-slate-900\/70,
+.bg-slate-900\/80,
+.bg-slate-900\/90 {
   background-color: #f4f1ea !important;
 }
 
+.bg-slate-800,
+.bg-slate-800\/40,
+.bg-slate-800\/60,
+.bg-slate-800\/80 {
+  background-color: #eae6df !important;
+}
+
+.bg-slate-700 {
+  background-color: #ded9cf !important;
+}
+
 .border-slate-800,
+.border-slate-800\/40,
 .border-slate-800\/60,
 .border-slate-800\/80,
 .border-slate-700 {
-  border-color: #ebe7e1 !important;
+  border-color: #d6d1c7 !important;
 }
 
+.divide-slate-800,
+.divide-slate-800\/60,
+.divide-slate-800\/80 {
+  border-color: #d6d1c7 !important;
+}
+
+/* High-Contrast Accessible Text Colors */
 .text-slate-100,
 .text-slate-200 {
-  color: #1e2024 !important;
+  color: #18181b !important;
 }
 
 .text-slate-300,
 .text-slate-400 {
-  color: #52525b !important;
+  color: #3f3f46 !important;
 }
 
 .text-slate-500 {
   color: #71717a !important;
 }
 
-.divide-slate-800,
-.divide-slate-800\/80 {
-  border-color: #ebe7e1 !important;
+/* Fix pastel / dark-mode text colors on light background */
+.text-amber-300,
+.text-amber-400 {
+  color: #b45309 !important; /* amber-700 for high readability */
+}
+
+.text-emerald-300,
+.text-emerald-400 {
+  color: #047857 !important; /* emerald-700 */
+}
+
+.text-cyan-300,
+.text-cyan-400 {
+  color: #0e7490 !important; /* cyan-700 */
+}
+
+.text-red-300,
+.text-red-400,
+.text-rose-300,
+.text-rose-400 {
+  color: #be123c !important; /* rose-700 */
+}
+
+.text-orange-300,
+.text-orange-400 {
+  color: #c2410c !important; /* orange-700 */
+}
+
+/* Fix dark badge backgrounds on light theme */
+.bg-amber-950,
+.bg-amber-950\/20,
+.bg-amber-950\/60,
+.bg-amber-950\/70,
+.bg-amber-950\/80 {
+  background-color: #fef3c7 !important;
+}
+
+.border-amber-800,
+.border-amber-800\/40,
+.border-amber-800\/80 {
+  border-color: #fde68a !important;
+}
+
+.bg-emerald-950,
+.bg-emerald-950\/60,
+.bg-emerald-950\/80 {
+  background-color: #d1fae5 !important;
+}
+
+.border-emerald-800,
+.border-emerald-800\/80 {
+  border-color: #a7f3d0 !important;
+}
+
+.text-emerald-200 {
+  color: #065f46 !important;
+}
+
+.bg-red-950,
+.bg-red-950\/60,
+.bg-red-950\/80,
+.bg-rose-950,
+.bg-rose-950\/60,
+.bg-rose-950\/80 {
+  background-color: #ffe4e6 !important;
+}
+
+.border-red-800,
+.border-red-800\/80,
+.border-rose-800 {
+  border-color: #fecdd3 !important;
+}
+
+.text-red-200,
+.text-rose-200 {
+  color: #9f1239 !important;
+}
+
+.bg-cyan-950,
+.bg-cyan-950\/60 {
+  background-color: #cffafe !important;
+}
+
+.border-cyan-800 {
+  border-color: #a5f3fc !important;
+}
+
+/* Button & Pill Contrast Guarantees */
+button.bg-slate-800,
+button.bg-slate-700 {
+  background-color: #ffffff !important;
+  color: #1e2024 !important;
+  border: 1px solid #d6d1c7 !important;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03);
+}
+
+button.bg-slate-800:hover,
+button.bg-slate-700:hover {
+  background-color: #f4f1ea !important;
+  color: #09090b !important;
+  border-color: #b8b3a8 !important;
 }

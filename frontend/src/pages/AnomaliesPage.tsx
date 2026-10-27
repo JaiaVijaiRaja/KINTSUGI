@@ -506,19 +506,19 @@ export const AnomaliesPage: React.FC = () => {
                     <button
                       key={col}
                       onClick={() => setActiveSensorView(col)}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-mono transition-all flex items-center gap-2 ${
+                      className={`px-3 py-1.5 rounded-lg text-xs font-mono transition-all flex items-center gap-2 cursor-pointer ${
                         isActive
-                          ? 'bg-emerald-600 text-white shadow-md shadow-emerald-950/40 font-semibold'
-                          : 'bg-slate-950 text-slate-400 hover:text-slate-200 border border-slate-800'
+                          ? 'bg-[#EE602C] text-white shadow-xs font-semibold'
+                          : 'bg-white text-stone-800 hover:text-stone-950 hover:bg-stone-50 border border-stone-300 shadow-2xs'
                       }`}
                     >
                       <span>{col}</span>
                       {channelAnomalyCount > 0 && (
                         <span
-                          className={`px-1.5 py-0.2 rounded-full text-[10px] ${
+                          className={`px-1.5 py-0.2 rounded-full text-[10px] font-semibold ${
                             isActive
-                              ? 'bg-emerald-800 text-emerald-100'
-                              : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+                              ? 'bg-white/25 text-white'
+                              : 'bg-amber-100 text-amber-900 border border-amber-300'
                           }`}
                         >
                           {channelAnomalyCount}
@@ -874,9 +874,9 @@ export const AnomaliesPage: React.FC = () => {
                                 e.stopPropagation();
                                 setInspectedAnomaly(anom);
                               }}
-                              className="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px] font-mono transition-colors inline-flex items-center gap-1"
+                              className="px-2.5 py-1 rounded-lg bg-white hover:bg-stone-100 text-stone-900 text-[11px] font-mono font-medium transition-colors inline-flex items-center gap-1 border border-stone-300 shadow-2xs cursor-pointer"
                             >
-                              <Eye className="w-3 h-3" />
+                              <Eye className="w-3 h-3 text-[#EE602C]" />
                               Inspect
                             </button>
                           </td>

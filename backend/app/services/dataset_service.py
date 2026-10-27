@@ -63,17 +63,56 @@ def clean_nan(val: Any) -> Any:
 
 
 def decode_csv_bytes(content: bytes) -> str:
-    """Attempt decoding CSV bytes with standard encodings."""
-    encodings = ["utf-8-sig", "utf-8", "latin-1"]
+    """Attempt decoding CSV bytes with standard encodings (UTF-8, UTF-16, CP1252, Latin-1)."""
+    # Check for UTF-16 BOM first
+    if content.startswith(b"\xff\xfe") or content.startswith(b"\xfe\xff"):
+        try:
+            return content.decode("utf-16")
+        except UnicodeDecodeError:
+            pass
+    encodings = ["utf-8-sig", "utf-8", "utf-16", "cp1252", "windows-1252", "latin-1"]
     for enc in encodings:
         try:
-            return content.decode(enc)
+            decoded = content.decode(enc)
+            # Check for excessive null bytes which indicate wrong non-utf16 encoding
+            if "\x00" not in decoded:
+                return decoded
         except UnicodeDecodeError:
             continue
-    raise HTTPException(
-        status_code=status.HTTP_400_BAD_REQUEST,
-        detail="Unable to decode CSV file. Only UTF-8 and Latin-1 text encodings are supported.",
-    )
+    try:
+        return content.decode("latin-1", errors="replace")
+    except Exception:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Unable to decode CSV file. Only UTF-8, UTF-16, Windows-1252, and Latin-1 text encodings are supported.",
+        )
+
+
+def detect_csv_delimiter(text: str) -> str:
+    """Detect CSV delimiter candidate from comma, semicolon, tab, and pipe."""
+    # Take first 5 non-empty lines
+    lines = [line.strip() for line in text.split("\n") if line.strip()][:5]
+    if not lines:
+        return ","
+    candidates = [",", ";", "\t", "|"]
+    best_delim = ","
+    best_score = -1
+
+    for delim in candidates:
+        counts = [line.count(delim) for line in lines]
+        # Must appear at least once in header
+        if counts[0] > 0 and len(set(counts)) == 1:
+            score = counts[0] * 10
+            if delim == ",":
+                score += 1
+            if score > best_score:
+                best_score = score
+                best_delim = delim
+        elif counts[0] > 0 and counts[0] > best_score:
+            best_score = counts[0]
+            best_delim = delim
+
+    return best_delim
 
 
 def compute_column_summary(col_name: str, series: pd.Series) -> ColumnSummary:
@@ -313,11 +352,16 @@ class DatasetService:
 
         # 3. Text decoding
         decoded_text = decode_csv_bytes(content)
+        # Normalize newlines
+        decoded_text = decoded_text.replace("\r\n", "\n").replace("\r", "\n")
 
-        # 4. Validate raw headers and row consistency using strict csv reader
+        # Detect delimiter
+        delimiter = detect_csv_delimiter(decoded_text)
+
+        # 4. Validate raw headers and row consistency using csv reader
         import csv
         try:
-            reader = csv.reader(io.StringIO(decoded_text), strict=True)
+            reader = csv.reader(io.StringIO(decoded_text), delimiter=delimiter)
             try:
                 raw_headers = next(reader)
             except StopIteration:
@@ -331,6 +375,11 @@ class DatasetService:
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail="CSV contains no header columns.",
                 )
+
+            # Check if there is a trailing empty column caused by a trailing delimiter (e.g. "a,b,c,")
+            has_trailing_empty = len(raw_headers) > 1 and raw_headers[-1].strip() == ""
+            if has_trailing_empty:
+                raw_headers = raw_headers[:-1]
 
             # Normalize column names: strip whitespace
             normalized_cols = [str(c).strip() for c in raw_headers]
@@ -360,8 +409,11 @@ class DatasetService:
             expected_col_count = len(normalized_cols)
             data_row_count = 0
             for row_idx, row in enumerate(reader, start=2):
-                if not row:
-                    continue  # Skip blank lines
+                # Skip blank lines or rows that are completely empty / whitespace
+                if not row or all(str(c).strip() == "" for c in row):
+                    continue
+                if has_trailing_empty and len(row) == expected_col_count + 1 and str(row[-1]).strip() == "":
+                    row = row[:-1]
                 data_row_count += 1
                 if len(row) != expected_col_count:
                     raise HTTPException(
@@ -385,9 +437,14 @@ class DatasetService:
         try:
             df = pd.read_csv(
                 io.StringIO(decoded_text),
+                sep=delimiter,
                 skipinitialspace=True,
                 on_bad_lines="error",
             )
+            if has_trailing_empty and len(df.columns) == expected_col_count + 1:
+                df = df.iloc[:, :expected_col_count]
+            # Drop trailing all-empty rows if pandas parsed empty lines at EOF
+            df = df.dropna(how="all")
             df.columns = normalized_cols
         except HTTPException:
             raise
@@ -611,11 +668,18 @@ class DatasetService:
         safe_offset = max(0, offset)
 
         try:
+            # Detect delimiter from stored CSV sample
+            with open(csv_path, "rb") as f:
+                sample_bytes = f.read(8192)
+            sample_text = decode_csv_bytes(sample_bytes)
+            delimiter = detect_csv_delimiter(sample_text)
+
             # Read bounded chunk with pandas
             # If offset > 0, we skip rows: header is row 0, then skiprows=range(1, safe_offset + 1)
             if safe_offset > 0:
                 df_chunk = pd.read_csv(
                     csv_path,
+                    sep=delimiter,
                     skiprows=range(1, safe_offset + 1),
                     nrows=bounded_limit,
                     skipinitialspace=True,
@@ -623,6 +687,7 @@ class DatasetService:
             else:
                 df_chunk = pd.read_csv(
                     csv_path,
+                    sep=delimiter,
                     nrows=bounded_limit,
                     skipinitialspace=True,
                 )

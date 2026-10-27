@@ -584,26 +584,26 @@ export const AuditPage: React.FC = () => {
                               <span
                                 className={`px-2 py-0.5 rounded text-[10px] font-semibold ${
                                   evt.new_status === 'CORRECTED'
-                                    ? 'bg-emerald-950/60 text-emerald-300 border border-emerald-800'
+                                    ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
                                     : evt.new_status === 'UNRESOLVED'
-                                    ? 'bg-rose-950/60 text-rose-300 border border-rose-800'
+                                    ? 'bg-rose-100 text-rose-800 border border-rose-300'
                                     : evt.new_status === 'ANOMALY'
-                                    ? 'bg-amber-950/60 text-amber-300 border border-amber-800'
-                                    : 'bg-slate-800 text-slate-300'
+                                    ? 'bg-amber-100 text-amber-900 border border-amber-300'
+                                    : 'bg-stone-100 text-stone-800 border border-stone-200'
                                 }`}
                               >
                                 {evt.new_status}
                               </span>
                             ) : (
-                              <span className="text-slate-600">—</span>
+                              <span className="text-stone-400">—</span>
                             )}
                           </td>
-                          <td className="py-2.5 px-3 text-slate-400 max-w-xs truncate font-sans text-xs">
+                          <td className="py-2.5 px-3 text-stone-600 max-w-xs truncate font-sans text-xs">
                             {evt.decision_reason || evt.error_details || '—'}
                           </td>
                           <td className="py-2.5 px-3 text-right space-x-1">
                             <Button
-                              variant="ghost"
+                              variant="outline"
                               size="sm"
                               icon={Eye}
                               onClick={() => setSelectedEvent(evt)}
@@ -611,7 +611,7 @@ export const AuditPage: React.FC = () => {
                             />
                             {evt.reconstruction_result_id && (
                               <Button
-                                variant="ghost"
+                                variant="outline"
                                 size="sm"
                                 icon={GitCommit}
                                 onClick={() => handleFetchTrace(evt.reconstruction_result_id!)}

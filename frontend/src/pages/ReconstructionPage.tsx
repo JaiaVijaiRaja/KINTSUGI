@@ -16,6 +16,7 @@ import {
   ShieldCheck,
   UserCheck,
   Check,
+  Download,
 } from 'lucide-react';
 import { PageHeader } from '../components/common/PageHeader';
 import { Card, CardHeader, CardContent } from '../components/common/Card';
@@ -72,6 +73,7 @@ export const ReconstructionPage: React.FC = () => {
   // Execution state
   const [isExecuting, setIsExecuting] = useState<boolean>(false);
   const [executionError, setExecutionError] = useState<string | null>(null);
+  const [isExporting, setIsExporting] = useState<boolean>(false);
 
   // Reconstruction Results ledger
   const [results, setResults] = useState<ReconstructionRecord[]>([]);
@@ -263,6 +265,23 @@ export const ReconstructionPage: React.FC = () => {
       setExecutionError(msg);
     } finally {
       setIsExecuting(false);
+    }
+  };
+
+  // Export reconstructed dataset
+  const handleExportCsv = async () => {
+    if (!activeReconstructionRun || isExporting) return;
+    setIsExporting(true);
+    try {
+      await reconstructionService.downloadExport(
+        activeReconstructionRun.reconstruction_run_id,
+        'csv'
+      );
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      setExecutionError(`Export failed: ${msg}`);
+    } finally {
+      setIsExporting(false);
     }
   };
 
@@ -510,21 +529,33 @@ export const ReconstructionPage: React.FC = () => {
                 {isExecuting ? 'Reconstructing Telemetry...' : 'Start Reconstruction Run'}
               </Button>
               {activeReconstructionRun && (
-                <Button
-                  variant="outline"
-                  size="md"
-                  onClick={() =>
-                    loadResults(
-                      activeReconstructionRun.reconstruction_run_id,
-                      sensorFilter,
-                      statusFilter
-                    )
-                  }
-                  loading={isLoadingResults}
-                  icon={RefreshCw}
-                >
-                  Refresh
-                </Button>
+                <>
+                  <Button
+                    variant="outline"
+                    size="md"
+                    onClick={() =>
+                      loadResults(
+                        activeReconstructionRun.reconstruction_run_id,
+                        sensorFilter,
+                        statusFilter
+                      )
+                    }
+                    loading={isLoadingResults}
+                    icon={RefreshCw}
+                  >
+                    Refresh
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    size="md"
+                    onClick={handleExportCsv}
+                    loading={isExporting}
+                    disabled={isExporting}
+                    icon={Download}
+                  >
+                    Export Repaired CSV
+                  </Button>
+                </>
               )}
             </div>
 
@@ -818,9 +849,9 @@ export const ReconstructionPage: React.FC = () => {
                               e.stopPropagation();
                               setInspectedRecord(r);
                             }}
-                            className="px-2.5 py-1 rounded-md bg-slate-800 text-slate-200 hover:bg-slate-700 text-[11px] font-sans transition-colors inline-flex items-center gap-1"
+                            className="px-2.5 py-1 rounded-lg bg-white text-stone-900 hover:bg-stone-100 text-[11px] font-sans font-medium transition-colors inline-flex items-center gap-1 border border-stone-300 shadow-2xs cursor-pointer"
                           >
-                            <Eye className="w-3 h-3 text-amber-400" />
+                            <Eye className="w-3 h-3 text-[#EE602C]" />
                             <span>Inspect</span>
                           </button>
                         </td>
