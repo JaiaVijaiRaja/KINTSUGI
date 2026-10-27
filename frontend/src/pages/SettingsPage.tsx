@@ -16,6 +16,7 @@ import { PageHeader } from '../components/common/PageHeader';
 import { Card, CardHeader, CardContent } from '../components/common/Card';
 import { Button } from '../components/common/Button';
 import { ThresholdsManager } from '../components/settings/ThresholdsManager';
+import { FontZoomManager } from '../components/settings/FontZoomManager';
 
 interface SettingsPageProps {
   connection: ConnectionState;
@@ -36,7 +37,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
     <div className="space-y-8">
       <PageHeader
         title="Settings & System Configuration"
-        description="Configure human supervisory threshold boundaries, control policies, network connectivity diagnostics, and interactive backend API documentation."
+        description="Configure application font size and display zoom, human supervisory threshold boundaries, control policies, network connectivity diagnostics, and interactive backend API documentation."
         badge="Production Verified"
         badgeVariant="primary"
         actions={
@@ -51,6 +52,9 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
           </Button>
         }
       />
+
+      {/* Global Application Display Zoom & Font Size Controls */}
+      <FontZoomManager />
 
       {/* Human-Managed Operational Thresholds Section */}
       <ThresholdsManager />
