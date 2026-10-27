@@ -17,7 +17,9 @@ import {
   UserCheck,
   Check,
   Download,
+  Sparkles,
 } from 'lucide-react';
+import { calculateValueDifference, getRemediationProtocol } from '../utils/remediationGuide';
 import { PageHeader } from '../components/common/PageHeader';
 import { Card, CardHeader, CardContent } from '../components/common/Card';
 import { EmptyState } from '../components/common/EmptyState';
@@ -151,6 +153,61 @@ export const ReconstructionPage: React.FC = () => {
     if (!selectedPipeline) return null;
     return datasets.find((d) => d.dataset_id === selectedPipeline.dataset_id) || null;
   }, [selectedPipeline, datasets]);
+
+  // Deduplicated pipelines showing each unique dataset filename exactly once
+  const uniquePipelines = useMemo(() => {
+    const activeDsId =
+      new URLSearchParams(window.location.search).get('dataset_id') ||
+      localStorage.getItem('kintsugi_active_dataset_id');
+
+    const fileGroups = new Map<string, PipelineConfig[]>();
+    for (const pipe of pipelines) {
+      const ds = datasets.find((d) => d.dataset_id === pipe.dataset_id);
+      const fileKey = (ds?.filename || pipe.configuration_name).trim().toLowerCase();
+      if (!fileGroups.has(fileKey)) {
+        fileGroups.set(fileKey, []);
+      }
+      fileGroups.get(fileKey)!.push(pipe);
+    }
+
+    const deduplicated: PipelineConfig[] = [];
+    for (const group of fileGroups.values()) {
+      let chosen = group.find((p) => p.configuration_id === selectedPipelineId);
+      if (!chosen && activeDsId) {
+        chosen = group.find((p) => p.dataset_id === activeDsId);
+      }
+      if (!chosen) {
+        chosen = [...group].sort((a, b) => {
+          const timeA = new Date(a.created_at || 0).getTime();
+          const timeB = new Date(b.created_at || 0).getTime();
+          return timeB - timeA;
+        })[0];
+      }
+      if (chosen) {
+        deduplicated.push(chosen);
+      }
+    }
+
+    return deduplicated.sort((a, b) => {
+      if (a.dataset_id === activeDsId) return -1;
+      if (b.dataset_id === activeDsId) return 1;
+      const dsA = datasets.find((d) => d.dataset_id === a.dataset_id);
+      const dsB = datasets.find((d) => d.dataset_id === b.dataset_id);
+      const nameA = dsA?.filename || a.configuration_name;
+      const nameB = dsB?.filename || b.configuration_name;
+      return nameA.localeCompare(nameB, undefined, { sensitivity: 'base' });
+    });
+  }, [pipelines, datasets, selectedPipelineId]);
+
+  // Keep selectedPipelineId aligned with uniquePipelines
+  useEffect(() => {
+    if (uniquePipelines.length > 0) {
+      const exists = uniquePipelines.some((p) => p.configuration_id === selectedPipelineId);
+      if (!exists) {
+        setSelectedPipelineId(uniquePipelines[0].configuration_id);
+      }
+    }
+  }, [uniquePipelines, selectedPipelineId]);
 
   // 2. Fetch Detection Runs when Pipeline Changes
   const loadDetectionRuns = useCallback(async (pipelineId: string) => {
@@ -427,25 +484,31 @@ export const ReconstructionPage: React.FC = () => {
               <label className="text-xs font-semibold text-stone-800 flex items-center justify-between">
                 <span>Select Target Pipeline</span>
                 <span className="text-[10px] text-stone-500 font-mono font-medium">
-                  {pipelines.length} configured
+                  {uniquePipelines.length} datasets ready
                 </span>
               </label>
               <select
                 value={selectedPipelineId}
                 onChange={(e) => setSelectedPipelineId(e.target.value)}
-                disabled={isLoadingCatalogs || isExecuting || pipelines.length === 0}
+                disabled={isLoadingCatalogs || isExecuting || uniquePipelines.length === 0}
                 className="w-full bg-white border border-stone-300 rounded-xl px-3.5 py-2.5 text-xs text-stone-900 font-medium shadow-2xs focus:outline-hidden focus:border-[#EE602C] focus:ring-2 focus:ring-[#EE602C]/20 transition-all cursor-pointer disabled:bg-stone-100 disabled:text-stone-400 disabled:cursor-not-allowed"
               >
-                {pipelines.length === 0 ? (
+                {uniquePipelines.length === 0 ? (
                   <option value="" disabled className="bg-white text-stone-400">
                     No pipelines configured — please configure a pipeline first
                   </option>
                 ) : (
-                  pipelines.map((p) => {
+                  uniquePipelines.map((p) => {
                     const ds = datasets.find((d) => d.dataset_id === p.dataset_id);
+                    const fileName = ds?.filename || '';
+                    const labelText = fileName
+                      ? p.configuration_name.toLowerCase().includes(fileName.toLowerCase())
+                        ? `📁 ${p.configuration_name}`
+                        : `📁 ${fileName} — ${p.configuration_name}`
+                      : p.configuration_name;
                     return (
-                      <option key={p.configuration_id} value={p.configuration_id} className="bg-white text-stone-900">
-                        {ds ? `📁 ${ds.filename} — ${p.configuration_name}` : `${p.configuration_name} (v${p.configuration_version})`}
+                      <option key={p.configuration_id} value={p.configuration_id} className="bg-white text-stone-900 font-medium">
+                        {labelText}
                       </option>
                     );
                   })
@@ -770,6 +833,7 @@ export const ReconstructionPage: React.FC = () => {
                     <th className="py-3 px-4">Raw Original</th>
                     <th className="py-3 px-4">Proposed</th>
                     <th className="py-3 px-4">Final Value</th>
+                    <th className="py-3 px-4">Value Differed (Δ)</th>
                     <th className="py-3 px-4">Status</th>
                     <th className="py-3 px-4">Method</th>
                     <th className="py-3 px-4">Confidence</th>
@@ -782,6 +846,7 @@ export const ReconstructionPage: React.FC = () => {
                     const isEstimated = r.status === 'ESTIMATED';
                     const isCorrected = r.status === 'CORRECTED';
                     const isUnresolved = r.status === 'UNRESOLVED';
+                    const valDiff = calculateValueDifference(r.original_value, r.final_value);
 
                     return (
                       <tr
@@ -828,6 +893,11 @@ export const ReconstructionPage: React.FC = () => {
                           ) : (
                             <span className="text-slate-300">{r.final_value?.toFixed(3)}</span>
                           )}
+                        </td>
+                        <td className="py-3 px-4">
+                          <span className={`px-2 py-0.5 rounded font-mono text-[11px] font-bold border ${valDiff.badgeColor}`}>
+                            {valDiff.deltaFormatted} {valDiff.percentChange !== null ? `(${valDiff.percentFormatted})` : ''}
+                          </span>
                         </td>
                         <td className="py-3 px-4">
                           <StatusBadge status={r.status} size="sm" />
@@ -970,6 +1040,118 @@ export const ReconstructionPage: React.FC = () => {
                 </p>
               </div>
             </div>
+
+            {/* SECTION: Rectification Analysis, Value Difference & Field Instructions */}
+            {(() => {
+              const valDiff = calculateValueDifference(
+                inspectedRecord.original_value,
+                inspectedRecord.final_value
+              );
+              const remediation = getRemediationProtocol(
+                inspectedRecord.sensor_column,
+                inspectedRecord.method,
+                inspectedRecord.original_value,
+                inspectedRecord.final_value
+              );
+
+              return (
+                <div className="space-y-4 p-4 rounded-2xl bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 border border-cyan-500/30 shadow-lg">
+                  <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                    <div className="flex items-center gap-2">
+                      <Sparkles className="w-4 h-4 text-cyan-400" />
+                      <h4 className="text-xs font-mono font-bold text-slate-100 uppercase tracking-wider">
+                        Signal Rectification Analysis & Value Difference (Δ)
+                      </h4>
+                    </div>
+                    <span className={`px-2.5 py-0.5 rounded text-[10px] font-mono font-bold border ${valDiff.badgeColor}`}>
+                      {valDiff.adjustmentType}
+                    </span>
+                  </div>
+
+                  {/* 3-Way Value Breakdown Cards */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 font-mono text-xs">
+                    <div className="p-3 rounded-xl bg-slate-900/90 border border-slate-800">
+                      <span className="text-[10px] text-slate-500 block uppercase">Raw Physical Reading</span>
+                      <span className="font-bold text-cyan-300 text-base">{valDiff.originalFormatted}</span>
+                      <span className="text-[10px] text-slate-500 block mt-0.5 font-sans">Immutable raw data</span>
+                    </div>
+                    <div className="p-3 rounded-xl bg-slate-900/90 border border-slate-800">
+                      <span className="text-[10px] text-emerald-400 block uppercase">Committed Final Reading</span>
+                      <span className="font-bold text-emerald-300 text-base">{valDiff.repairedFormatted}</span>
+                      <span className="text-[10px] text-slate-500 block mt-0.5 font-sans">
+                        {inspectedRecord.status === 'CORRECTED' ? 'Repaired telemetry' : 'Holding raw'}
+                      </span>
+                    </div>
+                    <div className="p-3 rounded-xl bg-slate-900/90 border border-amber-500/30">
+                      <span className="text-[10px] text-amber-400 block uppercase">Value Differed (Δ Delta)</span>
+                      <span className="font-bold text-amber-300 text-base">
+                        {valDiff.deltaFormatted}{' '}
+                        <span className="text-xs font-normal text-amber-400/80">({valDiff.percentFormatted})</span>
+                      </span>
+                      <span className="text-[10px] text-amber-400/80 block mt-0.5 font-sans">Corrective deviation</span>
+                    </div>
+                  </div>
+
+                  <p className="text-xs text-slate-300 font-sans leading-relaxed bg-slate-900/60 p-3 rounded-xl border border-slate-800/80">
+                    {valDiff.summaryText}
+                  </p>
+
+                  {/* Rectification Method Breakdown */}
+                  <div className="p-3.5 rounded-xl bg-slate-950/80 border border-slate-800 space-y-1.5">
+                    <div className="flex items-center gap-2">
+                      <Wrench className="w-4 h-4 text-amber-400" />
+                      <span className="text-xs font-mono font-bold text-slate-200">
+                        Remediation Algorithm: {remediation.methodName}
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-400 font-sans leading-relaxed">
+                      {remediation.methodDescription}
+                    </p>
+                  </div>
+
+                  {/* Actionable Problem Solving Instructions */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+                    {/* Digital Software Fix */}
+                    <div className="p-3.5 rounded-xl bg-slate-950/90 border border-slate-800 space-y-2">
+                      <span className="font-mono text-[11px] font-bold text-cyan-400 uppercase tracking-wider block flex items-center gap-1.5">
+                        <ShieldCheck className="w-3.5 h-3.5 text-cyan-400" />
+                        1. Digital Software Healing Protocol
+                      </span>
+                      <ul className="space-y-1.5 text-slate-300 font-sans text-[11px]">
+                        {remediation.digitalFixSteps.map((step, idx) => (
+                          <li key={idx} className="flex items-start gap-1.5">
+                            <span className="font-mono font-bold text-cyan-400 shrink-0">{idx + 1}.</span>
+                            <span>{step}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+
+                    {/* Physical Field Action */}
+                    <div className="p-3.5 rounded-xl bg-slate-950/90 border border-slate-800 space-y-2">
+                      <span className="font-mono text-[11px] font-bold text-amber-400 uppercase tracking-wider block flex items-center gap-1.5">
+                        <Wrench className="w-3.5 h-3.5 text-amber-400" />
+                        2. Field Engineering Maintenance Action
+                      </span>
+                      <ul className="space-y-1.5 text-slate-300 font-sans text-[11px]">
+                        {remediation.fieldEngineeringSteps.map((step, idx) => (
+                          <li key={idx} className="flex items-start gap-1.5">
+                            <span className="font-mono font-bold text-amber-400 shrink-0">{idx + 1}.</span>
+                            <span>{step}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+
+                  {/* Safety Notice */}
+                  <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/30 text-[11px] text-amber-200 font-sans flex items-start gap-2">
+                    <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                    <span>{remediation.safetyNotice}</span>
+                  </div>
+                </div>
+              );
+            })()}
 
             {/* Method Explanation & Abstention Notice */}
             <div className="p-4 bg-slate-950/70 border border-slate-800 rounded-xl space-y-2 text-xs">

@@ -5,3 +5,4 @@ export * from './anomaly';
 export * from './reconstruction';
 export * from './audit';
 export * from './evaluation';
+export * from './threshold';

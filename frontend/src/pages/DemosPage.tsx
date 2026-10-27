@@ -11,7 +11,10 @@ import {
   Search,
   Database,
   RefreshCw,
+  Wrench,
+  TrendingDown,
 } from 'lucide-react';
+import { calculateValueDifference } from '../utils/remediationGuide';
 import { PageHeader } from '../components/common/PageHeader';
 import { Card, CardHeader, CardContent } from '../components/common/Card';
 import { Button } from '../components/common/Button';
@@ -662,6 +665,86 @@ export const DemosPage: React.FC = () => {
             </Card>
           </div>
 
+          {/* Judges Quick Reference Guide: How Faults Are Solved & Rectified */}
+          <Card className="border-cyan-500/30 bg-gradient-to-br from-slate-900/90 via-slate-950 to-slate-900 shadow-xl">
+            <CardHeader
+              title="Judges & Operators Guide: How KINTSUGI Solves & Rectifies Industrial Telemetry"
+              subtitle="Algorithmic rectification method selection, value difference (Δ) quantification, and dual-track remediation instructions."
+              icon={Sparkles}
+            />
+            <CardContent className="space-y-4">
+              {/* 3 Core Methods Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div className="p-3.5 rounded-xl bg-slate-950 border border-cyan-500/30 space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Wrench className="w-4 h-4 text-cyan-400" />
+                    <span className="font-mono text-xs font-bold text-cyan-300">
+                      1. Temporal Linear Interpolation
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-slate-300 font-sans leading-relaxed">
+                    <strong>How it solves:</strong> Reconstructs momentary thermal/vibration excursions using the rate-of-change vector between nearest valid chronologically bounded neighbors without extrapolation.
+                  </p>
+                  <span className="inline-block text-[10px] font-mono text-cyan-400 bg-cyan-500/10 px-2 py-0.5 rounded border border-cyan-500/20">
+                    Used on: Row 12 (Temp Spike) & Rows 24-26 (Comms Gap)
+                  </span>
+                </div>
+
+                <div className="p-3.5 rounded-xl bg-slate-950 border border-amber-500/30 space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Activity className="w-4 h-4 text-amber-400" />
+                    <span className="font-mono text-xs font-bold text-amber-300">
+                      2. Rolling Median Filtering
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-slate-300 font-sans leading-relaxed">
+                    <strong>How it solves:</strong> Filters non-Gaussian transducer cavitation or electromagnetic noise bursts using centered temporal median with 50% breakdown point immunity.
+                  </p>
+                  <span className="inline-block text-[10px] font-mono text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">
+                    Used on: Row 38 (Feed Pressure Glitch)
+                  </span>
+                </div>
+
+                <div className="p-3.5 rounded-xl bg-slate-950 border border-rose-500/30 space-y-2">
+                  <div className="flex items-center gap-2">
+                    <ShieldCheck className="w-4 h-4 text-rose-400" />
+                    <span className="font-mono text-xs font-bold text-rose-300">
+                      3. Conservative Abstention
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-slate-300 font-sans leading-relaxed">
+                    <strong>How it solves:</strong> When pre-fault boundary points are missing (Row 0) or evidence is insufficient, KINTSUGI strictly refuses to hallucinate data, preserving the raw value.
+                  </p>
+                  <span className="inline-block text-[10px] font-mono text-rose-400 bg-rose-500/10 px-2 py-0.5 rounded border border-rose-500/20">
+                    Used on: Row 0 (Missing Boundary Neighbor)
+                  </span>
+                </div>
+              </div>
+
+              {/* How Values Differ & Dual-Track Instructions */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs bg-slate-950/70 p-3.5 rounded-xl border border-slate-800">
+                <div className="space-y-1">
+                  <span className="font-mono font-bold text-slate-200 text-[11px] flex items-center gap-1.5">
+                    <TrendingDown className="w-3.5 h-3.5 text-cyan-400" />
+                    How Values Differ (Δ Delta Formula):
+                  </span>
+                  <p className="text-slate-400 text-[11px] leading-relaxed">
+                    <code className="text-cyan-300 font-mono">Δ = Repaired Committed - Raw Corrupted</code>. In Row 12, the raw reading of <code className="text-rose-300 font-mono">158.42°C</code> differed by <code className="text-amber-300 font-mono">Δ -91.28°C (-57.6%)</code> to restore the true physical baseline of <code className="text-emerald-300 font-mono">67.14°C</code>.
+                  </p>
+                </div>
+                <div className="space-y-1">
+                  <span className="font-mono font-bold text-slate-200 text-[11px] flex items-center gap-1.5">
+                    <Wrench className="w-3.5 h-3.5 text-amber-400" />
+                    Dual-Track Operator Instructions:
+                  </span>
+                  <p className="text-slate-400 text-[11px] leading-relaxed">
+                    <strong>Digital:</strong> Seamless telemetry healing for SCADA/DCS loop controllers. <strong>Physical:</strong> Actionable field checklists (RTD terminal check, accelerometer torquing, manifold line bleeding).
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
           {/* Results Comparison Table */}
           <Card>
             <CardHeader
@@ -731,6 +814,7 @@ export const DemosPage: React.FC = () => {
                       <th className="px-3 py-2.5 text-right">Raw Original</th>
                       <th className="px-3 py-2.5 text-right">Proposed Value</th>
                       <th className="px-3 py-2.5 text-right">Final Value</th>
+                      <th className="px-3 py-2.5 text-center">Value Differed (Δ)</th>
                       <th className="px-3 py-2.5 text-center">Status</th>
                       <th className="px-3 py-2.5">Method</th>
                       <th className="px-3 py-2.5 text-center">Evidence Score</th>
@@ -740,7 +824,7 @@ export const DemosPage: React.FC = () => {
                   <tbody className="divide-y divide-slate-800/60 font-mono">
                     {filteredRecords.length === 0 ? (
                       <tr>
-                        <td colSpan={9} className="px-4 py-8 text-center text-slate-500">
+                        <td colSpan={10} className="px-4 py-8 text-center text-slate-500">
                           No observation records matching current filter.
                         </td>
                       </tr>
@@ -748,6 +832,7 @@ export const DemosPage: React.FC = () => {
                       filteredRecords.map((r) => {
                         const isSpikeRow = r.source_row_index === 12 && r.sensor_column === 'temperature_bearing_c';
                         const isBoundaryRow = r.source_row_index === 0;
+                        const valDiff = calculateValueDifference(r.original_value, r.final_value);
 
                         return (
                           <tr
@@ -786,6 +871,11 @@ export const DemosPage: React.FC = () => {
                               ) : (
                                 r.final_value.toFixed(2)
                               )}
+                            </td>
+                            <td className="px-3 py-2 text-center">
+                              <span className={`px-2 py-0.5 rounded font-mono text-[11px] font-bold border ${valDiff.badgeColor}`}>
+                                {valDiff.deltaFormatted} {valDiff.percentChange !== null ? `(${valDiff.percentFormatted})` : ''}
+                              </span>
                             </td>
                             <td className="px-3 py-2 text-center">
                               <StatusBadge status={r.status} />

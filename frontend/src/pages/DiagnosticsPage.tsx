@@ -11,7 +11,9 @@ import {
   Wrench,
   Lock,
   HelpCircle,
+  Sliders,
 } from 'lucide-react';
+import { useRouter } from '../router';
 import { PageHeader } from '../components/common/PageHeader';
 import { Card, CardHeader, CardContent } from '../components/common/Card';
 import { Button } from '../components/common/Button';
@@ -21,6 +23,7 @@ import { pipelineService } from '../services/pipelineService';
 import { reconstructionService } from '../services/reconstructionService';
 import { evaluationService } from '../services/evaluationService';
 import { auditService } from '../services/auditService';
+import { thresholdService } from '../services/thresholdService';
 import type { HealthResponse } from '../types/api';
 import type { HashChainVerificationResponse } from '../types/audit';
 
@@ -37,6 +40,7 @@ interface DiagnosticSummary {
 }
 
 export const DiagnosticsPage: React.FC = () => {
+  const { navigate } = useRouter();
   const [diagnostics, setDiagnostics] = useState<DiagnosticSummary>({
     health: null,
     latencyMs: null,
@@ -50,6 +54,7 @@ export const DiagnosticsPage: React.FC = () => {
   });
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [thresholdPolicy] = useState(() => thresholdService.getStoredPolicy());
 
   const fetchDiagnostics = useCallback(async () => {
     setIsLoading(true);
@@ -118,6 +123,25 @@ export const DiagnosticsPage: React.FC = () => {
         hash_chain_valid: diagnostics.auditVerification?.is_valid ?? false,
         total_events: diagnostics.auditEventCount,
         verified_at: diagnostics.auditVerification?.verified_at ?? null,
+      },
+      operational_thresholds_policy: {
+        version: thresholdPolicy.version,
+        managed_by_operator: thresholdPolicy.operator,
+        last_updated: thresholdPolicy.lastSavedAt,
+        active_unit_thresholds: thresholdPolicy.thresholds
+          .filter((t) => t.includeInReports)
+          .map((t) => ({
+            name: t.name,
+            category: t.category,
+            unit: t.unit,
+            target_nominal: t.nominalValue,
+            critical_low_trip: t.criticalLow,
+            warning_low: t.warningLow,
+            warning_high: t.warningHigh,
+            critical_high_trip: t.criticalHigh,
+            control_action: t.controlAction,
+            standard_reference: t.standardReference,
+          })),
       },
       integrity_guarantees: [
         'Raw telemetry readings are permanently immutable and preserved.',
@@ -369,6 +393,64 @@ export const DiagnosticsPage: React.FC = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Panel 3: Active Human-Managed Operational Thresholds */}
+      <Card>
+        <CardHeader
+          title="Human-Configured Operational Thresholds & Safety Limits"
+          subtitle="Supervisory boundary parameters currently active in report generation and real-time control actions"
+          icon={Sliders}
+          badge={
+            <Button
+              variant="outline"
+              size="sm"
+              icon={Sliders}
+              onClick={() => navigate('/settings')}
+            >
+              Configure in Settings
+            </Button>
+          }
+        />
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {thresholdPolicy.thresholds
+              .filter((t) => t.includeInReports)
+              .map((unit) => (
+                <div
+                  key={unit.id}
+                  className="p-4 rounded-xl bg-stone-50 border border-stone-200/90 space-y-2 text-xs"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-stone-900">{unit.name}</span>
+                    <span className="font-mono text-[10px] font-semibold px-2 py-0.5 rounded bg-white text-stone-700 border border-stone-200">
+                      {unit.unit}
+                    </span>
+                  </div>
+                  <div className="space-y-1 font-mono text-[11px]">
+                    <div className="flex items-center justify-between text-stone-600">
+                      <span>Nominal Target:</span>
+                      <span className="text-emerald-700 font-semibold">{unit.nominalValue} {unit.unit}</span>
+                    </div>
+                    <div className="flex items-center justify-between text-amber-800">
+                      <span>Warning Window:</span>
+                      <span>{unit.warningLow} – {unit.warningHigh} {unit.unit}</span>
+                    </div>
+                    <div className="flex items-center justify-between text-rose-800 font-semibold">
+                      <span>Critical Trip:</span>
+                      <span>&lt; {unit.criticalLow} | &gt; {unit.criticalHigh} {unit.unit}</span>
+                    </div>
+                  </div>
+                  <div className="pt-2 border-t border-stone-200/80 text-[10px] text-stone-500 flex items-center justify-between">
+                    <span className="truncate max-w-[170px]" title={unit.controlAction}>
+                      Action: {unit.controlAction.replace(/_/g, ' ')}
+                    </span>
+                    <span className="text-emerald-700 font-semibold">Active in Report</span>
+                  </div>
+                </div>
+              ))}
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import {
   ShieldAlert,
   LineChart,
@@ -13,7 +13,18 @@ import {
   Database,
   X,
   HelpCircle,
+  ZoomIn,
+  ZoomOut,
+  RotateCcw,
+  ChevronLeft,
+  ChevronRight,
+  Wrench,
+  ShieldCheck,
+  ArrowRight,
+  Sparkles,
 } from 'lucide-react';
+import { useRouter } from '../router';
+import { calculateValueDifference, getRemediationProtocol } from '../utils/remediationGuide';
 import { PageHeader } from '../components/common/PageHeader';
 import { Card, CardHeader, CardContent } from '../components/common/Card';
 import { EmptyState } from '../components/common/EmptyState';
@@ -29,6 +40,8 @@ import type {
 } from '../types/anomaly';
 
 export const AnomaliesPage: React.FC = () => {
+  const { navigate } = useRouter();
+
   // Pipelines and datasets state
   const [pipelines, setPipelines] = useState<PipelineConfig[]>([]);
   const [datasets, setDatasets] = useState<DatasetMetadata[]>([]);
@@ -64,6 +77,59 @@ export const AnomaliesPage: React.FC = () => {
     timestamp?: string;
     anomaly?: AnomalyRecord;
   } | null>(null);
+
+  // Side Zoom & Pan state for time-series visualization canvas
+  const [zoomLevel, setZoomLevel] = useState<number>(1);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [isDragging, setIsDragging] = useState<boolean>(false);
+  const [dragStartX, setDragStartX] = useState<number>(0);
+  const [scrollStartX, setScrollStartX] = useState<number>(0);
+
+  const handleZoomIn = () => {
+    setHoveredPoint(null);
+    setZoomLevel((prev) => Math.min(Number((prev + 0.5).toFixed(2)), 6));
+  };
+
+  const handleZoomOut = () => {
+    setHoveredPoint(null);
+    setZoomLevel((prev) => Math.max(Number((prev - 0.5).toFixed(2)), 1));
+  };
+
+  const handleResetZoom = () => {
+    setHoveredPoint(null);
+    setZoomLevel(1);
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollTo({ left: 0, behavior: 'smooth' });
+    }
+  };
+
+  const handlePan = (direction: 'left' | 'right') => {
+    if (!scrollContainerRef.current) return;
+    const scrollAmount = 300;
+    scrollContainerRef.current.scrollBy({
+      left: direction === 'left' ? -scrollAmount : scrollAmount,
+      behavior: 'smooth',
+    });
+  };
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (zoomLevel <= 1 || !scrollContainerRef.current) return;
+    setIsDragging(true);
+    setDragStartX(e.pageX - scrollContainerRef.current.offsetLeft);
+    setScrollStartX(scrollContainerRef.current.scrollLeft);
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging || !scrollContainerRef.current) return;
+    e.preventDefault();
+    const x = e.pageX - scrollContainerRef.current.offsetLeft;
+    const walk = (x - dragStartX) * 1.5;
+    scrollContainerRef.current.scrollLeft = scrollStartX - walk;
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
 
   // 1. Load pipelines and datasets on mount
   const loadCatalogs = useCallback(async () => {
@@ -116,23 +182,91 @@ export const AnomaliesPage: React.FC = () => {
     return map;
   }, [datasets]);
 
-  // Unconfigured datasets that can be auto-provisioned
-  const unconfiguredDatasets = useMemo(() => {
-    const configuredIds = new Set(pipelines.map((p) => p.dataset_id));
-    return datasets.filter((ds) => !configuredIds.has(ds.dataset_id));
-  }, [datasets, pipelines]);
-
-  // Sorted pipelines showing recent/active datasets first
+  // Deduplicated & sorted pipelines: each dataset filename appears exactly ONCE
   const sortedPipelines = useMemo(() => {
     const activeDsId = localStorage.getItem('kintsugi_active_dataset_id');
-    return [...pipelines].sort((a, b) => {
+
+    // Group pipelines by dataset filename (lowercase) or fallback to configuration_name
+    const fileGroups = new Map<string, PipelineConfig[]>();
+    for (const pipe of pipelines) {
+      const ds = datasetMap.get(pipe.dataset_id);
+      const fileKey = (ds?.filename || pipe.configuration_name).trim().toLowerCase();
+      if (!fileGroups.has(fileKey)) {
+        fileGroups.set(fileKey, []);
+      }
+      fileGroups.get(fileKey)!.push(pipe);
+    }
+
+    // Select exactly one pipeline config per unique file
+    const deduplicated: PipelineConfig[] = [];
+    for (const group of fileGroups.values()) {
+      // 1. Keep currently selected configuration if it belongs to this file
+      let chosen = group.find((p) => p.configuration_id === selectedPipelineId);
+      // 2. Otherwise prioritize active dataset from localStorage/navigation
+      if (!chosen && activeDsId) {
+        chosen = group.find((p) => p.dataset_id === activeDsId);
+      }
+      // 3. Otherwise pick the newest pipeline config (latest created_at or last in list)
+      if (!chosen) {
+        chosen = [...group].sort((a, b) => {
+          const timeA = new Date(a.created_at || 0).getTime();
+          const timeB = new Date(b.created_at || 0).getTime();
+          return timeB - timeA;
+        })[0];
+      }
+      if (chosen) {
+        deduplicated.push(chosen);
+      }
+    }
+
+    // Sort: active file first, then alphabetical by file name
+    return deduplicated.sort((a, b) => {
       if (a.dataset_id === activeDsId) return -1;
       if (b.dataset_id === activeDsId) return 1;
       const nameA = datasetMap.get(a.dataset_id)?.filename || a.configuration_name;
       const nameB = datasetMap.get(b.dataset_id)?.filename || b.configuration_name;
-      return nameA.localeCompare(nameB);
+      return nameA.localeCompare(nameB, undefined, { sensitivity: 'base' });
     });
-  }, [pipelines, datasetMap]);
+  }, [pipelines, datasetMap, selectedPipelineId]);
+
+  // Unconfigured datasets that can be auto-provisioned (also deduplicated by filename)
+  const unconfiguredDatasets = useMemo(() => {
+    const configuredFilenames = new Set(
+      sortedPipelines.map((p) => {
+        const ds = datasetMap.get(p.dataset_id);
+        return (ds?.filename || '').trim().toLowerCase();
+      }).filter(Boolean)
+    );
+
+    const activeDsId = localStorage.getItem('kintsugi_active_dataset_id');
+    const unconfiguredByFilename = new Map<string, DatasetMetadata>();
+
+    for (const ds of datasets) {
+      const fileKey = ds.filename.trim().toLowerCase();
+      // Exclude files that already have a pipeline configured
+      if (configuredFilenames.has(fileKey)) {
+        continue;
+      }
+      // Keep active dataset or newest upload
+      if (!unconfiguredByFilename.has(fileKey) || ds.dataset_id === activeDsId) {
+        unconfiguredByFilename.set(fileKey, ds);
+      }
+    }
+
+    return Array.from(unconfiguredByFilename.values()).sort((a, b) =>
+      a.filename.localeCompare(b.filename, undefined, { sensitivity: 'base' })
+    );
+  }, [datasets, sortedPipelines, datasetMap]);
+
+  // Ensure selectedPipelineId points to a valid pipeline in deduplicated list
+  useEffect(() => {
+    if (sortedPipelines.length > 0) {
+      const exists = sortedPipelines.some((p) => p.configuration_id === selectedPipelineId);
+      if (!exists && !selectedPipelineId.startsWith('auto_create:')) {
+        setSelectedPipelineId(sortedPipelines[0].configuration_id);
+      }
+    }
+  }, [sortedPipelines, selectedPipelineId]);
 
   // Handle pipeline selection including on-the-fly auto-configuration
   const handleSelectPipelineOrDataset = async (value: string) => {
@@ -311,10 +445,11 @@ export const AnomaliesPage: React.FC = () => {
     return map;
   }, [anomalies, activeSensorView]);
 
-  // SVG Scalers
-  const { minVal, maxVal, svgPath, renderedPoints } = useMemo(() => {
+  // SVG Scalers taking horizontal zoomLevel into account
+  const { minVal, maxVal, svgPath, renderedPoints, chartWidth } = useMemo(() => {
+    const width = Math.round(1000 * zoomLevel);
     if (chartPoints.length === 0) {
-      return { minVal: 0, maxVal: 100, svgPath: '', renderedPoints: [] };
+      return { minVal: 0, maxVal: 100, svgPath: '', renderedPoints: [], chartWidth: width };
     }
 
     const values = chartPoints.map((p) => p.value);
@@ -328,7 +463,6 @@ export const AnomaliesPage: React.FC = () => {
     min -= pad;
     max += pad;
 
-    const width = 1000;
     const height = 240;
     const margin = { top: 20, right: 30, bottom: 30, left: 60 };
     const innerW = width - margin.left - margin.right;
@@ -354,8 +488,8 @@ export const AnomaliesPage: React.FC = () => {
       return idx === 0 ? `M ${pt.x} ${pt.y}` : `${acc} L ${pt.x} ${pt.y}`;
     }, '');
 
-    return { minVal: min, maxVal: max, svgPath: path, renderedPoints: points };
-  }, [chartPoints, anomaliesByRow]);
+    return { minVal: min, maxVal: max, svgPath: path, renderedPoints: points, chartWidth: width };
+  }, [chartPoints, anomaliesByRow, zoomLevel]);
 
   return (
     <div className="space-y-8">
@@ -420,25 +554,31 @@ export const AnomaliesPage: React.FC = () => {
                     onChange={(e) => handleSelectPipelineOrDataset(e.target.value)}
                     className="w-full bg-white border border-stone-300 rounded-xl px-3.5 py-2.5 text-xs text-stone-900 font-medium shadow-2xs focus:outline-hidden focus:border-[#EE602C] focus:ring-2 focus:ring-[#EE602C]/20 transition-all cursor-pointer"
                   >
-                    <optgroup label="Ready for Anomaly Detection (Datasets & Pipelines)">
+                    <optgroup label={`Ready for Anomaly Detection (${sortedPipelines.length} datasets)`}>
                       {sortedPipelines.map((p) => {
                         const ds = datasetMap.get(p.dataset_id);
+                        const fileName = ds?.filename || '';
+                        const labelText = fileName
+                          ? p.configuration_name.toLowerCase().includes(fileName.toLowerCase())
+                            ? `📁 ${p.configuration_name}`
+                            : `📁 ${fileName} — ${p.configuration_name}`
+                          : p.configuration_name;
                         return (
                           <option key={p.configuration_id} value={p.configuration_id} className="bg-white text-stone-900 font-medium">
-                            {ds ? `📁 ${ds.filename} — ${p.configuration_name}` : `${p.configuration_name} (${p.dataset_id})`}
+                            {labelText}
                           </option>
                         );
                       })}
                     </optgroup>
                     {unconfiguredDatasets.length > 0 && (
-                      <optgroup label="Custom Uploaded Datasets (Auto-Configure on Select)">
+                      <optgroup label={`Custom Uploaded Datasets (${unconfiguredDatasets.length} available)`}>
                         {unconfiguredDatasets.map((ds) => (
                           <option
                             key={`auto_create:${ds.dataset_id}`}
                             value={`auto_create:${ds.dataset_id}`}
                             className="bg-amber-50 text-amber-900 font-medium"
                           >
-                            ⚡ {ds.filename} ({ds.dataset_id}) — Auto-Setup Pipeline
+                            ⚡ {ds.filename} — Auto-Setup Pipeline
                           </option>
                         ))}
                       </optgroup>
@@ -603,38 +743,67 @@ export const AnomaliesPage: React.FC = () => {
         />
         <CardContent>
           <div className="space-y-4">
-            {/* Sensor Channel Switcher Tabs */}
+            {/* Sensor Channel Switcher Tabs & Quick Zoom Presets */}
             {selectedPipeline && selectedPipeline.sensor_columns.length > 0 && (
-              <div className="flex items-center gap-2 overflow-x-auto pb-2 border-b border-slate-800/80">
-                <span className="text-[11px] font-mono text-slate-400 uppercase mr-1">Display Channel:</span>
-                {selectedPipeline.sensor_columns.map((col) => {
-                  const channelAnomalyCount = anomalies.filter((a) => a.sensor_column === col).length;
-                  const isActive = activeSensorView === col;
-                  return (
+              <div className="flex flex-wrap items-center justify-between gap-3 pb-2 border-b border-stone-200">
+                <div className="flex items-center gap-2 overflow-x-auto">
+                  <span className="text-[11px] font-mono text-stone-500 uppercase mr-1">Display Channel:</span>
+                  {selectedPipeline.sensor_columns.map((col) => {
+                    const channelAnomalyCount = anomalies.filter((a) => a.sensor_column === col).length;
+                    const isActive = activeSensorView === col;
+                    return (
+                      <button
+                        key={col}
+                        onClick={() => setActiveSensorView(col)}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-mono transition-all flex items-center gap-2 cursor-pointer ${
+                          isActive
+                            ? 'bg-[#EE602C] text-white shadow-xs font-semibold'
+                            : 'bg-white text-stone-800 hover:text-stone-950 hover:bg-stone-50 border border-stone-300 shadow-2xs'
+                        }`}
+                      >
+                        <span>{col}</span>
+                        {channelAnomalyCount > 0 && (
+                          <span
+                            className={`px-1.5 py-0.2 rounded-full text-[10px] font-semibold ${
+                              isActive
+                                ? 'bg-white/25 text-white'
+                                : 'bg-amber-100 text-amber-900 border border-amber-300'
+                            }`}
+                          >
+                            {channelAnomalyCount}
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Quick Zoom Presets */}
+                <div className="flex items-center gap-1.5 text-xs">
+                  <span className="text-[10px] font-mono text-stone-400 uppercase hidden sm:inline">Timeline Zoom:</span>
+                  {[
+                    { label: 'Fit (1x)', value: 1 },
+                    { label: '2x', value: 2 },
+                    { label: '3x', value: 3 },
+                    { label: '5x', value: 5 },
+                  ].map((p) => (
                     <button
-                      key={col}
-                      onClick={() => setActiveSensorView(col)}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-mono transition-all flex items-center gap-2 cursor-pointer ${
-                        isActive
-                          ? 'bg-[#EE602C] text-white shadow-xs font-semibold'
-                          : 'bg-white text-stone-800 hover:text-stone-950 hover:bg-stone-50 border border-stone-300 shadow-2xs'
+                      key={p.value}
+                      type="button"
+                      onClick={() => {
+                        setHoveredPoint(null);
+                        setZoomLevel(p.value);
+                      }}
+                      className={`px-2 py-1 rounded-lg font-mono text-[11px] font-semibold transition-all cursor-pointer ${
+                        zoomLevel === p.value
+                          ? 'bg-stone-900 text-white shadow-2xs'
+                          : 'bg-stone-100 text-stone-600 hover:bg-stone-200 border border-stone-200'
                       }`}
                     >
-                      <span>{col}</span>
-                      {channelAnomalyCount > 0 && (
-                        <span
-                          className={`px-1.5 py-0.2 rounded-full text-[10px] font-semibold ${
-                            isActive
-                              ? 'bg-white/25 text-white'
-                              : 'bg-amber-100 text-amber-900 border border-amber-300'
-                          }`}
-                        >
-                          {channelAnomalyCount}
-                        </span>
-                      )}
+                      {p.label}
                     </button>
-                  );
-                })}
+                  ))}
+                </div>
               </div>
             )}
 
@@ -653,53 +822,182 @@ export const AnomaliesPage: React.FC = () => {
               </div>
             ) : (
               <div className="relative border border-stone-200 rounded-2xl bg-white p-4 overflow-hidden">
-                {/* SVG Time Series Rendering */}
-                <div className="w-full overflow-x-auto">
-                  <svg
-                    viewBox="0 0 1000 240"
-                    className="w-full h-[260px] min-w-[700px] overflow-visible select-none"
+                {/* Floating Side Zoom & Dezoom Controls Bar */}
+                <div
+                  className="absolute right-5 top-5 z-30 flex flex-col items-center bg-white/95 backdrop-blur-md border border-stone-300 rounded-2xl shadow-lg p-1.5 gap-1 select-none"
+                  title="Side Zoom & Navigation Controls"
+                >
+                  {/* Zoom In Button */}
+                  <button
+                    type="button"
+                    onClick={handleZoomIn}
+                    disabled={zoomLevel >= 6}
+                    title="Zoom In (+)"
+                    className="p-2 rounded-xl text-stone-700 hover:text-white hover:bg-[#EE602C] active:scale-95 disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-stone-700 transition-all cursor-pointer"
                   >
-                    {/* Background Grid Lines */}
-                    <line x1="60" y1="20" x2="970" y2="20" stroke="#1e293b" strokeDasharray="4 4" />
-                    <line x1="60" y1="75" x2="970" y2="75" stroke="#1e293b" strokeDasharray="4 4" />
-                    <line x1="60" y1="130" x2="970" y2="130" stroke="#1e293b" strokeDasharray="4 4" />
-                    <line x1="60" y1="185" x2="970" y2="185" stroke="#1e293b" strokeDasharray="4 4" />
-                    <line x1="60" y1="210" x2="970" y2="210" stroke="#334155" />
+                    <ZoomIn className="w-4 h-4" />
+                  </button>
 
-                    {/* Y-Axis Value Labels */}
-                    <text x="50" y="25" textAnchor="end" fill="#64748b" fontSize="10" fontFamily="monospace">
-                      {maxVal.toFixed(1)}
-                    </text>
-                    <text x="50" y="117" textAnchor="end" fill="#64748b" fontSize="10" fontFamily="monospace">
-                      {((maxVal + minVal) / 2).toFixed(1)}
-                    </text>
-                    <text x="50" y="210" textAnchor="end" fill="#64748b" fontSize="10" fontFamily="monospace">
-                      {minVal.toFixed(1)}
-                    </text>
+                  {/* Zoom Level Indicator */}
+                  <span
+                    className="font-mono text-[10px] font-bold text-stone-700 px-1.5 py-0.5 rounded-md bg-stone-100 border border-stone-200 text-center min-w-[38px] cursor-default"
+                    title={`Current Zoom: ${Math.round(zoomLevel * 100)}%`}
+                  >
+                    {Math.round(zoomLevel * 100)}%
+                  </span>
 
-                    {/* Sensor Channel Telemetry Line */}
-                    <path
-                      d={svgPath}
-                      fill="none"
-                      stroke="#06b6d4"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      className="opacity-80"
-                    />
+                  {/* Zoom Out Button (Dezoom) */}
+                  <button
+                    type="button"
+                    onClick={handleZoomOut}
+                    disabled={zoomLevel <= 1}
+                    title="Zoom Out / Dezoom (-)"
+                    className="p-2 rounded-xl text-stone-700 hover:text-white hover:bg-[#EE602C] active:scale-95 disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-stone-700 transition-all cursor-pointer"
+                  >
+                    <ZoomOut className="w-4 h-4" />
+                  </button>
 
-                    {/* Telemetry Points and Anomaly Markers */}
-                    {renderedPoints.map((pt, i) => {
-                      const isAnomaly = !!pt.anomaly;
-                      const isConsensus = pt.anomaly?.consensus === 'MULTI_DETECTOR';
-                      const isHovered = hoveredPoint?.index === pt.index;
+                  {/* Reset to 100% (Fit) */}
+                  <button
+                    type="button"
+                    onClick={handleResetZoom}
+                    title="Reset Zoom to 100% (Fit full timeline)"
+                    className={`p-2 rounded-xl text-stone-500 hover:text-stone-900 hover:bg-stone-100 active:scale-95 transition-all cursor-pointer ${
+                      zoomLevel === 1 ? 'opacity-40' : 'text-[#EE602C] font-semibold'
+                    }`}
+                  >
+                    <RotateCcw className="w-3.5 h-3.5" />
+                  </button>
 
-                      if (isAnomaly) {
+                  {/* Pan Controls (Active when zoomed) */}
+                  {zoomLevel > 1 && (
+                    <>
+                      <div className="w-5 h-px bg-stone-200 my-0.5" />
+                      <button
+                        type="button"
+                        onClick={() => handlePan('left')}
+                        title="Pan Left (◀)"
+                        className="p-1.5 rounded-lg text-stone-600 hover:text-stone-900 hover:bg-stone-100 active:scale-95 transition-all cursor-pointer"
+                      >
+                        <ChevronLeft className="w-4 h-4" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handlePan('right')}
+                        title="Pan Right (▶)"
+                        className="p-1.5 rounded-lg text-stone-600 hover:text-stone-900 hover:bg-stone-100 active:scale-95 transition-all cursor-pointer"
+                      >
+                        <ChevronRight className="w-4 h-4" />
+                      </button>
+                    </>
+                  )}
+                </div>
+
+                {/* SVG Time Series Rendering Container with Drag-to-Pan */}
+                <div
+                  ref={scrollContainerRef}
+                  onMouseDown={handleMouseDown}
+                  onMouseMove={handleMouseMove}
+                  onMouseUp={handleMouseUp}
+                  onMouseLeave={handleMouseUp}
+                  className={`w-full overflow-x-auto select-none ${
+                    zoomLevel > 1 ? 'cursor-grab active:cursor-grabbing' : ''
+                  }`}
+                >
+                  <div style={{ width: `${chartWidth}px`, position: 'relative' }}>
+                    <svg
+                      viewBox={`0 0 ${chartWidth} 240`}
+                      style={{ width: `${chartWidth}px`, height: '260px' }}
+                      className="overflow-visible select-none"
+                    >
+                      {/* Background Grid Lines */}
+                      <line x1="60" y1="20" x2={chartWidth - 30} y2="20" stroke="#1e293b" strokeDasharray="4 4" />
+                      <line x1="60" y1="75" x2={chartWidth - 30} y2="75" stroke="#1e293b" strokeDasharray="4 4" />
+                      <line x1="60" y1="130" x2={chartWidth - 30} y2="130" stroke="#1e293b" strokeDasharray="4 4" />
+                      <line x1="60" y1="185" x2={chartWidth - 30} y2="185" stroke="#1e293b" strokeDasharray="4 4" />
+                      <line x1="60" y1="210" x2={chartWidth - 30} y2="210" stroke="#334155" />
+
+                      {/* Y-Axis Value Labels */}
+                      <text x="50" y="25" textAnchor="end" fill="#64748b" fontSize="10" fontFamily="monospace">
+                        {maxVal.toFixed(1)}
+                      </text>
+                      <text x="50" y="117" textAnchor="end" fill="#64748b" fontSize="10" fontFamily="monospace">
+                        {((maxVal + minVal) / 2).toFixed(1)}
+                      </text>
+                      <text x="50" y="210" textAnchor="end" fill="#64748b" fontSize="10" fontFamily="monospace">
+                        {minVal.toFixed(1)}
+                      </text>
+
+                      {/* Sensor Channel Telemetry Line */}
+                      <path
+                        d={svgPath}
+                        fill="none"
+                        stroke="#06b6d4"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        className="opacity-80"
+                      />
+
+                      {/* Telemetry Points and Anomaly Markers */}
+                      {renderedPoints.map((pt, i) => {
+                        const isAnomaly = !!pt.anomaly;
+                        const isConsensus = pt.anomaly?.consensus === 'MULTI_DETECTOR';
+                        const isHovered = hoveredPoint?.index === pt.index;
+
+                        if (isAnomaly) {
+                          return (
+                            <g
+                              key={i}
+                              className="cursor-pointer"
+                              onClick={() => pt.anomaly && setInspectedAnomaly(pt.anomaly)}
+                              onMouseEnter={() =>
+                                setHoveredPoint({
+                                  x: pt.x,
+                                  y: pt.y,
+                                  index: pt.index,
+                                  value: pt.value,
+                                  timestamp: pt.timestamp,
+                                  anomaly: pt.anomaly,
+                                })
+                              }
+                              onMouseLeave={() => setHoveredPoint(null)}
+                            >
+                              {/* Stable transparent hit target circle (never scales, prevents mouse jitter) */}
+                              <circle
+                                cx={pt.x}
+                                cy={pt.y}
+                                r={14}
+                                fill="transparent"
+                              />
+                              {/* Outer Halo Aura (smooth in-place expansion) */}
+                              <circle
+                                cx={pt.x}
+                                cy={pt.y}
+                                r={isHovered ? (isConsensus ? 11 : 9) : (isConsensus ? 8 : 6)}
+                                fill={isConsensus ? '#ef4444' : '#f59e0b'}
+                                opacity={isHovered ? 0.45 : 0.22}
+                                className="pointer-events-none transition-all duration-150"
+                              />
+                              {/* Core Anomaly Dot */}
+                              <circle
+                                cx={pt.x}
+                                cy={pt.y}
+                                r={isHovered ? (isConsensus ? 6 : 5) : (isConsensus ? 4.5 : 3.5)}
+                                fill={isConsensus ? '#ef4444' : '#f59e0b'}
+                                stroke="#0f172a"
+                                strokeWidth={isHovered ? 2 : 1.5}
+                                className="pointer-events-none transition-all duration-150"
+                              />
+                            </g>
+                          );
+                        }
+
+                        // Render subtle nominal hover target for sparse points
                         return (
                           <g
                             key={i}
-                            className="cursor-pointer transition-transform hover:scale-125"
-                            onClick={() => pt.anomaly && setInspectedAnomaly(pt.anomaly)}
+                            className="cursor-pointer"
                             onMouseEnter={() =>
                               setHoveredPoint({
                                 x: pt.x,
@@ -707,101 +1005,73 @@ export const AnomaliesPage: React.FC = () => {
                                 index: pt.index,
                                 value: pt.value,
                                 timestamp: pt.timestamp,
-                                anomaly: pt.anomaly,
+                                anomaly: undefined,
                               })
                             }
                             onMouseLeave={() => setHoveredPoint(null)}
                           >
-                            {/* Outer Pulsing Aura */}
                             <circle
                               cx={pt.x}
                               cy={pt.y}
-                              r={isConsensus ? '9' : '7'}
-                              fill={isConsensus ? '#ef4444' : '#f59e0b'}
-                              opacity={isHovered ? '0.4' : '0.2'}
-                              className={isConsensus ? 'animate-pulse' : ''}
+                              r={10}
+                              fill="transparent"
                             />
-                            {/* Core Anomaly Dot */}
                             <circle
                               cx={pt.x}
                               cy={pt.y}
-                              r={isConsensus ? '5' : '4'}
-                              fill={isConsensus ? '#ef4444' : '#f59e0b'}
-                              stroke="#0f172a"
-                              strokeWidth="1.5"
+                              r={isHovered ? 4 : 3}
+                              fill="#06b6d4"
+                              opacity={isHovered ? 1 : 0}
+                              className="pointer-events-none transition-opacity duration-150"
                             />
                           </g>
                         );
-                      }
+                      })}
+                    </svg>
 
-                      // Render subtle nominal hover target for sparse points
-                      return (
-                        <circle
-                          key={i}
-                          cx={pt.x}
-                          cy={pt.y}
-                          r="3"
-                          fill="#06b6d4"
-                          opacity={isHovered ? '1' : '0'}
-                          className="cursor-pointer hover:opacity-100 transition-opacity"
-                          onMouseEnter={() =>
-                            setHoveredPoint({
-                              x: pt.x,
-                              y: pt.y,
-                              index: pt.index,
-                              value: pt.value,
-                              timestamp: pt.timestamp,
-                              anomaly: undefined,
-                            })
-                          }
-                          onMouseLeave={() => setHoveredPoint(null)}
-                        />
-                      );
-                    })}
-                  </svg>
-                </div>
-
-                {/* Interactive Tooltip Overlay */}
-                {hoveredPoint && (
-                  <div
-                    className="absolute z-20 pointer-events-none bg-slate-900 border border-slate-700 rounded-lg p-2.5 shadow-xl text-xs space-y-1 transform -translate-x-1/2 -translate-y-full mb-3"
-                    style={{
-                      left: `${Math.min(Math.max(hoveredPoint.x, 80), 920)}px`,
-                      top: `${Math.max(hoveredPoint.y, 40)}px`,
-                    }}
-                  >
-                    <div className="flex items-center justify-between gap-4 font-mono text-[11px] text-slate-400">
-                      <span>Row #{hoveredPoint.index}</span>
-                      {hoveredPoint.timestamp && <span>{hoveredPoint.timestamp}</span>}
-                    </div>
-                    <div className="font-mono text-sm font-bold text-slate-100">
-                      {activeSensorView}: {hoveredPoint.value.toFixed(4)}
-                    </div>
-                    {hoveredPoint.anomaly ? (
-                      <div className="pt-1 border-t border-slate-800 space-y-0.5">
-                        <div className="flex items-center gap-1.5 font-semibold text-amber-400">
-                          <AlertTriangle className="w-3 h-3" />
-                          <span>Flagged Anomaly ({hoveredPoint.anomaly.severity})</span>
+                    {/* Interactive Tooltip Overlay */}
+                    {hoveredPoint && (
+                      <div
+                        className="absolute z-20 pointer-events-none bg-slate-900 border border-slate-700 rounded-lg p-2.5 shadow-xl text-xs space-y-1 transform -translate-x-1/2 -translate-y-full mb-3"
+                        style={{
+                          left: `${Math.min(Math.max(hoveredPoint.x, 80), chartWidth - 80)}px`,
+                          top: `${Math.max(hoveredPoint.y, 40)}px`,
+                        }}
+                      >
+                        <div className="flex items-center justify-between gap-4 font-mono text-[11px] text-slate-400">
+                          <span>Row #{hoveredPoint.index}</span>
+                          {hoveredPoint.timestamp && <span>{hoveredPoint.timestamp}</span>}
                         </div>
-                        <div className="text-[10px] text-slate-300 font-mono">
-                          Detector: {hoveredPoint.anomaly.detector_name}
+                        <div className="font-mono text-sm font-bold text-slate-100">
+                          {activeSensorView}: {hoveredPoint.value.toFixed(4)}
                         </div>
-                        {hoveredPoint.anomaly.detector_score !== null && (
-                          <div className="text-[10px] text-slate-400 font-mono">
-                            Score: {hoveredPoint.anomaly.detector_score.toFixed(2)} (Distance Metric)
+                        {hoveredPoint.anomaly ? (
+                          <div className="pt-1 border-t border-slate-800 space-y-0.5">
+                            <div className="flex items-center gap-1.5 font-semibold text-amber-400">
+                              <AlertTriangle className="w-3 h-3" />
+                              <span>Flagged Anomaly ({hoveredPoint.anomaly.severity})</span>
+                            </div>
+                            <div className="text-[10px] text-slate-300 font-mono">
+                              Detector: {hoveredPoint.anomaly.detector_name}
+                            </div>
+                            {hoveredPoint.anomaly.detector_score !== null && (
+                              <div className="text-[10px] text-slate-400 font-mono">
+                                Score: {hoveredPoint.anomaly.detector_score.toFixed(2)} (Distance Metric)
+                              </div>
+                            )}
+                            <p className="text-[10px] text-slate-300 italic max-w-xs line-clamp-2">
+                              {hoveredPoint.anomaly.detection_reason}
+                            </p>
                           </div>
+                        ) : (
+                          <div className="text-[10px] text-emerald-400 font-mono">Nominal Observation</div>
                         )}
-                        <p className="text-[10px] text-slate-300 italic max-w-xs line-clamp-2">
-                          {hoveredPoint.anomaly.detection_reason}
-                        </p>
                       </div>
-                    ) : (
-                      <div className="text-[10px] text-emerald-400 font-mono">Nominal Observation</div>
                     )}
                   </div>
-                )}
+                </div>
 
-                {/* Legend Bar */}
+                {/* Legend Bar & Navigation Hint */}
                 <div className="mt-3 pt-3 border-t border-slate-900 flex flex-wrap items-center justify-between gap-3 text-xs text-slate-400">
                   <div className="flex items-center gap-4">
                     <div className="flex items-center gap-1.5">
@@ -817,8 +1087,13 @@ export const AnomaliesPage: React.FC = () => {
                       <span>Multi-Detector Consensus</span>
                     </div>
                   </div>
-                  <div className="text-[11px] font-mono text-slate-500">
-                    Click any anomaly marker to inspect detailed algorithmic metrics.
+                  <div className="flex items-center gap-3 text-[11px] font-mono text-slate-500">
+                    {zoomLevel > 1 && (
+                      <span className="text-amber-400 font-medium">
+                        Zoom Active ({Math.round(zoomLevel * 100)}%) — Click & drag or use side arrows to pan
+                      </span>
+                    )}
+                    <span>Click any anomaly marker to inspect detailed algorithmic metrics.</span>
                   </div>
                 </div>
               </div>
@@ -905,19 +1180,20 @@ export const AnomaliesPage: React.FC = () => {
                     <th className="py-3 px-3">Score</th>
                     <th className="py-3 px-3">Severity</th>
                     <th className="py-3 px-3">Reason Summary</th>
+                    <th className="py-3 px-3">Remediation Method & Target Δ</th>
                     <th className="py-3 px-3 text-right">Action</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-800/60 bg-slate-900/40">
                   {!activeRun ? (
                     <tr>
-                      <td colSpan={9} className="py-8 text-center text-slate-500 font-mono text-xs">
+                      <td colSpan={10} className="py-8 text-center text-slate-500 font-mono text-xs">
                         No detection run active. Run detection above to inspect suspicious telemetry points.
                       </td>
                     </tr>
                   ) : filteredAnomalies.length === 0 ? (
                     <tr>
-                      <td colSpan={9} className="py-8 text-center text-slate-400 font-mono text-xs">
+                      <td colSpan={10} className="py-8 text-center text-slate-400 font-mono text-xs">
                         <CheckCircle2 className="w-5 h-5 text-emerald-400 mx-auto mb-1.5" />
                         Run completed successfully — No anomalies detected under current filter thresholds.
                       </td>
@@ -933,6 +1209,12 @@ export const AnomaliesPage: React.FC = () => {
                           : anom.severity === 'MEDIUM'
                           ? 'bg-amber-500/10 text-amber-300 border-amber-500/30'
                           : 'bg-slate-800 text-slate-400 border-slate-700';
+
+                      const madDetail = anom.detector_details?.rolling_mad;
+                      const rowBaseline = (madDetail && madDetail.baseline !== null && madDetail.baseline !== undefined)
+                        ? madDetail.baseline
+                        : null;
+                      const rowDiff = calculateValueDifference(anom.original_value, rowBaseline);
 
                       return (
                         <tr
@@ -976,6 +1258,22 @@ export const AnomaliesPage: React.FC = () => {
                           <td className="py-2.5 px-3 text-slate-400 max-w-xs truncate" title={anom.detection_reason}>
                             {anom.detection_reason}
                           </td>
+                          <td className="py-2.5 px-3">
+                            <div className="flex flex-col gap-0.5">
+                              <span className="font-mono text-[10px] font-semibold text-amber-300">
+                                Linear Interp
+                              </span>
+                              {rowDiff.delta !== null ? (
+                                <span className="font-mono text-[10px] text-cyan-300 font-bold">
+                                  Δ {rowDiff.deltaFormatted} ({rowDiff.percentFormatted})
+                                </span>
+                              ) : (
+                                <span className="font-mono text-[10px] text-amber-400/80">
+                                  Impute Missing
+                                </span>
+                              )}
+                            </div>
+                          </td>
                           <td className="py-2.5 px-3 text-right">
                             <button
                               onClick={(e) => {
@@ -1002,21 +1300,21 @@ export const AnomaliesPage: React.FC = () => {
       {/* Observation Details Modal */}
       {inspectedAnomaly && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in">
-          <div className="relative w-full max-w-2xl bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl p-6 space-y-6 max-h-[90vh] overflow-y-auto">
+          <div className="relative w-full max-w-3xl bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl p-6 space-y-6 max-h-[92vh] overflow-y-auto">
             {/* Modal Header */}
             <div className="flex items-start justify-between border-b border-slate-800 pb-4">
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
                   <ShieldAlert className="w-5 h-5 text-amber-400" />
                   <h3 className="text-base font-bold text-slate-100 font-mono">
-                    Anomaly Observation Details
+                    Anomaly Observation Details & Remediation Plan
                   </h3>
                   <span className="px-2 py-0.5 rounded bg-slate-800 text-slate-300 font-mono text-[10px]">
                     {inspectedAnomaly.anomaly_id}
                   </span>
                 </div>
                 <p className="text-xs text-slate-400">
-                  Full algorithmic breakdown for sensor channel '{inspectedAnomaly.sensor_column}' at row #{inspectedAnomaly.source_row_index}
+                  Full algorithmic breakdown, value delta, and operator instructions for sensor channel '{inspectedAnomaly.sensor_column}' at row #{inspectedAnomaly.source_row_index}
                 </p>
               </div>
               <button
@@ -1050,6 +1348,133 @@ export const AnomaliesPage: React.FC = () => {
                 </span>
               </div>
             </div>
+
+            {/* SECTION: Self-Healing Rectification Protocol & How Values Differ */}
+            {(() => {
+              const madDetail = inspectedAnomaly.detector_details?.rolling_mad;
+              const baselineVal =
+                madDetail && madDetail.baseline !== null && madDetail.baseline !== undefined
+                  ? madDetail.baseline
+                  : null;
+              const valDiff = calculateValueDifference(inspectedAnomaly.original_value, baselineVal);
+              const remediation = getRemediationProtocol(
+                inspectedAnomaly.sensor_column,
+                'linear_interpolation',
+                inspectedAnomaly.original_value,
+                baselineVal
+              );
+
+              return (
+                <div className="space-y-4 p-4 rounded-2xl bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 border border-cyan-500/30 shadow-lg">
+                  <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                    <div className="flex items-center gap-2">
+                      <Sparkles className="w-4 h-4 text-cyan-400" />
+                      <h4 className="text-xs font-mono font-bold text-slate-100 uppercase tracking-wider">
+                        Self-Healing Rectification Solution & Value Difference (Δ)
+                      </h4>
+                    </div>
+                    <span className={`px-2.5 py-0.5 rounded text-[10px] font-mono font-bold border ${valDiff.badgeColor}`}>
+                      {valDiff.adjustmentType}
+                    </span>
+                  </div>
+
+                  {/* 3-Way Value Comparison Grid */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 font-mono text-xs">
+                    <div className="p-3 rounded-xl bg-slate-900/90 border border-slate-800">
+                      <span className="text-[10px] text-slate-500 block uppercase">Raw Corrupted Reading</span>
+                      <span className="font-bold text-slate-100 text-base">{valDiff.originalFormatted}</span>
+                      <span className="text-[10px] text-slate-500 block mt-0.5 font-sans">Physical measured value</span>
+                    </div>
+                    <div className="p-3 rounded-xl bg-slate-900/90 border border-cyan-500/30">
+                      <span className="text-[10px] text-cyan-400 block uppercase">Rectified Healthy Target</span>
+                      <span className="font-bold text-cyan-300 text-base">{valDiff.repairedFormatted}</span>
+                      <span className="text-[10px] text-cyan-400/80 block mt-0.5 font-sans">Target operational baseline</span>
+                    </div>
+                    <div className="p-3 rounded-xl bg-slate-900/90 border border-amber-500/30">
+                      <span className="text-[10px] text-amber-400 block uppercase">Value Differed (Δ Delta)</span>
+                      <span className="font-bold text-amber-300 text-base">
+                        {valDiff.deltaFormatted}{' '}
+                        <span className="text-xs font-normal text-amber-400/80">({valDiff.percentFormatted})</span>
+                      </span>
+                      <span className="text-[10px] text-amber-400/80 block mt-0.5 font-sans">Variance eliminated</span>
+                    </div>
+                  </div>
+
+                  <p className="text-xs text-slate-300 font-sans leading-relaxed bg-slate-900/60 p-3 rounded-xl border border-slate-800/80">
+                    {valDiff.summaryText}
+                  </p>
+
+                  {/* Rectification Method Details */}
+                  <div className="p-3.5 rounded-xl bg-slate-950/80 border border-slate-800 space-y-1.5">
+                    <div className="flex items-center gap-2">
+                      <Wrench className="w-4 h-4 text-amber-400" />
+                      <span className="text-xs font-mono font-bold text-slate-200">
+                        Rectification Method: {remediation.methodName}
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-400 font-sans leading-relaxed">
+                      {remediation.methodDescription}
+                    </p>
+                  </div>
+
+                  {/* Actionable Problem Solving Instructions */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+                    {/* Digital Software Fix */}
+                    <div className="p-3.5 rounded-xl bg-slate-950/90 border border-slate-800 space-y-2">
+                      <span className="font-mono text-[11px] font-bold text-cyan-400 uppercase tracking-wider block flex items-center gap-1.5">
+                        <ShieldCheck className="w-3.5 h-3.5 text-cyan-400" />
+                        1. Digital Software Healing Protocol
+                      </span>
+                      <ul className="space-y-1.5 text-slate-300 font-sans text-[11px]">
+                        {remediation.digitalFixSteps.map((step, idx) => (
+                          <li key={idx} className="flex items-start gap-1.5">
+                            <span className="font-mono font-bold text-cyan-400 shrink-0">{idx + 1}.</span>
+                            <span>{step}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+
+                    {/* Physical Field Action */}
+                    <div className="p-3.5 rounded-xl bg-slate-950/90 border border-slate-800 space-y-2">
+                      <span className="font-mono text-[11px] font-bold text-amber-400 uppercase tracking-wider block flex items-center gap-1.5">
+                        <Wrench className="w-3.5 h-3.5 text-amber-400" />
+                        2. Field Engineering Action Checklist
+                      </span>
+                      <ul className="space-y-1.5 text-slate-300 font-sans text-[11px]">
+                        {remediation.fieldEngineeringSteps.map((step, idx) => (
+                          <li key={idx} className="flex items-start gap-1.5">
+                            <span className="font-mono font-bold text-amber-400 shrink-0">{idx + 1}.</span>
+                            <span>{step}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+
+                  {/* Safety Notice */}
+                  <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/30 text-[11px] text-amber-200 font-sans flex items-start gap-2">
+                    <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                    <span>{remediation.safetyNotice}</span>
+                  </div>
+
+                  {/* Direct Link to Reconstruction Page */}
+                  <div className="flex justify-end pt-1">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setInspectedAnomaly(null);
+                        navigate(`/reconstruction?pipeline_id=${selectedPipelineId}`);
+                      }}
+                      className="px-4 py-2 rounded-xl bg-[#EE602C] hover:bg-[#d54f1f] text-white text-xs font-mono font-semibold transition-all shadow-md flex items-center gap-2 cursor-pointer"
+                    >
+                      <span>Execute Full Signal Reconstruction & Provenance</span>
+                      <ArrowRight className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              );
+            })()}
 
             {/* Detector Explanations Breakdown */}
             <div className="space-y-3">
