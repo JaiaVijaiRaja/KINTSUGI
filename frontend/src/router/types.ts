@@ -7,6 +7,7 @@ export type AppRoute =
   | '/reconstruction'
   | '/audit'
   | '/evaluation'
+  | '/diagnostics'
   | '/settings';
 
 export const VALID_ROUTES: AppRoute[] = [
@@ -18,6 +19,7 @@ export const VALID_ROUTES: AppRoute[] = [
   '/reconstruction',
   '/audit',
   '/evaluation',
+  '/diagnostics',
   '/settings',
 ];
 

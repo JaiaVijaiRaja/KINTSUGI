@@ -11,6 +11,7 @@ import {
   EvaluationPage,
   SettingsPage,
   DemosPage,
+  DiagnosticsPage,
 } from './pages';
 import { NotFoundPage } from './components/common/NotFoundPage';
 import type { ConnectionState } from './types/api';
@@ -121,6 +122,8 @@ const AppContent: React.FC = () => {
         return <AuditPage />;
       case '/evaluation':
         return <EvaluationPage />;
+      case '/diagnostics':
+        return <DiagnosticsPage />;
       case '/settings':
         return (
           <SettingsPage

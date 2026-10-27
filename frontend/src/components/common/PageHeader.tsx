@@ -16,17 +16,17 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
   actions,
 }) => {
   const badgeClasses = {
-    primary: 'bg-amber-500/15 text-amber-300 border-amber-500/30',
-    amber: 'bg-amber-500/15 text-amber-300 border-amber-500/30',
-    emerald: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30',
-    slate: 'bg-slate-800 text-slate-300 border-slate-700',
+    primary: 'bg-orange-50 text-[#EE602C] border-orange-200',
+    amber: 'bg-amber-50 text-amber-800 border-amber-200',
+    emerald: 'bg-emerald-50 text-emerald-800 border-emerald-200',
+    slate: 'bg-stone-100 text-stone-700 border-stone-200',
   }[badgeVariant];
 
   return (
-    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-slate-800/80">
+    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-stone-200/80">
       <div className="space-y-1.5">
         <div className="flex items-center gap-2.5 flex-wrap">
-          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-100 font-mono">
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-stone-900">
             {title}
           </h1>
           {badge && (
@@ -37,7 +37,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
             </span>
           )}
         </div>
-        <p className="text-xs sm:text-sm text-slate-400 max-w-3xl leading-relaxed">
+        <p className="text-xs sm:text-sm text-stone-600 max-w-3xl leading-relaxed">
           {description}
         </p>
       </div>

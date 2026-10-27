@@ -1,13 +1,85 @@
 @import "tailwindcss";
 
 :root {
-  color-scheme: dark;
+  color-scheme: light;
+  --bg-canvas: #f6f5f2;
+  --card-bg: #ffffff;
+  --color-primary: #ee602c;
+  --color-primary-hover: #d85220;
+  --color-text-main: #1e2024;
+  --color-text-muted: #71717a;
+  --color-border-subtle: #eae7e1;
 }
 
 body {
   margin: 0;
   min-height: 100vh;
-  background-color: #090d16;
-  color: #f1f5f9;
-  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  background-color: #f6f5f2;
+  color: #1e2024;
+  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Inter", "Helvetica Neue", Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Custom smooth light scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #d6d3cd;
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #b8b4ad;
+}
+
+/* Light Theme Mappings for Industrial SaaS Dashboard */
+.bg-slate-950,
+.bg-slate-950\/40,
+.bg-slate-950\/50,
+.bg-slate-950\/60,
+.bg-slate-950\/70,
+.bg-slate-950\/80 {
+  background-color: #faf8f5 !important;
+}
+
+.bg-slate-900,
+.bg-slate-900\/40,
+.bg-slate-900\/50,
+.bg-slate-900\/60,
+.bg-slate-900\/80 {
+  background-color: #f4f1ea !important;
+}
+
+.border-slate-800,
+.border-slate-800\/60,
+.border-slate-800\/80,
+.border-slate-700 {
+  border-color: #ebe7e1 !important;
+}
+
+.text-slate-100,
+.text-slate-200 {
+  color: #1e2024 !important;
+}
+
+.text-slate-300,
+.text-slate-400 {
+  color: #52525b !important;
+}
+
+.text-slate-500 {
+  color: #71717a !important;
+}
+
+.divide-slate-800,
+.divide-slate-800\/80 {
+  border-color: #ebe7e1 !important;
 }

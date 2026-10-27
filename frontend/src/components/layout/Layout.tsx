@@ -19,7 +19,7 @@ export const Layout: React.FC<LayoutProps> = ({
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-[#070b12] text-slate-100 flex flex-col font-sans selection:bg-amber-500/30 selection:text-amber-200">
+    <div className="min-h-screen bg-[#F6F5F2] text-stone-900 flex flex-col font-sans selection:bg-[#EE602C]/20 selection:text-[#EE602C]">
       <Header
         connectionStatus={connectionStatus}
         latencyMs={latencyMs}
@@ -37,9 +37,9 @@ export const Layout: React.FC<LayoutProps> = ({
         <main
           id="main-content"
           role="main"
-          className="flex-1 overflow-y-auto bg-gradient-to-b from-slate-950 via-[#070b14] to-slate-950 p-4 sm:p-6 lg:p-8"
+          className="flex-1 overflow-y-auto p-3 sm:p-5 lg:p-6"
         >
-          <div className="max-w-7xl mx-auto space-y-6">
+          <div className="max-w-[1440px] mx-auto space-y-6">
             {children}
           </div>
         </main>

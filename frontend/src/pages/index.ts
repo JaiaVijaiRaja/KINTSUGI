@@ -6,4 +6,5 @@ export * from './AnomaliesPage';
 export * from './ReconstructionPage';
 export * from './AuditPage';
 export * from './EvaluationPage';
+export * from './DiagnosticsPage';
 export * from './SettingsPage';

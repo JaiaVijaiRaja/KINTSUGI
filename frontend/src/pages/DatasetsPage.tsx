@@ -218,7 +218,7 @@ export const DatasetsPage: React.FC = () => {
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <PageHeader
         title="Dataset Management"
         description="Ingest, validate, preview, and audit multi-sensor industrial time-series CSV telemetry. Preserves raw measurements for strict downstream compliance."
@@ -239,17 +239,17 @@ export const DatasetsPage: React.FC = () => {
 
       {/* Upload Notification Banners */}
       {uploadSuccessMsg && (
-        <div className="flex items-start gap-3 p-4 rounded-xl bg-emerald-950/40 border border-emerald-500/40 text-xs text-emerald-300">
-          <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" />
+        <div className="flex items-start gap-3 p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-800 shadow-2xs">
+          <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
           <div className="flex-1 space-y-0.5">
-            <span className="font-semibold text-emerald-200">Ingestion Succeeded</span>
-            <p className="text-emerald-300/90 leading-relaxed font-mono">
+            <span className="font-semibold text-emerald-900">Ingestion Succeeded</span>
+            <p className="text-emerald-800/90 leading-relaxed font-mono">
               {uploadSuccessMsg}
             </p>
           </div>
           <button
             onClick={() => setUploadSuccessMsg(null)}
-            className="text-emerald-400 hover:text-emerald-200 transition-colors cursor-pointer"
+            className="text-emerald-600 hover:text-emerald-900 transition-colors cursor-pointer"
           >
             <X className="w-4 h-4" />
           </button>
@@ -257,17 +257,17 @@ export const DatasetsPage: React.FC = () => {
       )}
 
       {uploadErrorMsg && (
-        <div className="flex items-start gap-3 p-4 rounded-xl bg-rose-950/40 border border-rose-500/40 text-xs text-rose-300">
-          <XCircle className="w-5 h-5 text-rose-400 shrink-0 mt-0.5" />
+        <div className="flex items-start gap-3 p-4 rounded-2xl bg-rose-50 border border-rose-200 text-xs text-rose-800 shadow-2xs">
+          <XCircle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
           <div className="flex-1 space-y-0.5">
-            <span className="font-semibold text-rose-200">Ingestion Rejected</span>
-            <p className="text-rose-300/90 leading-relaxed font-mono">
+            <span className="font-semibold text-rose-900">Ingestion Rejected</span>
+            <p className="text-rose-800 leading-relaxed font-mono">
               {uploadErrorMsg}
             </p>
           </div>
           <button
             onClick={() => setUploadErrorMsg(null)}
-            className="text-rose-400 hover:text-rose-200 transition-colors cursor-pointer"
+            className="text-rose-600 hover:text-rose-900 transition-colors cursor-pointer"
           >
             <X className="w-4 h-4" />
           </button>
@@ -281,7 +281,7 @@ export const DatasetsPage: React.FC = () => {
           subtitle="Multi-channel sensor measurements in CSV format (up to 50 MB)"
           icon={Upload}
           badge={
-            <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
+            <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
               Active Ingestion
             </span>
           }
@@ -301,32 +301,32 @@ export const DatasetsPage: React.FC = () => {
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
             onClick={() => !isUploading && fileInputRef.current?.click()}
-            className={`border-2 border-dashed rounded-xl p-8 sm:p-10 text-center transition-all cursor-pointer select-none ${
+            className={`border-2 border-dashed rounded-2xl p-8 sm:p-10 text-center transition-all cursor-pointer select-none ${
               isDragging
-                ? 'border-amber-400 bg-amber-500/10 scale-[1.005]'
+                ? 'border-[#EE602C] bg-orange-50/40 scale-[1.005]'
                 : isUploading
-                ? 'border-slate-700 bg-slate-950/40 opacity-75 cursor-wait'
-                : 'border-slate-800 bg-slate-950/40 hover:border-amber-500/50 hover:bg-slate-900/40'
+                ? 'border-stone-300 bg-stone-50/50 opacity-75 cursor-wait'
+                : 'border-[#E0DCD3] bg-white hover:border-[#EE602C] hover:bg-orange-50/10'
             }`}
           >
-            <div className="mx-auto w-12 h-12 rounded-xl bg-slate-900 flex items-center justify-center border border-slate-800 text-amber-400 mb-4 shadow-sm">
+            <div className="mx-auto w-12 h-12 rounded-2xl bg-orange-50 flex items-center justify-center border border-orange-200 text-[#EE602C] mb-4 shadow-2xs">
               {isUploading ? (
-                <RefreshCw className="w-6 h-6 animate-spin text-amber-400" />
+                <RefreshCw className="w-6 h-6 animate-spin text-[#EE602C]" />
               ) : (
-                <Upload className="w-6 h-6 text-amber-400" />
+                <Upload className="w-6 h-6 text-[#EE602C]" />
               )}
             </div>
 
             <div className="space-y-1.5 max-w-md mx-auto">
-              <h3 className="text-sm sm:text-base font-semibold text-slate-200">
+              <h3 className="text-sm sm:text-base font-semibold text-stone-900">
                 {isUploading
                   ? 'Parsing & computing quality summary on backend...'
                   : isDragging
                   ? 'Drop CSV file to begin ingestion'
                   : 'Drag & drop your CSV file here, or click to browse'}
               </h3>
-              <p className="text-xs text-slate-400 leading-relaxed">
-                Accepted: <strong className="text-slate-300">.csv</strong> files. Maximum limit: <strong className="text-slate-300">50 MB</strong>. Must contain header row with at least 1 data row.
+              <p className="text-xs text-stone-500 leading-relaxed">
+                Accepted: <strong className="text-stone-700">.csv</strong> files. Maximum limit: <strong className="text-stone-700">50 MB</strong>. Must contain header row with at least 1 data row.
               </p>
             </div>
 
@@ -349,32 +349,32 @@ export const DatasetsPage: React.FC = () => {
 
           {/* Ingestion Rules & Architectural Invariants */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-1">
-            <div className="p-3.5 rounded-lg bg-slate-950/60 border border-slate-800/80 space-y-1">
-              <div className="flex items-center gap-2 text-xs font-semibold text-slate-300">
-                <FileCheck className="w-4 h-4 text-amber-400" />
+            <div className="p-3.5 rounded-xl bg-stone-50 border border-stone-200 space-y-1">
+              <div className="flex items-center gap-2 text-xs font-semibold text-stone-800">
+                <FileCheck className="w-4 h-4 text-[#EE602C]" />
                 <span>Strict Header Validation</span>
               </div>
-              <p className="text-[11px] text-slate-400 leading-relaxed">
+              <p className="text-[11px] text-stone-600 leading-relaxed">
                 Headers are sanitized; empty column names and duplicate column headers are strictly rejected.
               </p>
             </div>
 
-            <div className="p-3.5 rounded-lg bg-slate-950/60 border border-slate-800/80 space-y-1">
-              <div className="flex items-center gap-2 text-xs font-semibold text-slate-300">
-                <TableIcon className="w-4 h-4 text-amber-400" />
+            <div className="p-3.5 rounded-xl bg-stone-50 border border-stone-200 space-y-1">
+              <div className="flex items-center gap-2 text-xs font-semibold text-stone-800">
+                <TableIcon className="w-4 h-4 text-[#EE602C]" />
                 <span>Genuine Quality Audit</span>
               </div>
-              <p className="text-[11px] text-slate-400 leading-relaxed">
+              <p className="text-[11px] text-stone-600 leading-relaxed">
                 Calculates true missing counts, duplicate full rows, timestamp monotonicity, and numeric sensor stats.
               </p>
             </div>
 
-            <div className="p-3.5 rounded-lg bg-slate-950/60 border border-slate-800/80 space-y-1">
-              <div className="flex items-center gap-2 text-xs font-semibold text-slate-300">
-                <ShieldCheck className="w-4 h-4 text-amber-400" />
+            <div className="p-3.5 rounded-xl bg-stone-50 border border-stone-200 space-y-1">
+              <div className="flex items-center gap-2 text-xs font-semibold text-stone-800">
+                <ShieldCheck className="w-4 h-4 text-[#EE602C]" />
                 <span>Immutable Raw Storage</span>
               </div>
-              <p className="text-[11px] text-slate-400 leading-relaxed">
+              <p className="text-[11px] text-stone-600 leading-relaxed">
                 Raw files are assigned server-controlled identifiers and preserved intact in isolated storage.
               </p>
             </div>
@@ -389,7 +389,7 @@ export const DatasetsPage: React.FC = () => {
           subtitle="All telemetry files parsed and stored by the backend engine"
           icon={Database}
           badge={
-            <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700">
+            <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-stone-100 text-stone-700 border border-stone-200 font-semibold">
               {datasets.length} Total
             </span>
           }
@@ -407,16 +407,16 @@ export const DatasetsPage: React.FC = () => {
         />
         <CardContent>
           {datasetListError && (
-            <div className="p-4 mb-4 rounded-lg bg-rose-950/30 border border-rose-900/50 text-xs text-rose-300 flex items-center gap-2">
-              <AlertTriangle className="w-4 h-4 shrink-0 text-rose-400" />
+            <div className="p-4 mb-4 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-800 flex items-center gap-2">
+              <AlertTriangle className="w-4 h-4 shrink-0 text-rose-500" />
               <span>{datasetListError}</span>
             </div>
           )}
 
           {isLoadingDatasets ? (
             <div className="py-12 flex flex-col items-center justify-center space-y-3">
-              <RefreshCw className="w-6 h-6 text-amber-400 animate-spin" />
-              <p className="text-xs text-slate-400 font-mono">
+              <RefreshCw className="w-6 h-6 text-[#EE602C] animate-spin" />
+              <p className="text-xs text-stone-500 font-mono">
                 Loading catalog from backend...
               </p>
             </div>
@@ -433,8 +433,8 @@ export const DatasetsPage: React.FC = () => {
             />
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs border border-slate-800 rounded-lg overflow-hidden">
-                <thead className="bg-slate-950 text-slate-400 uppercase font-mono text-[10px] border-b border-slate-800">
+              <table className="w-full text-left text-xs border border-stone-200 rounded-xl overflow-hidden">
+                <thead className="bg-[#FAF8F5] text-stone-600 uppercase font-mono text-[10px] border-b border-stone-200">
                   <tr>
                     <th className="py-3 px-3.5">Filename</th>
                     <th className="py-3 px-3.5">Dataset ID</th>
@@ -446,7 +446,7 @@ export const DatasetsPage: React.FC = () => {
                     <th className="py-3 px-3.5 text-right">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-800/80 font-mono">
+                <tbody className="divide-y divide-stone-200/80 font-mono">
                   {datasets.map((ds) => {
                     const isSelected = selectedDatasetId === ds.dataset_id;
                     return (
@@ -454,37 +454,37 @@ export const DatasetsPage: React.FC = () => {
                         key={ds.dataset_id}
                         className={`transition-colors ${
                           isSelected
-                            ? 'bg-amber-500/10 text-amber-200'
-                            : 'hover:bg-slate-900/60 text-slate-300'
+                            ? 'bg-orange-50/50 text-stone-900 font-medium'
+                            : 'hover:bg-stone-50 text-stone-700'
                         }`}
                       >
                         <td className="py-3 px-3.5 font-medium flex items-center gap-2">
-                          <FileSpreadsheet className="w-4 h-4 text-amber-400 shrink-0" />
+                          <FileSpreadsheet className="w-4 h-4 text-[#EE602C] shrink-0" />
                           <span className="truncate max-w-[200px]" title={ds.filename}>
                             {ds.filename}
                           </span>
                         </td>
-                        <td className="py-3 px-3.5 text-slate-400">
+                        <td className="py-3 px-3.5 text-stone-500">
                           <span
-                            className="bg-slate-950 px-2 py-0.5 rounded border border-slate-800 text-[11px]"
+                            className="bg-stone-100 px-2 py-0.5 rounded border border-stone-200 text-[11px]"
                             title={ds.dataset_id}
                           >
                             {ds.dataset_id}
                           </span>
                         </td>
-                        <td className="py-3 px-3.5 text-slate-200 font-semibold">
+                        <td className="py-3 px-3.5 text-stone-900 font-semibold">
                           {ds.row_count.toLocaleString()}
                         </td>
-                        <td className="py-3 px-3.5 text-slate-400">{ds.column_count}</td>
-                        <td className="py-3 px-3.5 text-slate-400">
+                        <td className="py-3 px-3.5 text-stone-600">{ds.column_count}</td>
+                        <td className="py-3 px-3.5 text-stone-600">
                           {formatBytes(ds.file_size_bytes)}
                         </td>
-                        <td className="py-3 px-3.5 text-slate-400 text-[11px]">
+                        <td className="py-3 px-3.5 text-stone-500 text-[11px]">
                           {formatDate(ds.uploaded_at)}
                         </td>
                         <td className="py-3 px-3.5">
-                          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-950/60 text-emerald-400 border border-emerald-500/30 text-[10px] uppercase font-semibold">
-                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 text-[10px] uppercase font-semibold">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                             Ready
                           </span>
                         </td>
@@ -511,21 +511,21 @@ export const DatasetsPage: React.FC = () => {
       {/* Selected Dataset Inspection Section */}
       {selectedDatasetId && (
         <div id="dataset-inspection" className="space-y-6 pt-2">
-          <div className="flex items-center justify-between pb-3 border-b border-slate-800/80">
+          <div className="flex items-center justify-between pb-3 border-b border-stone-200">
             <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-400">
+              <div className="p-2.5 rounded-2xl bg-orange-50 border border-orange-200 text-[#EE602C]">
                 <FileText className="w-5 h-5" />
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <h2 className="text-lg font-bold text-slate-100 font-mono">
+                  <h2 className="text-lg font-bold text-stone-900 font-mono">
                     {selectedMetadata ? selectedMetadata.filename : selectedDatasetId}
                   </h2>
-                  <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700">
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-stone-100 text-stone-700 border border-stone-200">
                     {selectedDatasetId}
                   </span>
                 </div>
-                <p className="text-xs text-slate-400">
+                <p className="text-xs text-stone-500">
                   Detailed data-quality summary and row-level preview generated by the Python backend.
                 </p>
               </div>
@@ -547,16 +547,16 @@ export const DatasetsPage: React.FC = () => {
           </div>
 
           {detailsError && (
-            <div className="p-4 rounded-lg bg-rose-950/40 border border-rose-900/60 text-xs text-rose-300 flex items-center gap-2">
-              <XCircle className="w-4 h-4 shrink-0 text-rose-400" />
+            <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-800 flex items-center gap-2">
+              <XCircle className="w-4 h-4 shrink-0 text-rose-500" />
               <span>{detailsError}</span>
             </div>
           )}
 
           {isLoadingDetails ? (
             <div className="py-16 flex flex-col items-center justify-center space-y-3">
-              <RefreshCw className="w-8 h-8 text-amber-400 animate-spin" />
-              <p className="text-xs text-slate-300 font-mono">
+              <RefreshCw className="w-8 h-8 text-[#EE602C] animate-spin" />
+              <p className="text-xs text-stone-600 font-mono">
                 Calculating quality audit and loading row preview...
               </p>
             </div>
@@ -564,72 +564,72 @@ export const DatasetsPage: React.FC = () => {
             <>
               {/* Quality Summary KPI Cards */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                <div className="p-4 rounded-xl bg-slate-900/50 border border-slate-800 space-y-1">
-                  <span className="text-[10px] uppercase font-mono text-slate-400 block">
+                <div className="p-4 rounded-2xl bg-white border border-[#EBE7E1] shadow-[0_2px_8px_rgba(0,0,0,0.02)] space-y-1">
+                  <span className="text-[10px] uppercase font-mono text-stone-500 block">
                     Total Rows
                   </span>
-                  <span className="text-xl font-mono font-bold text-slate-100">
+                  <span className="text-xl font-mono font-bold text-stone-900">
                     {selectedQuality.total_rows.toLocaleString()}
                   </span>
-                  <span className="text-[10px] text-slate-500 block font-mono">
+                  <span className="text-[10px] text-stone-500 block font-mono">
                     {selectedMetadata.columns.length} columns registered
                   </span>
                 </div>
 
-                <div className="p-4 rounded-xl bg-slate-900/50 border border-slate-800 space-y-1">
-                  <span className="text-[10px] uppercase font-mono text-slate-400 block">
+                <div className="p-4 rounded-2xl bg-white border border-[#EBE7E1] shadow-[0_2px_8px_rgba(0,0,0,0.02)] space-y-1">
+                  <span className="text-[10px] uppercase font-mono text-stone-500 block">
                     Missing Cells
                   </span>
                   <div className="flex items-baseline gap-2">
                     <span
                       className={`text-xl font-mono font-bold ${
                         selectedQuality.total_missing_cells === 0
-                          ? 'text-emerald-400'
-                          : 'text-amber-400'
+                          ? 'text-emerald-700'
+                          : 'text-amber-700'
                       }`}
                     >
                       {selectedQuality.total_missing_cells.toLocaleString()}
                     </span>
-                    <span className="text-xs font-mono text-slate-400">
+                    <span className="text-xs font-mono text-stone-500">
                       ({selectedQuality.missing_cells_percentage}%)
                     </span>
                   </div>
-                  <span className="text-[10px] text-slate-500 block font-mono">
+                  <span className="text-[10px] text-stone-500 block font-mono">
                     Across all cells
                   </span>
                 </div>
 
-                <div className="p-4 rounded-xl bg-slate-900/50 border border-slate-800 space-y-1">
-                  <span className="text-[10px] uppercase font-mono text-slate-400 block">
+                <div className="p-4 rounded-2xl bg-white border border-[#EBE7E1] shadow-[0_2px_8px_rgba(0,0,0,0.02)] space-y-1">
+                  <span className="text-[10px] uppercase font-mono text-stone-500 block">
                     Duplicate Rows
                   </span>
                   <div className="flex items-baseline gap-2">
                     <span
                       className={`text-xl font-mono font-bold ${
                         selectedQuality.duplicate_rows_count === 0
-                          ? 'text-emerald-400'
-                          : 'text-rose-400'
+                          ? 'text-emerald-700'
+                          : 'text-rose-700'
                       }`}
                     >
                       {selectedQuality.duplicate_rows_count.toLocaleString()}
                     </span>
-                    <span className="text-xs font-mono text-slate-400">
+                    <span className="text-xs font-mono text-stone-500">
                       ({selectedQuality.duplicate_rows_percentage}%)
                     </span>
                   </div>
-                  <span className="text-[10px] text-slate-500 block font-mono">
+                  <span className="text-[10px] text-stone-500 block font-mono">
                     Full row duplicates
                   </span>
                 </div>
 
-                <div className="p-4 rounded-xl bg-slate-900/50 border border-slate-800 space-y-1">
-                  <span className="text-[10px] uppercase font-mono text-slate-400 block">
+                <div className="p-4 rounded-2xl bg-white border border-[#EBE7E1] shadow-[0_2px_8px_rgba(0,0,0,0.02)] space-y-1">
+                  <span className="text-[10px] uppercase font-mono text-stone-500 block">
                     Timestamp Candidates
                   </span>
-                  <span className="text-xl font-mono font-bold text-amber-400">
+                  <span className="text-xl font-mono font-bold text-amber-700">
                     {selectedQuality.timestamp_candidates.length}
                   </span>
-                  <span className="text-[10px] text-slate-500 block font-mono truncate">
+                  <span className="text-[10px] text-stone-500 block font-mono truncate">
                     {selectedQuality.timestamp_candidates.length > 0
                       ? selectedQuality.timestamp_candidates.map((t) => t.column_name).join(', ')
                       : 'None detected'}
@@ -645,7 +645,7 @@ export const DatasetsPage: React.FC = () => {
                     subtitle="Conservative detection of temporal telemetry coordinates"
                     icon={Clock}
                     badge={
-                      <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-amber-500/15 text-amber-300 border border-amber-500/30">
+                      <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200">
                         {selectedQuality.timestamp_candidates.length} Candidate(s)
                       </span>
                     }
@@ -655,38 +655,38 @@ export const DatasetsPage: React.FC = () => {
                       {selectedQuality.timestamp_candidates.map((ts) => (
                         <div
                           key={ts.column_name}
-                          className="p-4 rounded-xl bg-slate-950/70 border border-slate-800 space-y-2.5 font-mono text-xs"
+                          className="p-4 rounded-2xl bg-stone-50 border border-stone-200 space-y-2.5 font-mono text-xs"
                         >
                           <div className="flex items-center justify-between">
-                            <span className="font-bold text-amber-300 text-sm">
+                            <span className="font-bold text-stone-900 text-sm">
                               {ts.column_name}
                             </span>
                             <span
-                              className={`text-[10px] px-2 py-0.5 rounded border uppercase ${
+                              className={`text-[10px] px-2 py-0.5 rounded border uppercase font-semibold ${
                                 ts.is_monotonic
-                                  ? 'bg-emerald-950/60 text-emerald-400 border-emerald-500/30'
-                                  : 'bg-amber-950/60 text-amber-400 border-amber-500/30'
+                                  ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                                  : 'bg-amber-50 text-amber-800 border-amber-200'
                               }`}
                             >
                               {ts.is_monotonic ? 'Monotonic Increasing' : 'Non-Monotonic'}
                             </span>
                           </div>
 
-                          <div className="space-y-1 text-slate-400 text-[11px]">
+                          <div className="space-y-1 text-stone-600 text-[11px]">
                             <div className="flex justify-between">
                               <span>Parseable Ratio:</span>
-                              <span className="text-slate-200">{ts.parseable_percentage}%</span>
+                              <span className="text-stone-900 font-semibold">{ts.parseable_percentage}%</span>
                             </div>
                             <div className="flex justify-between">
                               <span>Duplicate Timestamps:</span>
-                              <span className="text-slate-200">
+                              <span className="text-stone-900 font-semibold">
                                 {ts.duplicate_timestamp_count} ({ts.duplicate_percentage}%)
                               </span>
                             </div>
                             {ts.sample_format && (
                               <div className="flex justify-between">
                                 <span>Sample Format:</span>
-                                <span className="text-slate-300 truncate max-w-[200px]">
+                                <span className="text-stone-800 truncate max-w-[200px]">
                                   {ts.sample_format}
                                 </span>
                               </div>
@@ -694,7 +694,7 @@ export const DatasetsPage: React.FC = () => {
                           </div>
 
                           {ts.notes && (
-                            <p className="text-[11px] text-slate-400 font-sans pt-1 border-t border-slate-800/80">
+                            <p className="text-[11px] text-stone-600 font-sans pt-1 border-t border-stone-200">
                               {ts.notes}
                             </p>
                           )}
@@ -712,15 +712,15 @@ export const DatasetsPage: React.FC = () => {
                   subtitle="Detailed type detection, missing value distribution, and descriptive statistics"
                   icon={Sliders}
                   badge={
-                    <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700">
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-stone-100 text-stone-700 border border-stone-200 font-semibold">
                       {selectedQuality.columns.length} Columns
                     </span>
                   }
                 />
                 <CardContent>
                   <div className="overflow-x-auto">
-                    <table className="w-full text-left text-xs border border-slate-800 rounded-lg overflow-hidden">
-                      <thead className="bg-slate-950 text-slate-400 uppercase font-mono text-[10px] border-b border-slate-800">
+                    <table className="w-full text-left text-xs border border-stone-200 rounded-xl overflow-hidden">
+                      <thead className="bg-[#FAF8F5] text-stone-600 uppercase font-mono text-[10px] border-b border-stone-200">
                         <tr>
                           <th className="py-2.5 px-3">Column</th>
                           <th className="py-2.5 px-3">Type</th>
@@ -733,24 +733,24 @@ export const DatasetsPage: React.FC = () => {
                           <th className="py-2.5 px-3">Std Dev</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-slate-800/80 font-mono text-slate-300">
+                      <tbody className="divide-y divide-stone-200 font-mono text-stone-700">
                         {selectedQuality.columns.map((col) => {
                           const typeBadgeClasses = {
-                            float: 'bg-cyan-950/60 text-cyan-300 border-cyan-500/40',
-                            integer: 'bg-blue-950/60 text-blue-300 border-blue-500/40',
-                            datetime: 'bg-amber-950/60 text-amber-300 border-amber-500/40',
-                            boolean: 'bg-purple-950/60 text-purple-300 border-purple-500/40',
-                            string: 'bg-slate-800 text-slate-300 border-slate-700',
-                          }[col.detected_type] || 'bg-slate-800 text-slate-300 border-slate-700';
+                            float: 'bg-cyan-50 text-cyan-800 border-cyan-200',
+                            integer: 'bg-blue-50 text-blue-800 border-blue-200',
+                            datetime: 'bg-amber-50 text-amber-800 border-amber-200',
+                            boolean: 'bg-purple-50 text-purple-800 border-purple-200',
+                            string: 'bg-stone-100 text-stone-700 border-stone-200',
+                          }[col.detected_type] || 'bg-stone-100 text-stone-700 border-stone-200';
 
                           return (
-                            <tr key={col.name} className="hover:bg-slate-900/40">
-                              <td className="py-2.5 px-3 font-semibold text-slate-200">
+                            <tr key={col.name} className="hover:bg-stone-50/70">
+                              <td className="py-2.5 px-3 font-semibold text-stone-900">
                                 {col.name}
                               </td>
                               <td className="py-2.5 px-3">
                                 <span
-                                  className={`text-[9px] uppercase px-1.5 py-0.2 rounded border font-mono ${typeBadgeClasses}`}
+                                  className={`text-[9px] uppercase px-1.5 py-0.2 rounded border font-mono font-semibold ${typeBadgeClasses}`}
                                 >
                                   {col.detected_type}
                                 </span>
@@ -758,28 +758,28 @@ export const DatasetsPage: React.FC = () => {
                               <td className="py-2.5 px-3">
                                 <span
                                   className={
-                                    col.missing_count > 0 ? 'text-amber-400' : 'text-slate-400'
+                                    col.missing_count > 0 ? 'text-amber-700 font-bold' : 'text-stone-500'
                                   }
                                 >
                                   {col.missing_count} ({col.missing_percentage}%)
                                 </span>
                               </td>
-                              <td className="py-2.5 px-3 text-slate-400">
+                              <td className="py-2.5 px-3 text-stone-600">
                                 {col.unique_count.toLocaleString()}
                               </td>
-                              <td className="py-2.5 px-3 text-slate-300">
+                              <td className="py-2.5 px-3 text-stone-700">
                                 {col.numeric_stats ? col.numeric_stats.min : '—'}
                               </td>
-                              <td className="py-2.5 px-3 text-slate-300">
+                              <td className="py-2.5 px-3 text-stone-700">
                                 {col.numeric_stats ? col.numeric_stats.max : '—'}
                               </td>
-                              <td className="py-2.5 px-3 text-slate-300">
+                              <td className="py-2.5 px-3 text-stone-700">
                                 {col.numeric_stats ? col.numeric_stats.mean : '—'}
                               </td>
-                              <td className="py-2.5 px-3 text-slate-300">
+                              <td className="py-2.5 px-3 text-stone-700">
                                 {col.numeric_stats ? col.numeric_stats.median : '—'}
                               </td>
-                              <td className="py-2.5 px-3 text-slate-400">
+                              <td className="py-2.5 px-3 text-stone-600">
                                 {col.numeric_stats && col.numeric_stats.std !== null
                                   ? col.numeric_stats.std
                                   : '—'}
@@ -804,7 +804,7 @@ export const DatasetsPage: React.FC = () => {
                     )} of ${selectedPreview.total_rows.toLocaleString()}`}
                     icon={TableIcon}
                     badge={
-                      <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
+                      <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200">
                         {selectedPreview.preview_rows} Rows Loaded
                       </span>
                     }
@@ -838,14 +838,14 @@ export const DatasetsPage: React.FC = () => {
                           </Button>
                         </div>
                         <div className="flex items-center gap-2">
-                          <span className="text-[11px] font-mono text-slate-400">Size:</span>
+                          <span className="text-[11px] font-mono text-stone-500">Size:</span>
                           <select
                             value={previewLimit}
                             onChange={(e) => {
                               const newLimit = parseInt(e.target.value, 10);
                               selectDataset(selectedDatasetId, newLimit, 0);
                             }}
-                            className="bg-slate-950 border border-slate-800 text-xs font-mono text-slate-200 rounded px-2.5 py-1 focus:outline-hidden focus:ring-1 focus:ring-amber-400 cursor-pointer"
+                            className="bg-white border border-stone-200 text-xs font-mono text-stone-800 rounded-lg px-2.5 py-1 focus:outline-hidden focus:ring-1 focus:ring-[#EE602C] cursor-pointer shadow-2xs"
                           >
                             <option value={25}>25</option>
                             <option value={50}>50</option>
@@ -856,11 +856,11 @@ export const DatasetsPage: React.FC = () => {
                     }
                   />
                   <CardContent>
-                    <div className="overflow-x-auto max-h-[480px] border border-slate-800 rounded-lg">
+                    <div className="overflow-x-auto max-h-[480px] border border-stone-200 rounded-xl">
                       <table className="w-full text-left text-xs">
-                        <thead className="bg-slate-950 text-slate-400 uppercase font-mono text-[10px] border-b border-slate-800 sticky top-0 z-10 shadow-xs">
+                        <thead className="bg-[#FAF8F5] text-stone-600 uppercase font-mono text-[10px] border-b border-stone-200 sticky top-0 z-10 shadow-2xs">
                           <tr>
-                            <th className="py-2 px-3 text-slate-500 w-12 text-center">#</th>
+                            <th className="py-2 px-3 text-stone-400 w-12 text-center">#</th>
                             {selectedPreview.columns.map((c) => (
                               <th key={c} className="py-2.5 px-3 whitespace-nowrap">
                                 {c}
@@ -868,10 +868,10 @@ export const DatasetsPage: React.FC = () => {
                             ))}
                           </tr>
                         </thead>
-                        <tbody className="divide-y divide-slate-800/80 font-mono text-slate-300 bg-slate-950/40">
+                        <tbody className="divide-y divide-stone-200 font-mono text-stone-800 bg-white">
                           {selectedPreview.rows.map((row, rIdx) => (
-                            <tr key={rIdx} className="hover:bg-slate-900/50">
-                              <td className="py-2 px-3 text-slate-500 text-center text-[10px]">
+                            <tr key={rIdx} className="hover:bg-stone-50">
+                              <td className="py-2 px-3 text-stone-400 text-center text-[10px]">
                                 {selectedPreview.offset + rIdx + 1}
                               </td>
                               {selectedPreview.columns.map((c) => {
@@ -881,7 +881,7 @@ export const DatasetsPage: React.FC = () => {
                                   <td
                                     key={c}
                                     className={`py-2 px-3 whitespace-nowrap ${
-                                      isNull ? 'text-slate-600 italic' : 'text-slate-200'
+                                      isNull ? 'text-stone-400 italic font-normal' : 'text-stone-900 font-medium'
                                     }`}
                                   >
                                     {isNull ? 'null' : String(val)}

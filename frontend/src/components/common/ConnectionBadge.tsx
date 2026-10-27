@@ -19,15 +19,15 @@ export const ConnectionBadge: React.FC<ConnectionBadgeProps> = ({
     switch (status) {
       case 'connected':
         return {
-          bg: 'bg-emerald-950/60 border-emerald-500/30 text-emerald-400',
-          dot: 'bg-emerald-400 ring-emerald-400/30',
+          bg: 'bg-emerald-50 border-emerald-200 text-emerald-800 shadow-2xs',
+          dot: 'bg-emerald-500 ring-emerald-500/20',
           label: 'Connected',
           icon: CheckCircle2,
         };
       case 'loading':
         return {
-          bg: 'bg-amber-950/60 border-amber-500/30 text-amber-400',
-          dot: 'bg-amber-400 ring-amber-400/30 animate-pulse',
+          bg: 'bg-amber-50 border-amber-200 text-amber-800 shadow-2xs',
+          dot: 'bg-amber-500 ring-amber-500/20 animate-pulse',
           label: 'Connecting...',
           icon: RefreshCw,
         };
@@ -35,8 +35,8 @@ export const ConnectionBadge: React.FC<ConnectionBadgeProps> = ({
       case 'disconnected':
       default:
         return {
-          bg: 'bg-rose-950/60 border-rose-500/30 text-rose-400',
-          dot: 'bg-rose-500 ring-rose-500/30',
+          bg: 'bg-rose-50 border-rose-200 text-rose-800 shadow-2xs',
+          dot: 'bg-rose-500 ring-rose-500/20',
           label: 'Disconnected',
           icon: XCircle,
         };
@@ -67,7 +67,7 @@ export const ConnectionBadge: React.FC<ConnectionBadgeProps> = ({
       </span>
 
       {status === 'connected' && latencyMs !== null && latencyMs !== undefined && (
-        <span className="font-mono text-[10px] text-emerald-300/80 pl-1 border-l border-emerald-500/20">
+        <span className="font-mono text-[10px] text-emerald-700 pl-1 border-l border-emerald-300">
           {latencyMs}ms
         </span>
       )}
@@ -78,7 +78,7 @@ export const ConnectionBadge: React.FC<ConnectionBadgeProps> = ({
             e.stopPropagation();
             onRefresh();
           }}
-          className="ml-1 text-slate-400 hover:text-slate-200 transition-colors cursor-pointer"
+          className="ml-1 text-stone-400 hover:text-stone-700 transition-colors cursor-pointer"
           title="Retry Health Check"
           disabled={status === 'loading'}
         >

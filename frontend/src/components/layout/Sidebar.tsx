@@ -5,13 +5,13 @@ import {
   Sliders,
   ShieldAlert,
   Wrench,
-  History,
   CheckCircle2,
+  History,
+  FileText,
   Settings,
-  Cpu,
-  Layers,
-  ChevronRight,
   Sparkles,
+  Lock,
+  Share2,
 } from 'lucide-react';
 import { useRouter, type AppRoute } from '../../router';
 
@@ -24,8 +24,6 @@ interface NavItem {
   path: AppRoute;
   label: string;
   icon: React.ElementType;
-  phase: string;
-  badge?: string;
   description: string;
 }
 
@@ -48,185 +46,167 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
       path: '/overview',
       label: 'Overview',
       icon: LayoutDashboard,
-      phase: 'Phase 1',
-      badge: 'Active',
-      description: 'System health & pipeline roadmap',
-    },
-    {
-      path: '/demos',
-      label: 'Live Demonstrations',
-      icon: Sparkles,
-      phase: 'Demos',
-      badge: '2 Demos',
-      description: 'Judge-Ready Demo 1 & Demo 2 Interactive Showcases',
+      description: 'System health, fault telemetry & KPI summary',
     },
     {
       path: '/datasets',
       label: 'Dataset Management',
       icon: Database,
-      phase: 'Phase 3',
-      badge: 'Active',
-      description: 'Upload, schemas & data quality',
+      description: 'Ingest industrial CSVs & schema validation',
     },
     {
       path: '/pipeline',
       label: 'Pipeline Configuration',
       icon: Sliders,
-      phase: 'Phase 4',
-      badge: 'Active',
-      description: 'Sensor mappings & detection rules',
+      description: 'Multi-sensor detection & repair settings',
     },
     {
       path: '/anomalies',
       label: 'Anomaly Explorer',
       icon: ShieldAlert,
-      phase: 'Phase 5',
-      badge: 'Active',
-      description: 'Statistical MAD & Isolation Forest',
+      description: 'Statistical MAD & Isolation Forest detections',
     },
     {
       path: '/reconstruction',
       label: 'Reconstruction Studio',
       icon: Wrench,
-      phase: 'Phase 6',
-      badge: 'Active',
-      description: 'Confidence-aware data reconstruction engine',
-    },
-    {
-      path: '/audit',
-      label: 'Audit Trail',
-      icon: History,
-      phase: 'Phase 8',
-      badge: 'Active',
-      description: 'Immutable SHA-256 ledger & provenance',
+      description: 'Confidence-aware signal repair & abstention',
     },
     {
       path: '/evaluation',
       label: 'Evaluation Center',
       icon: CheckCircle2,
-      phase: 'Phase 7',
-      badge: 'Active',
-      description: 'Controlled benchmarks & performance metrics',
+      description: 'Controlled benchmarks & ground truth validation',
+    },
+    {
+      path: '/audit',
+      label: 'Audit Trail',
+      icon: History,
+      description: 'Immutable SHA-256 ledger & provenance verification',
+    },
+    {
+      path: '/diagnostics',
+      label: 'Diagnostic Report',
+      icon: FileText,
+      description: 'Comprehensive system diagnostic health summary',
     },
     {
       path: '/settings',
       label: 'Settings & System Info',
       icon: Settings,
-      phase: 'Phase 10',
-      badge: 'Active',
-      description: 'Environment & API configurations',
+      description: 'Backend environment & API connectivity',
+    },
+    {
+      path: '/demos',
+      label: 'Live Demonstrations',
+      icon: Sparkles,
+      description: 'Interactive demo workflows and benchmark sandbox',
     },
   ];
 
   return (
     <>
-      {/* Mobile backdrop overlay with smooth fade */}
+      {/* Mobile backdrop */}
       {isOpen && (
         <div
-          className="fixed inset-0 z-40 bg-black/70 backdrop-blur-xs md:hidden"
+          className="fixed inset-0 z-40 bg-stone-900/50 backdrop-blur-xs md:hidden"
           onClick={onClose}
           aria-hidden="true"
         />
       )}
 
-      {/* Sidebar container */}
+      {/* Vertical Icon Dock matching reference screenshot */}
       <aside
         id="kintsugi-sidebar"
         role="navigation"
         aria-label="Main Navigation"
-        className={`fixed md:static inset-y-0 left-0 z-40 w-64 lg:w-72 shrink-0 flex flex-col border-r border-slate-800/80 bg-slate-950 transition-transform duration-200 ease-in-out md:translate-x-0 ${
-          isOpen ? 'translate-x-0' : '-translate-x-full'
+        className={`fixed md:static inset-y-0 left-0 z-40 my-auto py-3 pl-3 pr-1 shrink-0 flex flex-col items-center justify-between transition-transform duration-200 ease-in-out md:translate-x-0 ${
+          isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
         }`}
       >
-        {/* Navigation Category Label */}
-        <div className="p-4 border-b border-slate-800/60 bg-slate-950/40">
-          <div className="flex items-center gap-2 text-xs font-mono font-semibold uppercase tracking-wider text-slate-300">
-            <Layers className="w-3.5 h-3.5 text-amber-400" />
-            <span>Pipeline Modules</span>
+        <div className="w-14 sm:w-16 bg-white rounded-3xl border border-[#EBE7E1] shadow-[0_4px_20px_rgba(0,0,0,0.04)] py-4 px-2 flex flex-col items-center gap-3">
+          {/* Top orange pill with vertical rotated text 'PIPELINE' */}
+          <div
+            className="w-7 h-20 rounded-full bg-gradient-to-b from-[#EE602C] to-[#E3541E] flex items-center justify-center shadow-xs shadow-[#EE602C]/30 select-none group relative cursor-default"
+            title="KINTSUGI Self-Healing Pipeline Dock"
+          >
+            <span
+              className="text-[9px] font-mono tracking-widest text-white font-bold uppercase"
+              style={{
+                writingMode: 'vertical-rl',
+                textOrientation: 'mixed',
+                transform: 'rotate(180deg)',
+              }}
+            >
+              PIPELINE
+            </span>
           </div>
-          <p className="text-[11px] text-slate-500 mt-0.5 font-mono">
-            Operational Pipeline Modules
-          </p>
-        </div>
 
-        {/* Navigation list */}
-        <nav className="flex-1 overflow-y-auto px-3 py-3 space-y-1">
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            const isSelected = currentPath === item.path;
+          <div className="w-6 h-px bg-stone-200 my-1" />
 
-            return (
-              <button
-                key={item.path}
-                type="button"
-                onClick={() => {
-                  navigate(item.path);
-                  onClose();
-                }}
-                aria-current={isSelected ? 'page' : undefined}
-                className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-left transition-all duration-150 group cursor-pointer focus:outline-hidden focus:ring-2 focus:ring-amber-400/50 ${
-                  isSelected
-                    ? 'bg-amber-500/15 text-amber-300 font-medium border border-amber-500/35 shadow-xs shadow-amber-500/10'
-                    : 'text-slate-300 hover:text-white hover:bg-slate-900/80 border border-transparent'
-                }`}
-              >
-                <div className="flex items-center gap-3 min-w-0">
+          {/* Navigation Icon Buttons Stack */}
+          <nav className="flex flex-col items-center gap-2 w-full">
+            {navItems.map((item) => {
+              const Icon = item.icon;
+              const isSelected = currentPath === item.path;
+
+              return (
+                <button
+                  key={item.path}
+                  type="button"
+                  onClick={() => {
+                    navigate(item.path);
+                    onClose();
+                  }}
+                  aria-current={isSelected ? 'page' : undefined}
+                  title={`${item.label} — ${item.description}`}
+                  className={`relative w-10 h-10 rounded-2xl flex items-center justify-center transition-all duration-150 group cursor-pointer focus:outline-hidden focus:ring-2 focus:ring-[#EE602C]/40 ${
+                    isSelected
+                      ? 'bg-[#EE602C] text-white shadow-xs shadow-[#EE602C]/35 scale-105'
+                      : 'text-stone-500 hover:text-stone-900 hover:bg-stone-100/80'
+                  }`}
+                >
                   <Icon
-                    className={`w-4 h-4 shrink-0 transition-colors ${
-                      isSelected
-                        ? 'text-amber-400'
-                        : 'text-slate-400 group-hover:text-amber-300'
+                    className={`w-4 h-4 transition-transform group-hover:scale-110 ${
+                      isSelected ? 'text-white' : 'text-stone-600'
                     }`}
                   />
-                  <div className="truncate">
-                    <span className="text-xs font-medium block truncate">
-                      {item.label}
+
+                  {/* Accessible label for Playwright assertions and screen readers */}
+                  <span className="sr-only">{item.label}</span>
+
+                  {/* Hover tooltip for desktop */}
+                  <div className="absolute left-full ml-3 px-2.5 py-1 bg-stone-900 text-white text-[11px] font-medium rounded-lg shadow-lg whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50">
+                    <span className="font-semibold block">{item.label}</span>
+                    <span className="text-[10px] text-stone-300 font-normal">
+                      {item.description}
                     </span>
                   </div>
-                </div>
+                </button>
+              );
+            })}
+          </nav>
 
-                <div className="flex items-center gap-1.5 shrink-0 ml-2">
-                  {item.badge ? (
-                    <span className="text-[9px] font-mono uppercase px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40">
-                      {item.badge}
-                    </span>
-                  ) : (
-                    <span className="text-[9px] font-mono uppercase px-1.5 py-0.2 rounded bg-slate-900 text-slate-500 border border-slate-800">
-                      {item.phase}
-                    </span>
-                  )}
-                  {isSelected && (
-                    <ChevronRight className="w-3 h-3 text-amber-400 shrink-0" />
-                  )}
-                </div>
-              </button>
-            );
-          })}
-        </nav>
+          <div className="w-6 h-px bg-stone-200 my-1" />
 
-        {/* Bottom System Environment info card */}
-        <div className="p-3 border-t border-slate-800/60 bg-slate-950/60 m-2 rounded-lg border border-slate-800/80">
-          <div className="flex items-center justify-between text-[11px] font-mono text-slate-400 mb-2">
-            <span className="flex items-center gap-1.5">
-              <Cpu className="w-3.5 h-3.5 text-slate-500" />
-              Stack Architecture
-            </span>
-            <span className="text-amber-400/90 font-medium">FastAPI + Vite</span>
-          </div>
-
-          <div className="space-y-1 text-[10px] font-mono text-slate-500">
-            <div className="flex justify-between">
-              <span>Frontend:</span>
-              <span className="text-slate-300">React 19 + TypeScript</span>
-            </div>
-            <div className="flex justify-between">
-              <span>Backend:</span>
-              <span className="text-slate-300">Python 3.14 + FastAPI</span>
-            </div>
-            <div className="flex justify-between">
-              <span>System Status:</span>
-              <span className="text-amber-300">Phase 10 Verified</span>
-            </div>
+          {/* Bottom Dock Icons: Lock & Share/Network */}
+          <div className="flex flex-col items-center gap-2">
+            <button
+              type="button"
+              onClick={() => navigate('/audit')}
+              className="w-9 h-9 rounded-xl flex items-center justify-center text-rose-500/80 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
+              title="Immutable SHA-256 Ledger Lock"
+            >
+              <Lock className="w-4 h-4" />
+            </button>
+            <button
+              type="button"
+              onClick={() => navigate('/pipeline')}
+              className="w-9 h-9 rounded-xl flex items-center justify-center text-stone-400 hover:text-stone-700 hover:bg-stone-100 transition-colors cursor-pointer"
+              title="Pipeline Topology & Sensor Network"
+            >
+              <Share2 className="w-4 h-4" />
+            </button>
           </div>
         </div>
       </aside>

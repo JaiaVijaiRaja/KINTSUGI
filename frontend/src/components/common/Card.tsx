@@ -12,15 +12,15 @@ export const Card: React.FC<CardProps> = ({
   variant = 'default',
 }) => {
   const variantClasses = {
-    default: 'bg-slate-900/60 border-slate-800/80 shadow-md',
-    subtle: 'bg-slate-950/40 border-slate-800/50',
-    accent: 'bg-slate-900/70 border-amber-500/30 shadow-md shadow-amber-500/5',
-    danger: 'bg-rose-950/20 border-rose-900/40',
+    default: 'bg-white border-[#EBE7E1] shadow-[0_2px_12px_rgba(0,0,0,0.025)]',
+    subtle: 'bg-[#FAF8F5] border-[#EBE7E1]/80',
+    accent: 'bg-white border-orange-200 shadow-xs shadow-orange-500/5',
+    danger: 'bg-rose-50/40 border-rose-200',
   }[variant];
 
   return (
     <div
-      className={`rounded-xl border backdrop-blur-xs transition-all ${variantClasses} ${className}`}
+      className={`rounded-2xl border transition-all ${variantClasses} ${className}`}
     >
       {children}
     </div>
@@ -36,23 +36,23 @@ export const CardHeader: React.FC<{
   className?: string;
 }> = ({ title, subtitle, icon: Icon, badge, action, className = '' }) => (
   <div
-    className={`flex items-start justify-between gap-4 p-5 sm:p-6 border-b border-slate-800/70 ${className}`}
+    className={`flex items-start justify-between gap-4 p-5 sm:p-6 border-b border-[#F2EFE9] ${className}`}
   >
     <div className="flex items-start gap-3">
       {Icon && (
-        <div className="p-2 rounded-lg bg-slate-800/80 text-amber-400 border border-slate-700/60 shrink-0 mt-0.5">
+        <div className="p-2 rounded-xl bg-stone-100 text-[#EE602C] border border-stone-200/60 shrink-0 mt-0.5 shadow-2xs">
           <Icon className="w-4 h-4" />
         </div>
       )}
       <div>
         <div className="flex items-center gap-2 flex-wrap">
-          <h3 className="text-sm sm:text-base font-semibold text-slate-100">
+          <h3 className="text-sm sm:text-base font-semibold text-stone-900 tracking-tight">
             {title}
           </h3>
           {badge}
         </div>
         {subtitle && (
-          <p className="text-xs text-slate-400 mt-0.5 leading-relaxed">
+          <p className="text-xs text-stone-500 mt-0.5 leading-relaxed">
             {subtitle}
           </p>
         )}
@@ -74,8 +74,9 @@ export const CardFooter: React.FC<{
   className?: string;
 }> = ({ children, className = '' }) => (
   <div
-    className={`p-4 sm:px-6 border-t border-slate-800/60 bg-slate-950/40 rounded-b-xl flex items-center justify-between gap-3 text-xs text-slate-400 ${className}`}
+    className={`p-4 sm:px-6 border-t border-[#F2EFE9] bg-[#FAF8F5] rounded-b-2xl flex items-center justify-between gap-3 text-xs text-stone-500 ${className}`}
   >
     {children}
   </div>
 );
+
