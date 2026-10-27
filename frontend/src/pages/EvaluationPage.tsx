@@ -341,7 +341,7 @@ export const EvaluationPage: React.FC = () => {
       <PageHeader
         title="Evaluation Center & Benchmarking Engine"
         description="Confidence-aware industrial benchmark engine evaluating anomaly detection precision/recall, reconstruction MAE/RMSE, evidence calibration, and abstention safety against known ground truth."
-        badge="Phase 7 Operational"
+        badge="Benchmarking Suite"
         badgeVariant="emerald"
         actions={
           <div className="flex items-center gap-2">
@@ -367,15 +367,17 @@ export const EvaluationPage: React.FC = () => {
       />
 
       {/* Strict Anti-Fabrication Invariant Alert */}
-      <div className="flex items-start gap-3 p-4 rounded-xl bg-slate-900/90 border border-amber-500/30 text-xs text-slate-300 shadow-md">
-        <Info className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+      <div className="flex items-start gap-3 p-4 rounded-2xl bg-amber-50/70 border border-amber-200 text-xs text-stone-700 shadow-2xs">
+        <div className="w-7 h-7 rounded-lg bg-amber-100 text-[#D97706] border border-amber-300 flex items-center justify-center shrink-0 mt-0.5">
+          <Info className="w-4 h-4" />
+        </div>
         <div className="space-y-1">
-          <span className="font-semibold text-amber-300">
+          <span className="font-bold text-amber-950 text-sm">
             System Invariant: Zero Fabricated Metrics & Strict Ground-Truth Preservation
           </span>
-          <p className="text-slate-400 leading-relaxed">
+          <p className="text-stone-600 leading-relaxed">
             In <strong>Mode A (Benchmark)</strong>, synthetic faults are injected strictly into a separate benchmark copy; source telemetry remains 100% immutable.
-            In <strong>Mode B (Existing Runs)</strong>, true ground truth is unobserved; precision, recall, and RMSE are strictly disclaimed (<code className="text-amber-300 font-mono">—</code>) rather than fabricating synthetic scores.
+            In <strong>Mode B (Existing Runs)</strong>, true ground truth is unobserved; precision, recall, and RMSE are strictly disclaimed (<code className="text-amber-800 font-mono font-bold bg-amber-100 px-1 py-0.5 rounded">—</code>) rather than fabricating synthetic scores.
           </p>
         </div>
       </div>
@@ -1490,7 +1492,7 @@ export const EvaluationPage: React.FC = () => {
               <div className="space-y-2">
                 <span className="font-semibold text-sm text-slate-200">1. Preservation of Original Readings & Ground Truth</span>
                 <p className="text-slate-400 leading-relaxed">
-                  In all phases of KINTSUGI, the original uploaded telemetry CSV is immutable. Synthetic fault injection creates an isolated benchmark copy (<code className="text-amber-300 font-mono">ds_bm_*</code>).
+                  Across all modules of KINTSUGI, the original uploaded telemetry CSV is immutable. Synthetic fault injection creates an isolated benchmark copy (<code className="text-amber-300 font-mono">ds_bm_*</code>).
                   Every synthetic modification is registered in a machine-readable JSON manifest recording row index, sensor, uncorrupted physical reading, corrupted reading, and overlap resolution notes.
                 </p>
               </div>

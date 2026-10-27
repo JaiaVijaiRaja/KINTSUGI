@@ -1,5 +1,5 @@
 /**
- * KINTSUGI Evaluation Center Types (Phase 7)
+ * KINTSUGI Evaluation Center Types
  * Defines quantitative benchmark metrics, ground-truth manifests, breakdowns, and evaluation run state.
  */
 

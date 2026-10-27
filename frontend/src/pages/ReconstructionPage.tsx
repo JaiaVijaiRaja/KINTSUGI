@@ -428,35 +428,41 @@ export const ReconstructionPage: React.FC = () => {
       <PageHeader
         title="Reconstruction Studio"
         description="Confidence-aware self-healing signal repair engine. Computes evidence-based candidate reconstructions with transparent scoring (0–100), enforcing deterministic acceptance policies and strict source dataset immutability."
-        badge="Phase 6 Active"
+        badge="Signal Restoration Active"
         badgeVariant="emerald"
       />
 
       {/* Critical Pipeline Invariants Banner */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="flex items-start gap-3 p-4 rounded-xl bg-slate-900/60 border border-slate-800 text-xs text-slate-300">
-          <Database className="w-4 h-4 text-cyan-400 shrink-0 mt-0.5" />
+        <div className="flex items-start gap-3 p-4 rounded-2xl bg-white border border-stone-200 text-xs shadow-2xs">
+          <div className="w-7 h-7 rounded-lg bg-sky-50 text-sky-800 border border-sky-200 flex items-center justify-center shrink-0 mt-0.5">
+            <Database className="w-4 h-4" />
+          </div>
           <div className="space-y-1">
-            <span className="font-semibold text-slate-200">100% Immutable Source</span>
-            <p className="text-slate-400 leading-relaxed">
+            <span className="font-bold text-stone-900 text-xs">100% Immutable Source</span>
+            <p className="text-stone-600 leading-relaxed font-sans">
               Raw telemetry files are read-only. Original measurements are never overwritten or altered.
             </p>
           </div>
         </div>
-        <div className="flex items-start gap-3 p-4 rounded-xl bg-slate-900/60 border border-slate-800 text-xs text-slate-300">
-          <Activity className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+        <div className="flex items-start gap-3 p-4 rounded-2xl bg-white border border-stone-200 text-xs shadow-2xs">
+          <div className="w-7 h-7 rounded-lg bg-amber-50 text-amber-800 border border-amber-200 flex items-center justify-center shrink-0 mt-0.5">
+            <Activity className="w-4 h-4" />
+          </div>
           <div className="space-y-1">
-            <span className="font-semibold text-slate-200">Evidence-Based Scoring (0–100)</span>
-            <p className="text-slate-400 leading-relaxed">
+            <span className="font-bold text-stone-900 text-xs">Evidence-Based Scoring (0–100)</span>
+            <p className="text-stone-600 leading-relaxed font-sans">
               Confidence is a transparent evidence index composed of neighbor density, concordance, and temporal stability.
             </p>
           </div>
         </div>
-        <div className="flex items-start gap-3 p-4 rounded-xl bg-slate-900/60 border border-slate-800 text-xs text-slate-300">
-          <ShieldCheck className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
+        <div className="flex items-start gap-3 p-4 rounded-2xl bg-white border border-stone-200 text-xs shadow-2xs">
+          <div className="w-7 h-7 rounded-lg bg-rose-50 text-rose-800 border border-rose-200 flex items-center justify-center shrink-0 mt-0.5">
+            <ShieldCheck className="w-4 h-4" />
+          </div>
           <div className="space-y-1">
-            <span className="font-semibold text-slate-200">Mandatory Abstention</span>
-            <p className="text-slate-400 leading-relaxed">
+            <span className="font-bold text-stone-900 text-xs">Mandatory Abstention</span>
+            <p className="text-stone-600 leading-relaxed font-sans">
               When supporting evidence is insufficient or contradictory, the system tags the observation as UNRESOLVED.
             </p>
           </div>

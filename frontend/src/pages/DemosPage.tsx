@@ -404,7 +404,7 @@ export const DemosPage: React.FC = () => {
           }
           badge={
             <span className="text-[11px] font-mono uppercase px-2 py-0.5 rounded bg-amber-500/15 text-amber-300 border border-amber-500/30">
-              {activeTab === 'demo1' ? 'Phase 2 Scenario' : 'Phase 3 Scenario'}
+              {activeTab === 'demo1' ? 'Recoverable Faults Demo' : 'Strict Abstention Demo'}
             </span>
           }
           action={

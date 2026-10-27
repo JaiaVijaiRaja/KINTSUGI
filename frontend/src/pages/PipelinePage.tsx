@@ -445,7 +445,7 @@ export const PipelinePage: React.FC = () => {
       <PageHeader
         title="Pipeline Configuration"
         description="Map dataset channels, configure anomaly-detection parameters, define signal reconstruction policies, and validate settings against actual data."
-        badge="Phase 4 Active"
+        badge="Configuration Studio"
         badgeVariant="emerald"
         actions={
           <div className="flex items-center gap-2 flex-wrap">
@@ -1466,9 +1466,9 @@ export const PipelinePage: React.FC = () => {
               size="sm"
               icon={Play}
               disabled
-              title="Pipeline execution will be enabled in a subsequent phase."
+              title="Pipeline runs are managed via Anomaly Explorer."
             >
-              Execute Pipeline (Phase 5 Target)
+              Execute Pipeline
             </Button>
           }
         />
@@ -1476,11 +1476,10 @@ export const PipelinePage: React.FC = () => {
           <EmptyState
             icon={Activity}
             title="No Active Pipeline Runs"
-            description="Pipeline execution will be enabled in a subsequent phase. Saved configurations are preserved and ready for future processing."
-            plannedPhase="Phase 5"
+            description="Pipeline runs are executed via the Anomaly Explorer and Reconstruction Studio. Saved configurations are preserved and ready for real-time processing."
             plannedEndpoints={[
-              'POST /api/pipelines/{id}/execute',
-              'GET /api/pipelines/runs/{id}/status',
+              'POST /api/pipelines/{id}/run',
+              'GET /api/pipelines/{id}/runs',
             ]}
           />
         </CardContent>

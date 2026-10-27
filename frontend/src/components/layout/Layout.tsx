@@ -19,7 +19,7 @@ export const Layout: React.FC<LayoutProps> = ({
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-[#F6F5F2] text-stone-900 flex flex-col font-sans selection:bg-[#EE602C]/20 selection:text-[#EE602C]">
+    <div className="h-screen overflow-hidden bg-[#F6F5F2] text-stone-900 flex flex-col font-sans selection:bg-[#EE602C]/20 selection:text-[#EE602C]">
       <Header
         connectionStatus={connectionStatus}
         latencyMs={latencyMs}

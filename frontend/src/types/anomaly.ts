@@ -1,6 +1,6 @@
 /**
  * KINTSUGI Anomaly Types & Schemas
- * Typed definitions matching backend Phase 5 models for detection runs and anomaly records.
+ * Typed definitions matching backend models for detection runs and anomaly records.
  */
 
 export type AnomalySeverity = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';

@@ -36,7 +36,7 @@ export const OverviewPreview: React.FC<OverviewPreviewProps> = ({
           <div className="space-y-1">
             <div className="flex items-center gap-2">
               <h2 className="text-sm font-semibold text-amber-300 uppercase tracking-wide">
-                Development Preview — Phase 1 Foundation
+                Industrial Telemetry Platform Preview
               </h2>
               <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40 font-medium">
                 Non-Operational Preview

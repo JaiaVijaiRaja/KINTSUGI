@@ -368,39 +368,39 @@ export const OverviewPage: React.FC<OverviewPageProps> = () => {
           </div>
           <div className="flex items-center gap-1.5 flex-wrap text-xs font-mono">
             <span className="text-[#EE602C] font-semibold text-sm">|</span>
-            <span className="text-stone-500 font-medium">Quick inspect:</span>
+            <span className="text-stone-600 font-semibold mr-0.5">Quick inspect:</span>
             <button
               type="button"
               onClick={() => handleHeroTagClick('MISSING')}
-              className="px-2 py-0.5 rounded-md bg-stone-100 hover:bg-rose-50 hover:text-rose-700 text-stone-700 text-[11px] transition-colors cursor-pointer"
+              className="px-2.5 py-1 rounded-full bg-white hover:bg-rose-50 text-rose-800 border border-rose-300 font-semibold text-xs shadow-2xs transition-all cursor-pointer"
             >
               Data Missing
             </button>
             <button
               type="button"
               onClick={() => handleHeroTagClick('FREEZED')}
-              className="px-2 py-0.5 rounded-md bg-stone-100 hover:bg-sky-50 hover:text-sky-700 text-stone-700 text-[11px] transition-colors cursor-pointer"
+              className="px-2.5 py-1 rounded-full bg-white hover:bg-sky-50 text-sky-800 border border-sky-300 font-semibold text-xs shadow-2xs transition-all cursor-pointer"
             >
               Freezed Sensor
             </button>
             <button
               type="button"
               onClick={() => handleHeroTagClick('SPIKE')}
-              className="px-2 py-0.5 rounded-md bg-stone-100 hover:bg-orange-50 hover:text-[#EE602C] text-stone-700 text-[11px] transition-colors cursor-pointer"
+              className="px-2.5 py-1 rounded-full bg-white hover:bg-orange-50 text-[#EE602C] border border-orange-300 font-semibold text-xs shadow-2xs transition-all cursor-pointer"
             >
               Sudden Spike
             </button>
             <button
               type="button"
               onClick={() => handleHeroTagClick('GAP')}
-              className="px-2 py-0.5 rounded-md bg-stone-100 hover:bg-amber-50 hover:text-amber-800 text-stone-700 text-[11px] transition-colors cursor-pointer"
+              className="px-2.5 py-1 rounded-full bg-white hover:bg-amber-50 text-amber-800 border border-amber-300 font-semibold text-xs shadow-2xs transition-all cursor-pointer"
             >
               Communication Gap
             </button>
             <button
               type="button"
               onClick={() => handleHeroTagClick('DRIFT')}
-              className="px-2 py-0.5 rounded-md bg-stone-100 hover:bg-stone-200 text-stone-700 text-[11px] transition-colors cursor-pointer"
+              className="px-2.5 py-1 rounded-full bg-white hover:bg-purple-50 text-purple-800 border border-purple-300 font-semibold text-xs shadow-2xs transition-all cursor-pointer"
             >
               Sensor Drift
             </button>
@@ -522,79 +522,143 @@ export const OverviewPage: React.FC<OverviewPageProps> = () => {
               </div>
             </div>
 
-            {/* Expansive SVG Spike Waveform with Glowing Gradients */}
-            <div className="h-32 sm:h-36 w-full relative bg-white/80 rounded-2xl border border-[#EAE6DF] p-3 shadow-inner flex flex-col justify-between overflow-hidden">
-              <div className="flex items-center justify-between text-[10px] font-mono text-stone-400">
-                <span>Amplitude (°C)</span>
+            {/* Calibrated Proportional SVG Spike Waveform with Glowing Gradients & Full Axis Alignment */}
+            <div className="h-52 sm:h-56 w-full relative bg-white/95 rounded-2xl border border-[#EAE6DF] p-3 shadow-xs flex flex-col justify-between overflow-hidden">
+              <div className="flex items-center justify-between text-[10px] font-mono text-stone-500 pb-1 border-b border-[#F5F2EB]">
+                <div className="flex items-center gap-2">
+                  <span className="font-semibold text-stone-700">Telemetry Stream:</span>
+                  <span className="text-[#EE602C] font-bold">1-Second Interval High-Res Ingestion</span>
+                </div>
                 <div className="flex items-center gap-3">
-                  <span className="flex items-center gap-1">
-                    <span className="w-2 h-0.5 bg-[#EE602C]" /> Raw Spike Signal
+                  <span className="flex items-center gap-1.5">
+                    <span className="w-2.5 h-1 rounded-sm bg-[#EE602C]" />
+                    <span className="font-medium text-stone-700">Raw Spike Signal</span>
                   </span>
-                  <span className="flex items-center gap-1">
-                    <span className="w-2 h-0.5 bg-emerald-500" /> Healed Baseline
+                  <span className="flex items-center gap-1.5">
+                    <span className="w-2.5 h-1 rounded-sm bg-[#10B981]" />
+                    <span className="font-medium text-stone-700">Healed Baseline</span>
                   </span>
                 </div>
               </div>
 
-              <svg className="w-full h-24 overflow-visible" viewBox="0 0 400 90" preserveAspectRatio="none">
-                <defs>
-                  <linearGradient id="spikeFill" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#EE602C" stopOpacity="0.25" />
-                    <stop offset="100%" stopColor="#EE602C" stopOpacity="0.0" />
-                  </linearGradient>
-                  <linearGradient id="healedGlow" x1="0" y1="0" x2="1" y2="0">
-                    <stop offset="0%" stopColor="#10B981" />
-                    <stop offset="100%" stopColor="#059669" />
-                  </linearGradient>
-                </defs>
+              <div className="w-full flex-1 relative flex items-center justify-center py-1">
+                <svg
+                  className="w-full h-full overflow-visible select-none"
+                  viewBox="0 0 760 148"
+                  preserveAspectRatio="xMidYMid meet"
+                >
+                  <defs>
+                    <linearGradient id="spikeFill" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#EE602C" stopOpacity="0.25" />
+                      <stop offset="100%" stopColor="#EE602C" stopOpacity="0.0" />
+                    </linearGradient>
+                    <linearGradient id="healedGlow" x1="0" y1="0" x2="1" y2="0">
+                      <stop offset="0%" stopColor="#10B981" />
+                      <stop offset="100%" stopColor="#059669" />
+                    </linearGradient>
+                  </defs>
 
-                {/* Normal upper threshold limit */}
-                <line x1="0" y1="30" x2="400" y2="30" stroke="#FDE68A" strokeDasharray="3,3" strokeWidth="1" />
-                {/* Normal baseline dotted */}
-                <line x1="0" y1="65" x2="400" y2="65" stroke="#E5E0D6" strokeDasharray="4,4" strokeWidth="1.5" />
+                  {/* Horizontal Grid Lines */}
+                  <line x1="55" y1="20" x2="735" y2="20" stroke="#F1EFE9" strokeDasharray="4 4" strokeWidth="1" />
+                  <line x1="55" y1="52" x2="735" y2="52" stroke="#F1EFE9" strokeDasharray="4 4" strokeWidth="1" />
+                  <line x1="55" y1="82" x2="735" y2="82" stroke="#E5E0D6" strokeDasharray="4 4" strokeWidth="1" />
+                  <line x1="55" y1="112" x2="735" y2="112" stroke="#F1EFE9" strokeDasharray="4 4" strokeWidth="1" />
 
-                {/* Shaded area under spike curve */}
-                <polygon
-                  points="0,65 100,65 150,64 180,65 200,12 220,65 250,64 320,65 400,65 400,90 0,90"
-                  fill="url(#spikeFill)"
-                />
+                  {/* Y-Axis Value Labels */}
+                  <text x="48" y="23" textAnchor="end" fill="#78716C" fontSize="9" fontFamily="monospace">120°C</text>
+                  <text x="48" y="55" textAnchor="end" fill="#78716C" fontSize="9" fontFamily="monospace">90°C</text>
+                  <text x="48" y="85" textAnchor="end" fill="#78716C" fontSize="9" fontFamily="monospace">60°C</text>
+                  <text x="48" y="115" textAnchor="end" fill="#78716C" fontSize="9" fontFamily="monospace">30°C</text>
 
-                {/* Raw trajectory with spike */}
-                <path
-                  d="M 0 65 L 100 65 L 150 64 L 180 65 L 200 12 L 220 65 L 250 64 L 320 65 L 400 65"
-                  fill="none"
-                  stroke="#EE602C"
-                  strokeWidth="2.5"
-                />
+                  {/* Upper Bound Threshold Line */}
+                  <line x1="55" y1="52" x2="735" y2="52" stroke="#F59E0B" strokeDasharray="3 3" strokeWidth="1.2" opacity="0.85" />
+                  <text x="730" y="47" textAnchor="end" fill="#D97706" fontSize="8.5" fontFamily="monospace" fontWeight="600">
+                    UPPER THRESHOLD 85°C
+                  </text>
 
-                {/* Restored smooth healed path */}
-                <path
-                  d="M 180 65 Q 200 65 220 65"
-                  fill="none"
-                  stroke="url(#healedGlow)"
-                  strokeWidth="3"
-                  strokeLinecap="round"
-                />
+                  {/* Shaded Area Under Spike */}
+                  <polygon
+                    points="55,82 85,80 115,84 145,81 175,79 205,83 235,81 265,79 295,83 325,80 355,75 375,50 395,20 415,50 435,75 465,81 495,83 525,79 555,82 585,84 615,80 645,81 675,83 705,80 735,82 735,128 55,128"
+                    fill="url(#spikeFill)"
+                  />
 
-                {/* Peak dot with ping glow */}
-                <circle cx="200" cy="12" r="5" fill="#EE602C" stroke="#FFFFFF" strokeWidth="2" />
-                <circle cx="200" cy="12" r="9" fill="none" stroke="#EE602C" strokeWidth="1" opacity="0.6" />
+                  {/* Vertical Alignment Cursor intersecting the anomaly peak */}
+                  <line x1="395" y1="20" x2="395" y2="128" stroke="#EE602C" strokeDasharray="2 2" strokeWidth="1.2" opacity="0.5" />
 
-                {/* Restored point on baseline */}
-                <circle cx="200" cy="65" r="4" fill="#10B981" stroke="#FFFFFF" strokeWidth="1.5" />
-              </svg>
+                  {/* Raw Telemetry Trajectory with Spike */}
+                  <path
+                    d="M 55 82 C 85 80, 115 84, 145 81 C 175 79, 205 83, 235 81 C 265 79, 295 83, 325 80 C 355 76, 375 52, 388 35 L 395 20 L 402 35 C 415 52, 435 76, 465 81 C 495 83, 525 79, 555 82 C 585 84, 615 80, 645 81 C 675 83, 705 80, 735 82"
+                    fill="none"
+                    stroke="#EE602C"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
 
-              <div className="flex items-center justify-between text-[10px] font-mono text-stone-400">
-                <span>Window t-15</span>
-                <span>Spike Peak t_0</span>
-                <span>Window t+15</span>
+                  {/* Restored Smooth Healed Path across Anomaly Interval */}
+                  <path
+                    d="M 345 80 C 370 81, 395 82, 420 81 C 445 80, 465 81, 465 81"
+                    fill="none"
+                    stroke="url(#healedGlow)"
+                    strokeWidth="3.5"
+                    strokeLinecap="round"
+                  />
+
+                  {/* Peak Anomaly Dot with Ping Glow */}
+                  <circle cx="395" cy="20" r="10" fill="none" stroke="#EE602C" strokeWidth="1" opacity="0.4" />
+                  <circle cx="395" cy="20" r="5" fill="#EE602C" stroke="#FFFFFF" strokeWidth="2" />
+
+                  {/* Peak Floating Badge */}
+                  <g transform="translate(345, 4)">
+                    <rect width="100" height="15" rx="4" fill="#FEF2F2" stroke="#FCA5A5" strokeWidth="0.8" />
+                    <text x="50" y="11" textAnchor="middle" fill="#DC2626" fontSize="8" fontFamily="monospace" fontWeight="700">
+                      118.13°C RAW SPIKE
+                    </text>
+                  </g>
+
+                  {/* Restored Point on Baseline */}
+                  <circle cx="395" cy="81.5" r="4.5" fill="#10B981" stroke="#FFFFFF" strokeWidth="2" />
+
+                  {/* Restored Floating Badge */}
+                  <g transform="translate(345, 93)">
+                    <rect width="100" height="15" rx="4" fill="#ECFDF5" stroke="#6EE7B7" strokeWidth="0.8" />
+                    <text x="50" y="11" textAnchor="middle" fill="#059669" fontSize="8" fontFamily="monospace" fontWeight="700">
+                      61.20°C RESTORED
+                    </text>
+                  </g>
+
+                  {/* Bottom Horizontal Axis Line */}
+                  <line x1="55" y1="128" x2="735" y2="128" stroke="#E2E8F0" strokeWidth="1.2" />
+
+                  {/* X-Axis Ticks and Time Labels */}
+                  <line x1="55" y1="128" x2="55" y2="133" stroke="#CBD5E1" />
+                  <text x="55" y="142" textAnchor="start" fill="#57534E" fontSize="9" fontFamily="monospace" fontWeight="600">t-15</text>
+
+                  <line x1="168" y1="128" x2="168" y2="133" stroke="#CBD5E1" />
+                  <text x="168" y="142" textAnchor="middle" fill="#57534E" fontSize="9" fontFamily="monospace" fontWeight="600">t-10</text>
+
+                  <line x1="281" y1="128" x2="281" y2="133" stroke="#CBD5E1" />
+                  <text x="281" y="142" textAnchor="middle" fill="#57534E" fontSize="9" fontFamily="monospace" fontWeight="600">t-5</text>
+
+                  <line x1="395" y1="128" x2="395" y2="135" stroke="#EE602C" strokeWidth="2" />
+                  <text x="395" y="143" textAnchor="middle" fill="#EE602C" fontSize="9.5" fontFamily="monospace" fontWeight="700">t_0 (Spike Peak)</text>
+
+                  <line x1="508" y1="128" x2="508" y2="133" stroke="#CBD5E1" />
+                  <text x="508" y="142" textAnchor="middle" fill="#57534E" fontSize="9" fontFamily="monospace" fontWeight="600">t+5</text>
+
+                  <line x1="621" y1="128" x2="621" y2="133" stroke="#CBD5E1" />
+                  <text x="621" y="142" textAnchor="middle" fill="#57534E" fontSize="9" fontFamily="monospace" fontWeight="600">t+10</text>
+
+                  <line x1="735" y1="128" x2="735" y2="133" stroke="#CBD5E1" />
+                  <text x="735" y="142" textAnchor="end" fill="#57534E" fontSize="9" fontFamily="monospace" fontWeight="600">t+15</text>
+                </svg>
               </div>
             </div>
           </div>
 
           <div className="pt-3 border-t border-[#F2EFE9] flex items-center justify-between flex-wrap gap-2 text-xs font-mono">
-            <span className="text-stone-500">
-              Detector: <strong className="text-stone-800">MAD (3.5σ) + Isolation Forest Consensus</strong>
+            <span className="text-stone-600 font-medium">
+              Detector: <strong className="text-stone-900 font-bold">MAD (3.5σ) + Isolation Forest Consensus</strong>
             </span>
             <button
               type="button"
@@ -608,33 +672,32 @@ export const OverviewPage: React.FC<OverviewPageProps> = () => {
         </div>
 
         {/* ----------------------------------------------------------------------- */}
-        {/* CAPSULE 2: OBSIDIAN LUXE CONFIDENCE & CONSENSUS (Showcase 5 cols)       */}
+        {/* CAPSULE 2: CONSENSUS CONFIDENCE & MULTI-DETECTOR VERIFICATION (5 cols)  */}
         {/* ----------------------------------------------------------------------- */}
         <div
-          style={{ backgroundColor: '#18181B' }}
-          className="xl:col-span-5 text-white rounded-3xl p-6 border border-stone-800 shadow-[0_8px_30px_rgba(0,0,0,0.12)] hover:border-stone-700 transition-all duration-300 flex flex-col justify-between space-y-5 relative overflow-hidden"
+          className="xl:col-span-5 bg-gradient-to-br from-white via-[#FAF8F5] to-amber-50/25 rounded-3xl p-6 border border-[#EBE7E1] shadow-[0_4px_20px_rgba(0,0,0,0.025)] hover:shadow-[0_12px_32px_rgba(238,96,44,0.06)] hover:border-amber-300 transition-all duration-300 flex flex-col justify-between space-y-5 relative overflow-hidden"
         >
           {/* Subtle warm glow orb in top right */}
-          <div className="absolute -top-12 -right-12 w-40 h-40 bg-orange-600/15 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute -top-12 -right-12 w-40 h-40 bg-amber-400/10 rounded-full blur-3xl pointer-events-none" />
 
           {/* Header */}
           <div className="flex items-center justify-between relative z-10">
             <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-xl bg-stone-800 border border-stone-700 flex items-center justify-center text-amber-400">
+              <div className="w-8 h-8 rounded-xl bg-amber-100 text-[#D97706] border border-amber-200 flex items-center justify-center shadow-2xs">
                 <Shield className="w-4 h-4" />
               </div>
               <div>
-                <h3 className="text-sm font-bold text-white tracking-tight">
+                <h3 className="text-sm font-bold text-stone-900 tracking-tight">
                   Consensus Confidence
                 </h3>
-                <span className="text-[10px] font-mono text-stone-400">
+                <span className="text-[10px] font-mono text-stone-600 font-semibold">
                   Verification Grade A • 03_VERIF
                 </span>
               </div>
             </div>
 
-            <div className="flex items-center gap-1.5 bg-stone-800/90 border border-stone-700 px-2.5 py-1 rounded-full text-[10px] font-mono text-emerald-400">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            <div className="flex items-center gap-1.5 bg-emerald-50 border border-emerald-300 px-2.5 py-1 rounded-full text-[10px] font-mono text-emerald-800 font-bold shadow-2xs">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse" />
               <span>Agreed</span>
             </div>
           </div>
@@ -643,66 +706,64 @@ export const OverviewPage: React.FC<OverviewPageProps> = () => {
           <div className="py-2 flex flex-col items-center justify-center relative z-10">
             <div className="relative w-32 h-32 flex items-center justify-center">
               {/* Outer decorative ring */}
-              <div className="absolute inset-0 rounded-full border border-stone-800/80" />
+              <div className="absolute inset-0 rounded-full border border-stone-200" />
 
               {/* Dynamic SVG circular progress ring */}
               <svg className="w-28 h-28 transform -rotate-90" viewBox="0 0 36 36">
                 <path
-                  className="text-stone-800"
+                  stroke="#E7E5E4"
                   strokeWidth="3.2"
-                  stroke="currentColor"
                   fill="none"
                   d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
                 />
                 <path
-                  className="text-[#EE602C]"
+                  stroke="#EE602C"
                   strokeDasharray={`${activeConfidencePercent !== null ? activeConfidencePercent : 88}, 100`}
                   strokeWidth="3.4"
                   strokeLinecap="round"
-                  stroke="currentColor"
                   fill="none"
                   d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
                 />
               </svg>
 
               <div className="absolute text-center flex flex-col items-center">
-                <span className="text-2xl font-bold font-mono tracking-tight text-white">
+                <span className="text-2xl font-bold font-mono tracking-tight text-stone-900">
                   {activeConfidencePercent !== null ? `${activeConfidencePercent}%` : '88%'}
                 </span>
-                <span className="text-[9px] font-mono uppercase tracking-widest text-stone-400">
+                <span className="text-[10px] font-mono uppercase tracking-widest text-stone-600 font-bold">
                   Confidence
                 </span>
               </div>
             </div>
 
-            <p className="text-xs text-stone-300 font-medium text-center mt-3">
+            <p className="text-xs text-stone-700 font-semibold text-center mt-3">
               3 of 3 Multi-Detectors in Full Agreement
             </p>
           </div>
 
           {/* Multi-detector verification tags */}
           <div className="grid grid-cols-3 gap-2 relative z-10">
-            <div className="bg-stone-800/80 border border-stone-700/80 rounded-xl p-2 text-center">
-              <span className="text-[9px] font-mono text-stone-400 block uppercase">MAD 3.5σ</span>
-              <span className="text-xs font-mono font-bold text-emerald-400 mt-0.5 block">Pass</span>
+            <div className="bg-white border border-stone-200 rounded-xl p-2.5 text-center shadow-2xs hover:border-stone-300 transition-colors">
+              <span className="text-[10px] font-mono text-stone-700 block uppercase font-bold">MAD 3.5σ</span>
+              <span className="text-xs font-mono font-bold text-emerald-700 mt-0.5 block">Pass</span>
             </div>
-            <div className="bg-stone-800/80 border border-stone-700/80 rounded-xl p-2 text-center">
-              <span className="text-[9px] font-mono text-stone-400 block uppercase">IForest</span>
-              <span className="text-xs font-mono font-bold text-emerald-400 mt-0.5 block">Pass</span>
+            <div className="bg-white border border-stone-200 rounded-xl p-2.5 text-center shadow-2xs hover:border-stone-300 transition-colors">
+              <span className="text-[10px] font-mono text-stone-700 block uppercase font-bold">IForest</span>
+              <span className="text-xs font-mono font-bold text-emerald-700 mt-0.5 block">Pass</span>
             </div>
-            <div className="bg-stone-800/80 border border-stone-700/80 rounded-xl p-2 text-center">
-              <span className="text-[9px] font-mono text-stone-400 block uppercase">Rolling IQR</span>
-              <span className="text-xs font-mono font-bold text-emerald-400 mt-0.5 block">Pass</span>
+            <div className="bg-white border border-stone-200 rounded-xl p-2.5 text-center shadow-2xs hover:border-stone-300 transition-colors">
+              <span className="text-[10px] font-mono text-stone-700 block uppercase font-bold">Rolling IQR</span>
+              <span className="text-xs font-mono font-bold text-emerald-700 mt-0.5 block">Pass</span>
             </div>
           </div>
 
           {/* Footer Link */}
-          <div className="pt-2 border-t border-stone-800 flex items-center justify-between text-[11px] font-mono text-stone-400 relative z-10">
-            <span>Zero Fabricated Scores</span>
+          <div className="pt-2 border-t border-[#F2EFE9] flex items-center justify-between text-[11px] font-mono relative z-10">
+            <span className="text-stone-600 font-medium">Zero Fabricated Scores</span>
             <button
               type="button"
               onClick={() => navigate('/audit')}
-              className="text-[#EE602C] hover:text-orange-400 font-semibold cursor-pointer flex items-center gap-1 transition-colors"
+              className="text-[#EE602C] hover:text-[#D95322] font-bold cursor-pointer flex items-center gap-1 transition-colors text-[11px] font-mono"
             >
               <span>Audit Ledger</span>
               <ArrowRight className="w-3 h-3" />
@@ -729,21 +790,21 @@ export const OverviewPage: React.FC<OverviewPageProps> = () => {
                   Data Missing & Dropout
                 </span>
               </div>
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-amber-50 text-amber-900 border border-amber-200 font-semibold">
+              <span className="text-[10px] font-mono px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-300 font-bold shadow-2xs">
                 NaN Dropout
               </span>
             </div>
 
-            <p className="text-[11px] text-stone-500 font-mono">
+            <p className="text-[11px] text-stone-600 font-mono">
               Sensor channel • Immutable raw telemetry
             </p>
 
             <div className="bg-[#FAF8F5] p-3.5 rounded-2xl border border-[#EBE7E1] space-y-2.5">
               <div className="flex items-center justify-between text-xs">
-                <span className="font-mono font-bold text-stone-800">
+                <span className="font-mono font-bold text-stone-900">
                   {missingRecord ? `**** row_${String(missingRecord.source_row_index).padStart(4, '0')}` : '**** row_0048'}
                 </span>
-                <span className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-amber-100 text-amber-900 font-medium">
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-amber-100 text-amber-900 border border-amber-200 font-bold">
                   {activeQuality ? `${activeQuality.missing_cells_percentage.toFixed(1)}% Missing` : '3.2% Missing'}
                 </span>
               </div>
@@ -753,7 +814,7 @@ export const OverviewPage: React.FC<OverviewPageProps> = () => {
                   {missingRecord ? missingRecord.sensor_column : 'TURBINE_TEMP_A'}
                 </span>{' '}
                 • Value:{' '}
-                <span className="text-rose-600 font-bold bg-rose-50 px-1.5 py-0.5 rounded border border-rose-200">
+                <span className="text-rose-700 font-bold bg-rose-100 px-2 py-0.5 rounded border border-rose-300">
                   {missingRecord && missingRecord.original_value !== null && missingRecord.original_value !== undefined ? missingRecord.original_value : 'NaN (Null)'}
                 </span>
               </div>
@@ -763,14 +824,14 @@ export const OverviewPage: React.FC<OverviewPageProps> = () => {
                 <button
                   type="button"
                   onClick={() => navigate('/reconstruction')}
-                  className="flex-1 py-1.5 rounded-xl bg-stone-900 hover:bg-black text-white text-xs font-semibold shadow-xs transition-colors cursor-pointer text-center"
+                  className="flex-1 py-1.5 rounded-xl bg-stone-900 hover:bg-black text-white text-xs font-bold shadow-xs transition-colors cursor-pointer text-center"
                 >
                   Reconstruct
                 </button>
                 <button
                   type="button"
                   onClick={() => navigate('/reconstruction')}
-                  className="flex-1 py-1.5 rounded-xl bg-white hover:bg-stone-100 text-stone-700 text-xs font-semibold border border-stone-200 transition-colors cursor-pointer text-center"
+                  className="flex-1 py-1.5 rounded-xl bg-white hover:bg-stone-100 text-stone-800 text-xs font-bold border border-stone-300 shadow-2xs transition-colors cursor-pointer text-center"
                 >
                   Abstain
                 </button>
@@ -780,15 +841,15 @@ export const OverviewPage: React.FC<OverviewPageProps> = () => {
 
           <div className="pt-3 border-t border-[#F2EFE9] flex items-center justify-between text-xs font-mono">
             <div>
-              <span className="text-[10px] text-stone-500 block">Fault • Communication Gap</span>
-              <span className="font-bold text-stone-800">
+              <span className="text-[10px] text-stone-600 block font-medium">Fault • Communication Gap</span>
+              <span className="font-bold text-stone-900">
                 {activeQuality ? `${activeQuality.total_rows} Rows (>Max 5)` : '8 Rows (>Max 5)'}
               </span>
             </div>
             <button
               type="button"
               onClick={() => navigate('/pipeline')}
-              className="px-2.5 py-1 rounded-full bg-orange-50 text-[#EE602C] hover:bg-orange-100 text-[10px] font-semibold border border-orange-200 transition-colors cursor-pointer"
+              className="px-2.5 py-1 rounded-full bg-orange-50 text-[#EE602C] hover:bg-orange-100 text-[10px] font-bold border border-orange-200 transition-colors cursor-pointer"
             >
               Inspect gap limit
             </button>
@@ -803,19 +864,19 @@ export const OverviewPage: React.FC<OverviewPageProps> = () => {
             <span className="text-xs font-bold text-stone-900">
               Signal Stability Pods
             </span>
-            <span className="text-[10px] font-mono text-stone-500">
+            <span className="text-[10px] font-mono text-stone-600 font-semibold">
               Multi-Variance Auditing
             </span>
           </div>
 
           {/* Pod 1: Freezed Sensor (Icy Blue Theme) */}
-          <div className="bg-sky-50/70 border border-sky-100 rounded-2xl p-3.5 space-y-1.5 transition-colors hover:bg-sky-50">
+          <div className="bg-sky-50/80 border border-sky-200 rounded-2xl p-3.5 space-y-1.5 transition-colors hover:bg-sky-50">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-1.5">
-                <Snowflake className="w-3.5 h-3.5 text-sky-600 animate-spin-slow" />
-                <span className="text-[11px] font-bold text-stone-800">Freezed Sensor</span>
+                <Snowflake className="w-3.5 h-3.5 text-sky-700 animate-spin-slow" />
+                <span className="text-xs font-bold text-sky-950">Freezed Sensor</span>
               </div>
-              <span className="text-[9px] font-mono px-2 py-0.5 rounded-full bg-sky-100 text-sky-900 border border-sky-200 font-semibold">
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-sky-100 text-sky-900 border border-sky-300 font-bold">
                 12 Ticks Locked
               </span>
             </div>
@@ -824,14 +885,14 @@ export const OverviewPage: React.FC<OverviewPageProps> = () => {
                 <span className="text-lg font-bold font-mono text-stone-900">
                   54.20 °C
                 </span>
-                <span className="text-[11px] font-mono text-stone-500">
+                <span className="text-[11px] font-mono text-stone-600 font-medium">
                   Δ = 0.000
                 </span>
               </div>
               <button
                 type="button"
                 onClick={() => navigate('/anomalies')}
-                className="text-[10px] font-mono text-sky-700 hover:text-sky-900 font-semibold underline cursor-pointer"
+                className="text-[11px] font-mono text-sky-800 hover:text-sky-950 font-bold underline cursor-pointer"
               >
                 PRESSURE_PSI_B • Inspect
               </button>
@@ -839,13 +900,13 @@ export const OverviewPage: React.FC<OverviewPageProps> = () => {
           </div>
 
           {/* Pod 2: Sensor Drift (Warm Amber Ramp Theme) */}
-          <div className="bg-orange-50/70 border border-orange-100 rounded-2xl p-3.5 space-y-1.5 transition-colors hover:bg-orange-50">
+          <div className="bg-orange-50/80 border border-orange-200 rounded-2xl p-3.5 space-y-1.5 transition-colors hover:bg-orange-50">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-1.5">
                 <TrendingUp className="w-3.5 h-3.5 text-[#EE602C]" />
-                <span className="text-[11px] font-bold text-stone-800">Sensor Drift</span>
+                <span className="text-xs font-bold text-stone-900">Sensor Drift</span>
               </div>
-              <span className="text-[9px] font-mono px-2 py-0.5 rounded-full bg-orange-100 text-[#EE602C] border border-orange-200 font-semibold">
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-orange-100 text-orange-900 border border-orange-300 font-bold">
                 Ramp +0.25/t
               </span>
             </div>
@@ -856,14 +917,14 @@ export const OverviewPage: React.FC<OverviewPageProps> = () => {
               <button
                 type="button"
                 onClick={() => navigate('/anomalies')}
-                className="px-2.5 py-1 rounded-lg bg-white text-[#EE602C] hover:bg-orange-100 text-[10px] font-semibold border border-orange-200 shadow-2xs transition-colors cursor-pointer"
+                className="px-2.5 py-1 rounded-lg bg-white text-[#EE602C] hover:bg-orange-100 text-[10px] font-bold border border-orange-200 shadow-2xs transition-colors cursor-pointer"
               >
                 View on chart
               </button>
             </div>
           </div>
 
-          <div className="text-[10px] font-mono text-stone-500 text-center pt-1">
+          <div className="text-[10px] font-mono text-stone-600 font-medium text-center pt-1">
             Zero-variance and gradual creep detectors actively scanning
           </div>
         </div>
@@ -874,11 +935,11 @@ export const OverviewPage: React.FC<OverviewPageProps> = () => {
         <div className="xl:col-span-4 bg-white rounded-3xl border border-[#EBE7E1] p-5 shadow-[0_2px_12px_rgba(0,0,0,0.025)] hover:shadow-md transition-all duration-300 flex flex-col justify-between space-y-4">
           <div className="space-y-3">
             <div className="flex items-center justify-between text-xs">
-              <div className="flex items-center gap-1.5 font-mono text-stone-600 font-semibold">
-                <Clock className="w-3.5 h-3.5 text-stone-400" />
+              <div className="flex items-center gap-1.5 font-mono text-stone-700 font-bold">
+                <Clock className="w-3.5 h-3.5 text-stone-500" />
                 <span>SLIDING WINDOW: WIN_28</span>
               </div>
-              <span className="text-[9px] font-mono px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 font-semibold uppercase">
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-300 font-bold uppercase">
                 Consensus Locked
               </span>
             </div>
@@ -888,16 +949,16 @@ export const OverviewPage: React.FC<OverviewPageProps> = () => {
                 <div className="text-2xl font-bold font-mono text-stone-900">
                   {activeFaultCount !== null ? `${activeFaultCount} Faults` : '5 Faults'}
                 </div>
-                <div className="text-[11px] text-stone-500 font-mono mt-0.5">
+                <div className="text-[11px] text-stone-600 font-mono mt-0.5 font-medium">
                   8-row comm gap + 3 NaN dropout
                 </div>
               </div>
 
               <div className="flex items-center gap-1.5">
-                <span className="text-[10px] font-mono px-2.5 py-1 rounded-lg bg-orange-50 text-[#EE602C] border border-orange-200 font-bold">
+                <span className="text-[10px] font-mono px-2.5 py-1 rounded-lg bg-orange-50 text-[#EE602C] border border-orange-200 font-bold shadow-2xs">
                   MAD 3.5σ
                 </span>
-                <span className="text-[10px] font-mono px-2.5 py-1 rounded-lg bg-stone-900 text-white font-bold">
+                <span className="text-[10px] font-mono px-2.5 py-1 rounded-lg bg-stone-100 text-stone-800 border border-stone-300 font-bold shadow-2xs">
                   IForest
                 </span>
               </div>
@@ -905,7 +966,7 @@ export const OverviewPage: React.FC<OverviewPageProps> = () => {
 
             {/* Timeline Dot Matrix */}
             <div className="bg-[#FAF8F5] p-3 rounded-2xl border border-[#EBE7E1] space-y-2">
-              <div className="flex items-center justify-between text-[10px] font-mono text-stone-500">
+              <div className="flex items-center justify-between text-[10px] font-mono text-stone-600 font-semibold">
                 <span>Chronological Event Stream</span>
                 <span>t_0 → t_end</span>
               </div>
@@ -919,7 +980,7 @@ export const OverviewPage: React.FC<OverviewPageProps> = () => {
                 <span className="w-3 h-3 rounded-full bg-emerald-500 shadow-2xs hover:scale-125 transition-transform cursor-pointer" title="Healed Baseline" />
                 <span className="w-3 h-3 rounded-full bg-[#EE602C] shadow-2xs hover:scale-125 transition-transform cursor-pointer" title="Sensor Drift" />
               </div>
-              <div className="flex items-center justify-between text-[9px] font-mono text-stone-400">
+              <div className="flex items-center justify-between text-[10px] font-mono text-stone-600 font-semibold">
                 <span>● Missing</span>
                 <span>● Spike</span>
                 <span>● Freeze</span>
@@ -929,11 +990,11 @@ export const OverviewPage: React.FC<OverviewPageProps> = () => {
           </div>
 
           <div className="pt-2 border-t border-[#F2EFE9] flex items-center justify-between text-[11px] font-mono">
-            <span className="text-stone-500">Consensus Threshold: &gt;0.70</span>
+            <span className="text-stone-600 font-medium">Consensus Threshold: &gt;0.70</span>
             <button
               type="button"
               onClick={() => navigate('/pipeline')}
-              className="text-[#EE602C] hover:underline font-semibold cursor-pointer"
+              className="text-[#EE602C] hover:text-[#D95322] font-bold cursor-pointer"
             >
               Configure Windows →
             </button>
@@ -1162,14 +1223,14 @@ export const OverviewPage: React.FC<OverviewPageProps> = () => {
                           </span>
                         </div>
                         <span
-                          className={`text-[10px] font-bold px-1.5 py-0.5 rounded shrink-0 ${
+                          className={`text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 shadow-2xs ${
                             inc.tagColor === 'rose'
-                              ? 'bg-rose-50 text-rose-700 border border-rose-200'
+                              ? 'bg-rose-100 text-rose-800 border border-rose-300'
                               : inc.tagColor === 'sky'
-                              ? 'bg-sky-50 text-sky-700 border border-sky-200'
+                              ? 'bg-sky-100 text-sky-800 border border-sky-300'
                               : inc.tagColor === 'amber'
-                              ? 'bg-amber-50 text-amber-800 border border-amber-200'
-                              : 'bg-orange-50 text-[#EE602C] border border-orange-200'
+                              ? 'bg-amber-100 text-amber-900 border border-amber-300'
+                              : 'bg-orange-100 text-[#EE602C] border border-orange-300'
                           }`}
                         >
                           {inc.value}

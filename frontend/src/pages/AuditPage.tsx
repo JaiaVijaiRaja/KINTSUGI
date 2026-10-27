@@ -241,7 +241,7 @@ export const AuditPage: React.FC = () => {
       <PageHeader
         title="Audit Trail & Explainability Engine"
         description="Append-only cryptographic ledger tracking every dataset ingestion, anomaly detection, repair proposal, confidence breakdown, and policy commit."
-        badge="Phase 8 Active"
+        badge="Cryptographic Ledger Active"
         badgeVariant="emerald"
         actions={
           <div className="flex items-center gap-2">

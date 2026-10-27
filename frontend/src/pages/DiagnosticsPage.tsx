@@ -109,7 +109,7 @@ export const DiagnosticsPage: React.FC = () => {
   const handleExportReport = () => {
     const reportData = {
       system: 'KINTSUGI — Confidence-Aware Self-Healing Industrial Data Pipeline',
-      phase: 'Phase 10 Verified',
+      status: 'Production Verified',
       generated_at: diagnostics.timestamp,
       runtime_diagnostics: {
         backend_status: diagnostics.health ? 'Operational' : 'Unavailable',
@@ -176,7 +176,7 @@ export const DiagnosticsPage: React.FC = () => {
       <PageHeader
         title="Diagnostic Report"
         description="Comprehensive real-time system diagnostic audit, operational pipeline telemetry verification, cryptographic ledger status, and safety constraints."
-        badge="Phase 10 Live"
+        badge="System Live"
         badgeVariant="emerald"
         actions={
           <div className="flex items-center gap-2">

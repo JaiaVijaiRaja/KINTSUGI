@@ -3,7 +3,7 @@ import { Card, CardHeader, CardContent } from './Card';
 
 interface PlannedFeatureCardProps {
   title: string;
-  phase: string;
+  badge?: string;
   icon: React.ElementType;
   description: string;
   specifications: string[];
@@ -13,7 +13,7 @@ interface PlannedFeatureCardProps {
 
 export const PlannedFeatureCard: React.FC<PlannedFeatureCardProps> = ({
   title,
-  phase,
+  badge = 'Active',
   icon: Icon,
   description,
   specifications,
@@ -27,7 +27,7 @@ export const PlannedFeatureCard: React.FC<PlannedFeatureCardProps> = ({
         icon={Icon}
         badge={
           <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-amber-500/10 text-amber-300 border border-amber-500/30">
-            {phase}
+            {badge}
           </span>
         }
       />

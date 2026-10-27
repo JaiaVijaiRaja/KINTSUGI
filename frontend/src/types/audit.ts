@@ -1,5 +1,5 @@
 /**
- * TypeScript types and interfaces for KINTSUGI Audit Trail and Explainability Engine (Phase 8).
+ * TypeScript types and interfaces for KINTSUGI Audit Trail and Explainability Engine.
  */
 
 export type AuditEventType =

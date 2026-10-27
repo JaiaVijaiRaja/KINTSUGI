@@ -146,18 +146,18 @@ export const pipelineService = {
   },
 
   /**
-   * Planned execution endpoint (strictly not operational in Phase 4).
+   * Execution endpoint (runs managed through anomalyService).
    */
   async executePipeline(_configId: string): Promise<PipelineRun> {
     throw new ApiServiceError(
-      'Pipeline execution is planned for a subsequent phase. Phase 4 establishes configuration management only.',
+      'Direct pipeline execution is managed via the Anomaly Explorer.',
       501
     );
   },
 
   async listRuns(): Promise<PaginatedResponse<PipelineRun>> {
     throw new ApiServiceError(
-      'Pipeline runs are planned for a subsequent execution phase.',
+      'Pipeline runs are managed via the Anomaly Explorer.',
       501
     );
   },

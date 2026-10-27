@@ -72,7 +72,7 @@ export const Header: React.FC<HeaderProps> = ({
   ];
 
   return (
-    <header className="sticky top-0 z-30 w-full bg-[#F6F5F2] border-b border-[#EBE7E1] px-3 sm:px-6 py-2.5 space-y-2.5">
+    <header className="shrink-0 z-30 w-full bg-[#F6F5F2] border-b border-[#EBE7E1] px-3 sm:px-6 py-2.5 space-y-2.5">
       {/* ========================================================================= */}
       {/* ROW 1: BRAND IDENTITY + TOP HORIZONTAL NAV PILLS + CONNECTION STATUS */}
       {/* ========================================================================= */}

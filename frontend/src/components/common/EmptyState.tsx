@@ -5,7 +5,7 @@ interface EmptyStateProps {
   icon?: React.ElementType;
   title: string;
   description: string;
-  plannedPhase?: string;
+  milestone?: string;
   plannedEndpoints?: string[];
   action?: React.ReactNode;
   className?: string;
@@ -15,7 +15,7 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
   icon: Icon = Database,
   title,
   description,
-  plannedPhase,
+  milestone,
   plannedEndpoints,
   action,
   className = '',
@@ -37,10 +37,10 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
         </p>
       </div>
 
-      {plannedPhase && (
+      {milestone && (
         <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-50 border border-amber-200 text-[11px] font-mono text-amber-800">
           <Clock className="w-3.5 h-3.5 text-amber-600" />
-          <span>Scheduled for {plannedPhase}</span>
+          <span>Release: {milestone}</span>
         </div>
       )}
 

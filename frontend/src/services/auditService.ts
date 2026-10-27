@@ -1,5 +1,5 @@
 /**
- * API client service for KINTSUGI Audit Trail and Explainability Engine (Phase 8).
+ * API client service for KINTSUGI Audit Trail and Explainability Engine.
  */
 
 import { apiService } from './api';

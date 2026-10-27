@@ -308,7 +308,7 @@ export const DatasetsPage: React.FC = () => {
       <PageHeader
         title="Dataset Management"
         description="Ingest, validate, preview, and audit multi-sensor industrial time-series CSV telemetry. Preserves raw measurements for strict downstream compliance."
-        badge="Phase 3 Live"
+        badge="Ingestion Active"
         badgeVariant="emerald"
         actions={
           <Button

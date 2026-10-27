@@ -49,7 +49,7 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
           label: 'ACTIVE',
           classes: 'bg-emerald-50 text-emerald-800 border-emerald-200/80',
           dot: 'bg-emerald-500',
-          title: 'Module is active and operational in current phase',
+          title: 'Module is active and operational',
         };
       case 'PLANNED':
       default:
@@ -57,7 +57,7 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
           label: 'PLANNED',
           classes: 'bg-stone-100 text-stone-600 border-stone-200',
           dot: 'bg-stone-400',
-          title: 'Functionality designed and planned for upcoming phase',
+          title: 'Functionality designed and planned for upcoming release',
         };
     }
   };

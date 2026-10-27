@@ -97,7 +97,7 @@ export interface PipelineListResponse {
   total: number;
 }
 
-// Future stage execution models (Planned for subsequent phases)
+// Stage execution models
 export type PipelineStage =
   | 'ingestion'
   | 'anomaly_audit'

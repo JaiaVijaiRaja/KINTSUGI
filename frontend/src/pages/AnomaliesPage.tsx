@@ -497,18 +497,20 @@ export const AnomaliesPage: React.FC = () => {
       <PageHeader
         title="Anomaly Explorer"
         description="Inspect quality anomalies, localized MAD deviations, and multidimensional tree splits across validated industrial sensor streams."
-        badge="Phase 5 Production"
+        badge="Multi-Detector Active"
         badgeVariant="emerald"
       />
 
       {/* Real Execution Boundary Banner */}
-      <div className="flex items-start gap-3 p-4 rounded-xl bg-slate-900/90 border border-slate-800 text-xs text-slate-300 shadow-sm">
-        <Info className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+      <div className="flex items-start gap-3 p-4 rounded-2xl bg-white border border-stone-200 text-xs text-stone-700 shadow-2xs">
+        <div className="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-800 border border-emerald-200 flex items-center justify-center shrink-0 mt-0.5">
+          <Info className="w-4 h-4" />
+        </div>
         <div className="space-y-1">
-          <span className="font-semibold text-slate-200">
+          <span className="font-bold text-stone-900 text-sm">
             Real Telemetry Detection Engine Active
           </span>
-          <p className="text-slate-400 leading-relaxed">
+          <p className="text-stone-600 leading-relaxed font-sans">
             All algorithms operate directly on actual uploaded datasets and validated pipeline configurations.
             Suspicious observations are detected and recorded with algorithm-specific dispersion scores.
             Raw sensor readings remain strictly immutable and are never overwritten or altered.
