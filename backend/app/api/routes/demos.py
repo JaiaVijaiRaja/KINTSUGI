@@ -42,11 +42,15 @@ class ErrorValidationResponse(BaseModel):
 
 def get_demo_dir() -> Path:
     cwd = Path.cwd()
-    if (cwd / "demo").is_dir():
+    if (cwd / "demo_data").is_dir():
+        return cwd / "demo_data"
+    elif (cwd / "demo").is_dir():
         return cwd / "demo"
+    elif (cwd.parent / "demo_data").is_dir():
+        return cwd.parent / "demo_data"
     elif (cwd.parent / "demo").is_dir():
         return cwd.parent / "demo"
-    return Path(__file__).resolve().parent.parent.parent.parent / "demo"
+    return Path(__file__).resolve().parent.parent.parent.parent / "demo_data"
 
 
 DEMO_CATALOG: Dict[str, Dict[str, Any]] = {
@@ -194,20 +198,32 @@ def get_demo_manifest(demo_id: str) -> Dict[str, Any]:
     demo_dir = get_demo_dir()
     clean_id = demo_id.lower().strip()
 
-    if clean_id in ["demo1", "turbine_telemetry"]:
-        manifest_path = demo_dir / "ground_truth_manifest.json"
-    elif clean_id in ["demo2", "difficult_cases"]:
-        manifest_path = demo_dir / "difficult_cases_ground_truth.json"
+    manifest_path = None
+    if clean_id in ["demo1", "turbine_telemetry", "industrial_recoverable_faults", "recoverable"]:
+        candidates = ["recoverable_ground_truth.json", "ground_truth_manifest.json"]
+    elif clean_id in ["demo2", "difficult_cases", "industrial_ambiguous_faults", "ambiguous"]:
+        candidates = ["ambiguous_ground_truth.json", "difficult_cases_ground_truth.json"]
     else:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Unknown demo manifest '{demo_id}'. Expected 'demo1' or 'demo2'.",
         )
 
-    if not manifest_path.exists():
+    for c in candidates:
+        p = demo_dir / c
+        if p.is_file():
+            manifest_path = p
+            break
+        # Also check sibling demo or demo_data
+        sibling_dir = demo_dir.parent / ("demo" if demo_dir.name == "demo_data" else "demo_data")
+        if (sibling_dir / c).is_file():
+            manifest_path = sibling_dir / c
+            break
+
+    if not manifest_path or not manifest_path.exists():
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Manifest file not found at {manifest_path}.",
+            detail=f"Manifest file for '{demo_id}' not found in {demo_dir}.",
         )
 
     with open(manifest_path, "r", encoding="utf-8") as f:

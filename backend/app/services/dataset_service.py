@@ -218,30 +218,66 @@ class DatasetService:
     def ingest_demo_dataset(self, demo_id: str) -> DatasetDetailResponse:
         """Load and ingest a deterministic demonstration CSV dataset into local storage."""
         cwd = Path.cwd()
-        if (cwd / "demo").is_dir():
-            demo_base = cwd / "demo"
-        elif (cwd.parent / "demo").is_dir():
-            demo_base = cwd.parent / "demo"
-        else:
-            demo_base = Path(__file__).resolve().parent.parent.parent.parent / "demo"
+        repo_roots = [
+            cwd,
+            cwd.parent,
+            Path(__file__).resolve().parent.parent.parent.parent,
+        ]
 
         clean_id = demo_id.lower().strip()
-        if clean_id in ["demo1", "turbine_telemetry", "turbine", "turbine_telemetry_demo"]:
-            csv_path = demo_base / "turbine_telemetry_demo.csv"
-            filename = "turbine_telemetry_demo.csv"
-        elif clean_id in ["demo2", "difficult_cases", "difficult", "difficult_cases_demo"]:
-            csv_path = demo_base / "difficult_cases_demo.csv"
-            filename = "difficult_cases_demo.csv"
+        demo1_aliases = [
+            "demo1",
+            "turbine_telemetry",
+            "turbine",
+            "turbine_telemetry_demo",
+            "industrial_recoverable_faults",
+            "recoverable",
+            "recoverable_faults",
+        ]
+        demo2_aliases = [
+            "demo2",
+            "difficult_cases",
+            "difficult",
+            "difficult_cases_demo",
+            "industrial_ambiguous_faults",
+            "ambiguous",
+            "ambiguous_faults",
+        ]
+
+        if clean_id in demo1_aliases:
+            candidates = [
+                ("demo_data", "industrial_recoverable_faults.csv"),
+                ("demo", "turbine_telemetry_demo.csv"),
+            ]
+            default_filename = "industrial_recoverable_faults.csv"
+        elif clean_id in demo2_aliases:
+            candidates = [
+                ("demo_data", "industrial_ambiguous_faults.csv"),
+                ("demo", "difficult_cases_demo.csv"),
+            ]
+            default_filename = "industrial_ambiguous_faults.csv"
         else:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Unknown demonstration dataset identifier '{demo_id}'. Expected 'demo1' or 'demo2'.",
+                detail=f"Unknown demonstration dataset identifier '{demo_id}'. Expected 'demo1' (recoverable) or 'demo2' (ambiguous).",
             )
 
-        if not csv_path.exists():
+        csv_path = None
+        filename = default_filename
+        for root in repo_roots:
+            for folder, fname in candidates:
+                p = root / folder / fname
+                if p.is_file():
+                    csv_path = p
+                    filename = fname
+                    break
+            if csv_path:
+                break
+
+        if not csv_path or not csv_path.exists():
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Demonstration fixture '{filename}' not found at {csv_path}.",
+                detail=f"Demonstration fixture '{filename}' not found in demo_data/ or demo/.",
             )
 
         with open(csv_path, "rb") as f:

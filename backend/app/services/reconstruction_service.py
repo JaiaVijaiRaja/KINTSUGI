@@ -127,6 +127,44 @@ class ReconstructionService:
         if pipeline_cfg.timestamp_column and pipeline_cfg.timestamp_column in df.columns:
             timestamp_series = df[pipeline_cfg.timestamp_column]
 
+        # Also identify unmeasured/missing cells (NaN/null) in sensor columns to evaluate for reconstruction
+        eval_targets: List[AnomalyRecord] = list(anomaly_records)
+        existing_targets = {(a.sensor_column, a.source_row_index) for a in anomaly_records}
+
+        for col in pipeline_cfg.sensor_columns:
+            if col in df.columns:
+                series_vals_raw = df[col]
+                for r_idx in range(len(df)):
+                    val_at_r = series_vals_raw.iloc[r_idx]
+                    if pd.isna(val_at_r) or not np.isfinite(val_at_r):
+                        if (col, r_idx) not in existing_targets:
+                            ts_str = str(timestamp_series.iloc[r_idx]) if (timestamp_series is not None and pd.notna(timestamp_series.iloc[r_idx])) else None
+                            missing_rec = AnomalyRecord(
+                                anomaly_id=f"anom_missing_{col}_{r_idx}",
+                                run_id=det_run.run_id,
+                                dataset_id=det_run.dataset_id,
+                                configuration_id=pipeline_id,
+                                sensor_column=col,
+                                source_row_index=r_idx,
+                                timestamp=ts_str,
+                                original_value=None,
+                                detector_name="missing_value_check",
+                                detector_score=None,
+                                detection_reason="Missing observation (NaN/null): packet drop, sensor offline, or transmission loss",
+                                severity="HIGH",
+                                flagged_status="FLAGGED",
+                                consensus="SINGLE_DETECTOR",
+                                detectors_flagged=["missing_value_check"],
+                                detector_details={},
+                            )
+                            eval_targets.append(missing_rec)
+                            existing_targets.add((col, r_idx))
+                            if col in anomaly_map:
+                                anomaly_map[col].add(r_idx)
+
+        # Sort evaluation targets deterministically by (source_row_index, sensor_column)
+        eval_targets.sort(key=lambda x: (x.source_row_index, x.sensor_column))
+
         reconstruction_records: List[ReconstructionRecord] = []
         errors: List[str] = []
         warnings: List[str] = []
@@ -134,8 +172,8 @@ class ReconstructionService:
         rec_settings = pipeline_cfg.reconstruction_settings
         max_gap = rec_settings.max_gap_size
 
-        # 6. Evaluate reconstruction for each flagged anomaly observation
-        for anom in anomaly_records:
+        # 6. Evaluate reconstruction for each flagged anomaly and missing observation
+        for anom in eval_targets:
             col = anom.sensor_column
             if col not in df.columns:
                 continue
@@ -181,13 +219,41 @@ class ReconstructionService:
             primary_refs = []
             is_structurally_valid = False
             structural_reason: Optional[str] = None
+            is_safety_violation = False
 
-            if rec_settings.allow_linear_interpolation and interp_valid:
-                primary_method = "linear_interpolation"
-                proposed_val = interp_val
-                evidence_summary = interp_reason
-                primary_refs = interp_refs
-                is_structurally_valid = True
+            if rec_settings.allow_linear_interpolation:
+                if interp_valid:
+                    primary_method = "linear_interpolation"
+                    proposed_val = interp_val
+                    evidence_summary = interp_reason
+                    primary_refs = interp_refs
+                    is_structurally_valid = True
+                else:
+                    # Check if interpolation failed due to hard safety constraints:
+                    # 1. Boundary extrapolation prohibition
+                    # 2. Maximum gap limit exceeded
+                    is_safety_violation = (
+                        "extrapolation is strictly prohibited" in interp_reason.lower()
+                        or "exceeds configured maximum gap limit" in interp_reason.lower()
+                    )
+                    if is_safety_violation or rec_settings.fallback_behavior == "abstain_unresolved":
+                        primary_method = "none"
+                        proposed_val = None
+                        is_structurally_valid = False
+                        structural_reason = interp_reason
+                        evidence_summary = structural_reason
+                    elif median_valid:
+                        primary_method = "local_median"
+                        proposed_val = median_val
+                        evidence_summary = median_reason
+                        primary_refs = median_refs
+                        is_structurally_valid = True
+                    else:
+                        primary_method = "none"
+                        proposed_val = None
+                        is_structurally_valid = False
+                        structural_reason = interp_reason
+                        evidence_summary = structural_reason
             elif median_valid:
                 primary_method = "local_median"
                 proposed_val = median_val
@@ -198,7 +264,7 @@ class ReconstructionService:
                 primary_method = "none"
                 proposed_val = None
                 is_structurally_valid = False
-                structural_reason = interp_reason if not interp_valid else median_reason
+                structural_reason = median_reason
                 evidence_summary = structural_reason
 
             # Method C: Cross-Sensor Validation
@@ -211,7 +277,7 @@ class ReconstructionService:
             )
 
             # If interpolation and median were impossible, can cross-sensor establish a proposal?
-            if not is_structurally_valid and cross_val is not None and cross_agree is True:
+            if not is_structurally_valid and not is_safety_violation and cross_val is not None and cross_agree is True:
                 primary_method = "cross_sensor"
                 proposed_val = cross_val
                 is_structurally_valid = True

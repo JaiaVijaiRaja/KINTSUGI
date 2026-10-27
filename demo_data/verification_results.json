@@ -1,0 +1,187 @@
+{
+  "status": "passed",
+  "datasets": {
+    "dataset_a_recoverable": {
+      "dataset_id": "ds_efa8ed04a6e7",
+      "pipeline_id": "pipe_2bdfdbc7c041",
+      "detection_run_id": "run_8d0a41d048ec",
+      "reconstruction_run_id": "rec_run_62cb8dea157a",
+      "summary": {
+        "total_evaluated": 32,
+        "measured_count": 0,
+        "estimated_count": 0,
+        "corrected_count": 13,
+        "unresolved_count": 19,
+        "average_confidence": 68.04,
+        "anomalies_reconstructed_count": 13,
+        "by_sensor": {
+          "temperature_bearing_c": {
+            "CORRECTED": 4,
+            "ESTIMATED": 0,
+            "UNRESOLVED": 11,
+            "MEASURED": 0
+          },
+          "vibration_drive_end_g": {
+            "CORRECTED": 5,
+            "ESTIMATED": 0,
+            "UNRESOLVED": 7,
+            "MEASURED": 0
+          },
+          "pressure_feed_bar": {
+            "CORRECTED": 4,
+            "ESTIMATED": 0,
+            "UNRESOLVED": 1,
+            "MEASURED": 0
+          }
+        },
+        "by_method": {
+          "none": 2,
+          "linear_interpolation": 30
+        }
+      },
+      "checks": [
+        {
+          "check": "Row count matches",
+          "passed": true,
+          "details": "Got 60"
+        },
+        {
+          "check": "Columns validated",
+          "passed": true,
+          "details": "Columns: ['timestamp', 'temperature_bearing_c', 'vibration_drive_end_g', 'pressure_feed_bar', 'ambient_temp_c']"
+        },
+        {
+          "check": "Pipeline registered",
+          "passed": true,
+          "details": "pipe_2bdfdbc7c041"
+        },
+        {
+          "check": "Anomalies detected",
+          "passed": true,
+          "details": "Detected: 28"
+        },
+        {
+          "check": "Spikes corrected",
+          "passed": true,
+          "details": "Corrected: 13"
+        },
+        {
+          "check": "Boundary abstained (UNRESOLVED)",
+          "passed": true,
+          "details": "Unresolved: 19"
+        },
+        {
+          "check": "Row 12 Thermal Spike Reconstructed",
+          "passed": true,
+          "details": "Original=158.4\u00b0C -> Final=67.1014\u00b0C, Confidence=90.0"
+        },
+        {
+          "check": "Row 0 Boundary Abstention",
+          "passed": true,
+          "details": "Status=UNRESOLVED, Reason=Observation at row 0 has no valid preceding observation; extrapolation is strictly prohibited."
+        },
+        {
+          "check": "Raw dataset unchanged (Immutability)",
+          "passed": true,
+          "details": "SHA256 intact: ec3782a16423"
+        },
+        {
+          "check": "Export contains 60 rows",
+          "passed": true,
+          "details": "Rows: 60"
+        },
+        {
+          "check": "Export contains repaired columns",
+          "passed": true,
+          "details": ""
+        },
+        {
+          "check": "Export contains status columns",
+          "passed": true,
+          "details": ""
+        },
+        {
+          "check": "Audit Hash Chain Continuous & Valid",
+          "passed": true,
+          "details": "Events checked=5982"
+        }
+      ]
+    },
+    "dataset_b_ambiguous": {
+      "dataset_id": "ds_75d2a2065eb3",
+      "pipeline_id": "pipe_c903450dd3b2",
+      "detection_run_id": "run_358bbece535b",
+      "reconstruction_run_id": "rec_run_b890045b9f61",
+      "summary": {
+        "total_evaluated": 45,
+        "measured_count": 0,
+        "estimated_count": 0,
+        "corrected_count": 13,
+        "unresolved_count": 32,
+        "average_confidence": 39.27,
+        "anomalies_reconstructed_count": 13,
+        "by_sensor": {
+          "temperature_bearing_c": {
+            "CORRECTED": 3,
+            "ESTIMATED": 0,
+            "UNRESOLVED": 15,
+            "MEASURED": 0
+          },
+          "vibration_drive_end_g": {
+            "CORRECTED": 0,
+            "ESTIMATED": 0,
+            "UNRESOLVED": 17,
+            "MEASURED": 0
+          },
+          "pressure_feed_bar": {
+            "CORRECTED": 10,
+            "ESTIMATED": 0,
+            "UNRESOLVED": 0,
+            "MEASURED": 0
+          }
+        },
+        "by_method": {
+          "none": 20,
+          "linear_interpolation": 25
+        }
+      },
+      "checks": [
+        {
+          "check": "Strict Abstentions Enforced",
+          "passed": true,
+          "details": "Unresolved Count: 32"
+        },
+        {
+          "check": "Continuous Blackout (> 5 rows) Abstained",
+          "passed": true,
+          "details": "Found 8 records, all UNRESOLVED=True"
+        },
+        {
+          "check": "Boundary NaN Abstained",
+          "passed": true,
+          "details": "Row 0 status=UNRESOLVED"
+        },
+        {
+          "check": "Dataset B Immutability Verified",
+          "passed": true,
+          "details": "SHA256 intact: e7d76a6c2a2d"
+        },
+        {
+          "check": "Export contains 60 rows",
+          "passed": true,
+          "details": "Rows: 60"
+        },
+        {
+          "check": "Export contains status columns",
+          "passed": true,
+          "details": ""
+        }
+      ]
+    }
+  },
+  "summary": {
+    "total_checks": 19,
+    "passed_checks": 19,
+    "failed_checks": 0
+  }
+}

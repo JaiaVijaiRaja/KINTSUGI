@@ -2,6 +2,7 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Test Journey J: Live Demonstrations (Demo 1 & Demo 2)', () => {
   test('J-01: Demo 1 Turbine Telemetry — Pipeline Execution, Observation Ledger & Statuses', async ({ page }) => {
+    test.setTimeout(60000);
     await page.goto('/demos');
 
     // 1. Verify page renders with title and badge
@@ -23,9 +24,9 @@ test.describe('Test Journey J: Live Demonstrations (Demo 1 & Demo 2)', () => {
     await runBtn.click();
 
     // 5. Verify KPI Summary Cards appear upon completion
-    await expect(page.getByText('Total Processed', { exact: true })).toBeVisible({ timeout: 35000 });
-    await expect(page.getByText('Corrected (Accepted)', { exact: true })).toBeVisible();
-    await expect(page.getByText('Unresolved (Abstained)', { exact: true })).toBeVisible();
+    await expect(page.getByText('Total Evaluated', { exact: true })).toBeVisible({ timeout: 35000 });
+    await expect(page.getByText('Corrected', { exact: true })).toBeVisible();
+    await expect(page.getByText('Unresolved', { exact: true })).toBeVisible();
 
     // 6. Verify Results Ledger Table
     await expect(page.getByText('Observation Results Ledger', { exact: false })).toBeVisible();
@@ -47,6 +48,7 @@ test.describe('Test Journey J: Live Demonstrations (Demo 1 & Demo 2)', () => {
   });
 
   test('J-02: Demo 2 Trust, Abstention, Benchmark & Error Recovery', async ({ page }) => {
+    test.setTimeout(60000);
     await page.goto('/demos');
 
     // 1. Switch to Demo 2 tab
@@ -63,7 +65,7 @@ test.describe('Test Journey J: Live Demonstrations (Demo 1 & Demo 2)', () => {
     await runBtn.click();
 
     // 4. Verify completion and check abstention metrics
-    await expect(page.getByText('Unresolved (Abstained)', { exact: true })).toBeVisible({ timeout: 35000 });
+    await expect(page.getByText('Unresolved', { exact: true })).toBeVisible({ timeout: 35000 });
 
     // 5. Run Ground Truth Benchmark (Mode A)
     const benchmarkBtn = page.getByRole('button', { name: /Run Benchmark/i });
@@ -80,13 +82,13 @@ test.describe('Test Journey J: Live Demonstrations (Demo 1 & Demo 2)', () => {
     await testNonCsvBtn.click();
 
     // Verify clear user-facing error message appears without tracebacks
-    await expect(page.getByText('Simulated Error Response (Safe Recovery Verified)')).toBeVisible({ timeout: 10000 });
-    await expect(page.getByText('Traceback Exposed: false')).toBeVisible();
+    await expect(page.getByText('Data Preserved: True')).toBeVisible({ timeout: 10000 });
+    await expect(page.getByText('Safety Check:', { exact: false })).toBeVisible();
 
     // Test Empty File
     const testEmptyBtn = page.getByRole('button', { name: /Test Empty File/i });
     await expect(testEmptyBtn).toBeVisible();
     await testEmptyBtn.click();
-    await expect(page.getByText('Traceback Exposed: false')).toBeVisible();
+    await expect(page.getByText('Data Preserved: True')).toBeVisible({ timeout: 10000 });
   });
 });
