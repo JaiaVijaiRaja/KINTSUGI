@@ -714,3 +714,57 @@ def test_23_operator_review_decision(isolated_env):
     single_res = client.get(f"/api/reconstruction/results/{target_res_id}")
     assert single_res.status_code == 200
     assert single_res.json()["status"] == "CORRECTED"
+
+
+# ==============================================================================
+# 24. End-to-end dataset recovery endpoint
+# ==============================================================================
+def test_24_execute_recovery_for_dataset(isolated_env):
+    """Verify POST /api/reconstruction/execute-for-dataset/{dataset_id} executes detection & recovery end-to-end."""
+    client = isolated_env["client"]
+    rows = ["timestamp,temperature,pressure"]
+    for i in range(30):
+        # Insert NaN missing gap at i=10 and spike at i=20
+        temp = 42.0 if i != 20 else 999.0
+        temp_val = "" if i == 10 else str(temp)
+        pres = 101.3
+        rows.append(f"2026-03-01T00:{i:02d}:00Z,{temp_val},{pres}")
+    d_id = upload_csv_helper(client, "\n".join(rows))
+
+    resp = client.post(f"/api/reconstruction/execute-for-dataset/{d_id}")
+    assert resp.status_code == 201
+    rec_data = resp.json()
+    assert "run" in rec_data
+    run = rec_data["run"]
+    assert run["dataset_id"] == d_id
+    assert run["status"] == "completed"
+    assert run["summary"]["total_evaluated"] >= 1
+
+    # Check that results are queryable
+    res_list = client.get(f"/api/reconstruction/runs/{run['reconstruction_run_id']}/results").json()
+    assert res_list["total_results"] >= 1
+
+
+# ==============================================================================
+# 25. Filter reconstruction runs by dataset_id
+# ==============================================================================
+def test_25_list_reconstruction_runs_filtered_by_dataset(isolated_env):
+    """Verify GET /api/reconstruction/runs?dataset_id={dataset_id} properly filters by dataset."""
+    client = isolated_env["client"]
+    rows = ["timestamp,vibration"]
+    for i in range(20):
+        rows.append(f"2026-03-01T00:{i:02d}:00Z,{10.0 if i != 5 else 88.0}")
+    d_id_1 = upload_csv_helper(client, "\n".join(rows))
+    d_id_2 = upload_csv_helper(client, "\n".join(rows))
+
+    client.post(f"/api/reconstruction/execute-for-dataset/{d_id_1}")
+    client.post(f"/api/reconstruction/execute-for-dataset/{d_id_2}")
+
+    filter_res_1 = client.get(f"/api/reconstruction/runs?dataset_id={d_id_1}").json()
+    assert filter_res_1["total"] == 1
+    assert filter_res_1["runs"][0]["dataset_id"] == d_id_1
+
+    filter_res_2 = client.get(f"/api/reconstruction/runs?dataset_id={d_id_2}").json()
+    assert filter_res_2["total"] == 1
+    assert filter_res_2["runs"][0]["dataset_id"] == d_id_2
+

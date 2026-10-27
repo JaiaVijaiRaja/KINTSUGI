@@ -64,11 +64,40 @@ export const reconstructionService = {
   },
 
   /**
-   * List historical reconstruction runs, optionally filtered by pipeline or detection run.
+   * Execute end-to-end recovery for a selected dataset directly.
+   */
+  async executeRecoveryForDataset(
+    datasetId: string,
+    allowAutomaticCorrection: boolean = true
+  ): Promise<ReconstructionRunResponse> {
+    const baseUrl = apiService.getBaseUrl();
+    try {
+      const qp = new URLSearchParams({
+        allow_automatic_correction: String(allowAutomaticCorrection),
+      });
+      const res = await fetch(
+        `${baseUrl}/api/reconstruction/execute-for-dataset/${encodeURIComponent(datasetId)}?${qp.toString()}`,
+        {
+          method: 'POST',
+          headers: {
+            Accept: 'application/json',
+          },
+        }
+      );
+      return await handleResponse<ReconstructionRunResponse>(res);
+    } catch (err: unknown) {
+      if (err instanceof ApiServiceError) throw err;
+      throw new ApiServiceError(`Failed to trigger recovery for dataset: ${String(err)}`);
+    }
+  },
+
+  /**
+   * List historical reconstruction runs, optionally filtered by pipeline, detection run, or dataset.
    */
   async listRuns(
     pipelineId?: string,
     detectionRunId?: string,
+    datasetId?: string,
     limit: number = 50,
     offset: number = 0
   ): Promise<ReconstructionRunListResponse> {
@@ -80,6 +109,7 @@ export const reconstructionService = {
       });
       if (pipelineId) qp.set('pipeline_id', pipelineId);
       if (detectionRunId) qp.set('detection_run_id', detectionRunId);
+      if (datasetId) qp.set('dataset_id', datasetId);
 
       const res = await fetch(`${baseUrl}/api/reconstruction/runs?${qp.toString()}`, {
         method: 'GET',

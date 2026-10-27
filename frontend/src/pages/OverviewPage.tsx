@@ -100,7 +100,7 @@ export const OverviewPage: React.FC<OverviewPageProps> = () => {
         const [metaRes, qualRes, runsRes] = await Promise.allSettled([
           datasetService.getDatasetById(dsId),
           datasetService.getDatasetQuality(dsId),
-          reconstructionService.listRuns(undefined, undefined, 20, 0),
+          reconstructionService.listRuns(undefined, undefined, dsId, 20, 0),
         ]);
 
         if (!isMounted) return;

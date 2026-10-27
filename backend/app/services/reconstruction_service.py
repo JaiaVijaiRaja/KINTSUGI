@@ -523,6 +523,7 @@ class ReconstructionService:
         self,
         pipeline_id: Optional[str] = None,
         detection_run_id: Optional[str] = None,
+        dataset_id: Optional[str] = None,
         limit: int = 50,
         offset: int = 0,
     ) -> ReconstructionRunListResponse:
@@ -544,6 +545,8 @@ class ReconstructionService:
                                     continue
                                 if detection_run_id and r_run.detection_run_id != detection_run_id:
                                     continue
+                                if dataset_id and r_run.dataset_id != dataset_id:
+                                    continue
                                 runs.append(r_run)
                         except Exception as e:
                             logger.warning("Corrupted reconstruction run file %s: %s", run_file, str(e))
@@ -555,6 +558,101 @@ class ReconstructionService:
         return ReconstructionRunListResponse(
             runs=sliced,
             total=len(runs),
+        )
+
+    def execute_recovery_for_dataset(
+        self,
+        dataset_id: str,
+        allow_automatic_correction: bool = True,
+    ) -> ReconstructionRunResponse:
+        """
+        Execute end-to-end recovery for a selected dataset:
+        1. Validates target dataset exists.
+        2. Locates an existing pipeline configuration or provisions a verified pipeline.
+        3. Executes anomaly detection to identify real anomalies and missing observations.
+        4. Executes signal reconstruction engine following strict safety invariants.
+        5. Persists results and SHA-256 audit log.
+        """
+        # 1. Validate dataset exists
+        meta = dataset_service.get_dataset_metadata(dataset_id)
+
+        # 2. Locate existing pipeline for this dataset
+        pipelines = pipeline_service.list_pipeline_configs().pipelines
+        dataset_pipelines = [p for p in pipelines if p.dataset_id == dataset_id]
+
+        if dataset_pipelines:
+            pipeline = dataset_pipelines[0]
+            if allow_automatic_correction and not pipeline.reconstruction_settings.allow_automatic_correction:
+                from app.schemas.pipeline import PipelineConfigUpdate
+                update_payload = PipelineConfigUpdate(
+                    configuration_name=pipeline.configuration_name,
+                    description=pipeline.description,
+                    dataset_id=pipeline.dataset_id,
+                    timestamp_column=pipeline.timestamp_column,
+                    sensor_columns=pipeline.sensor_columns,
+                    ignored_columns=pipeline.ignored_columns,
+                    detection_settings=pipeline.detection_settings,
+                    reconstruction_settings=pipeline.reconstruction_settings.model_copy(update={"allow_automatic_correction": True}),
+                    confidence_policy=pipeline.confidence_policy,
+                )
+                pipeline = pipeline_service.update_pipeline_config(pipeline.configuration_id, update_payload)
+        else:
+            from app.schemas.pipeline import (
+                ConfidencePolicy,
+                DetectionSettings,
+                PipelineConfigCreate,
+                ReconstructionSettings,
+            )
+
+            quality = dataset_service.get_dataset_quality(dataset_id)
+            ts_col = None
+            if quality.timestamp_candidates:
+                ts_col = quality.timestamp_candidates[0].column_name
+            elif "timestamp" in meta.columns:
+                ts_col = "timestamp"
+
+            sensor_cols = [
+                c.name for c in quality.columns if c.is_numeric and c.name != ts_col
+            ]
+
+            if not sensor_cols:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Dataset '{dataset_id}' contains no numeric sensor columns eligible for recovery.",
+                )
+
+            pipe_create = PipelineConfigCreate(
+                configuration_name=f"Recovery-{meta.filename[:30]}",
+                description=f"Automated recovery pipeline for {meta.filename}",
+                dataset_id=dataset_id,
+                timestamp_column=ts_col,
+                sensor_columns=sensor_cols,
+                ignored_columns=[],
+                detection_settings=DetectionSettings(),
+                reconstruction_settings=ReconstructionSettings(
+                    allow_linear_interpolation=True,
+                    max_gap_size=5,
+                    require_cross_sensor_validation=(len(sensor_cols) >= 2),
+                    preserve_original_readings=True,
+                    allow_automatic_correction=allow_automatic_correction,
+                    fallback_behavior="abstain_unresolved",
+                ),
+                confidence_policy=ConfidencePolicy(
+                    review_threshold=0.80,
+                    human_review_required=True,
+                    min_evidence_sensors=min(1, len(sensor_cols)),
+                    unjustified_behavior="abstain_unresolved",
+                ),
+            )
+            pipeline = pipeline_service.create_pipeline_config(pipe_create)
+
+        # 3. Execute detection run
+        det_run = detection_service.execute_detection_run(pipeline.configuration_id)
+
+        # 4. Execute reconstruction run
+        return self.execute_reconstruction_run(
+            pipeline_id=pipeline.configuration_id,
+            detection_run_id=det_run.run_id,
         )
 
     def get_reconstruction_run(self, reconstruction_run_id: str) -> ReconstructionRun:

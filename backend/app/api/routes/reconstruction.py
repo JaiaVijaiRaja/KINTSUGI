@@ -8,6 +8,7 @@ from app.schemas.reconstruction import (
     ReconstructionResultsResponse,
     ReconstructionRun,
     ReconstructionRunListResponse,
+    ReconstructionRunResponse,
     ReviewDecisionRequest,
 )
 from app.services.reconstruction_service import reconstruction_service
@@ -19,11 +20,12 @@ router = APIRouter(prefix="/reconstruction", tags=["Reconstruction"])
     "/runs",
     response_model=ReconstructionRunListResponse,
     summary="List reconstruction runs",
-    description="Retrieve historical signal reconstruction runs with filtering by pipeline or source detection run.",
+    description="Retrieve historical signal reconstruction runs with filtering by pipeline, dataset, or source detection run.",
 )
 async def list_reconstruction_runs(
     pipeline_id: Optional[str] = Query(None, description="Filter by pipeline configuration ID"),
     detection_run_id: Optional[str] = Query(None, description="Filter by detection run ID"),
+    dataset_id: Optional[str] = Query(None, description="Filter by target dataset ID"),
     limit: int = Query(50, ge=1, le=500, description="Maximum number of runs to return"),
     offset: int = Query(0, ge=0, description="Pagination offset"),
 ) -> ReconstructionRunListResponse:
@@ -31,8 +33,27 @@ async def list_reconstruction_runs(
     return reconstruction_service.list_reconstruction_runs(
         pipeline_id=pipeline_id,
         detection_run_id=detection_run_id,
+        dataset_id=dataset_id,
         limit=limit,
         offset=offset,
+    )
+
+
+@router.post(
+    "/execute-for-dataset/{dataset_id}",
+    response_model=ReconstructionRunResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Execute end-to-end signal recovery for dataset",
+    description="Validates target dataset, configures recovery pipeline, runs anomaly detection, and executes confidence-aware signal repair.",
+)
+async def execute_recovery_for_dataset(
+    dataset_id: str,
+    allow_automatic_correction: bool = Query(True, description="Permit automatic correction when confidence threshold is satisfied"),
+) -> ReconstructionRunResponse:
+    """Execute end-to-end signal recovery on a selected dataset."""
+    return reconstruction_service.execute_recovery_for_dataset(
+        dataset_id=dataset_id,
+        allow_automatic_correction=allow_automatic_correction,
     )
 
 

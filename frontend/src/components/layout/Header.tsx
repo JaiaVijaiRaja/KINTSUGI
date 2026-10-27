@@ -9,7 +9,7 @@ import {
   Wrench,
   CheckCircle2,
   ShieldCheck,
-  FileText,
+  RotateCcw,
   Settings,
   Search,
   ArrowRight,
@@ -67,7 +67,7 @@ export const Header: React.FC<HeaderProps> = ({
     { path: '/reconstruction', label: 'Reconstruction', icon: Wrench },
     { path: '/evaluation', label: 'Evaluation', icon: CheckCircle2 },
     { path: '/audit', label: 'Audit Trail', icon: ShieldCheck },
-    { path: '/diagnostics', label: 'Diagnostic Report', icon: FileText },
+    { path: '/diagnostics', label: 'Recovery Center', icon: RotateCcw },
     { path: '/settings', label: 'Settings', icon: Settings },
   ];
 
