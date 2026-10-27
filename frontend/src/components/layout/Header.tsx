@@ -62,7 +62,7 @@ export const Header: React.FC<HeaderProps> = ({
   }, []);
 
   const navTabs: NavTab[] = [
-    { path: '/overview', label: 'Overview', icon: LayoutDashboard },
+    { path: '/overview', label: 'Dashboard', icon: LayoutDashboard },
     { path: '/datasets', label: 'Datasets', icon: Database },
     { path: '/pipeline', label: 'Pipeline', icon: Sliders },
     { path: '/anomalies', label: 'Anomalies', icon: Activity },

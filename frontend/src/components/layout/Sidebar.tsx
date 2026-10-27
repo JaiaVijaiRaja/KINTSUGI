@@ -42,7 +42,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
   const navItems: NavItem[] = [
     {
       path: '/overview',
-      label: 'Overview',
+      label: 'Dashboard',
       icon: LayoutDashboard,
       description: 'System health, fault telemetry & KPI summary',
     },

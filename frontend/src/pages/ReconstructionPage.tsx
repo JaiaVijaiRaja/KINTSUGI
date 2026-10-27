@@ -408,41 +408,47 @@ export const ReconstructionPage: React.FC = () => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Pipeline Selector */}
             <div className="space-y-2">
-              <label className="text-xs font-semibold text-slate-300 flex items-center justify-between">
+              <label className="text-xs font-semibold text-stone-800 flex items-center justify-between">
                 <span>Select Target Pipeline</span>
-                <span className="text-[10px] text-slate-500 font-mono">
+                <span className="text-[10px] text-stone-500 font-mono font-medium">
                   {pipelines.length} configured
                 </span>
               </label>
               <select
                 value={selectedPipelineId}
                 onChange={(e) => setSelectedPipelineId(e.target.value)}
-                disabled={isLoadingCatalogs || isExecuting}
-                className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3.5 py-2.5 text-xs text-slate-200 focus:outline-hidden focus:border-amber-500 transition-colors cursor-pointer"
+                disabled={isLoadingCatalogs || isExecuting || pipelines.length === 0}
+                className="w-full bg-white border border-stone-300 rounded-xl px-3.5 py-2.5 text-xs text-stone-900 font-medium shadow-2xs focus:outline-hidden focus:border-[#EE602C] focus:ring-2 focus:ring-[#EE602C]/20 transition-all cursor-pointer disabled:bg-stone-100 disabled:text-stone-400 disabled:cursor-not-allowed"
               >
-                {pipelines.map((p) => (
-                  <option key={p.configuration_id} value={p.configuration_id}>
-                    {p.configuration_name} (v{p.configuration_version}) — {p.sensor_columns.length} sensors
+                {pipelines.length === 0 ? (
+                  <option value="" disabled className="bg-white text-stone-400">
+                    No pipelines configured — please configure a pipeline first
                   </option>
-                ))}
+                ) : (
+                  pipelines.map((p) => (
+                    <option key={p.configuration_id} value={p.configuration_id} className="bg-white text-stone-900">
+                      {p.configuration_name} (v{p.configuration_version}) — {p.sensor_columns.length} sensors
+                    </option>
+                  ))
+                )}
               </select>
               {selectedPipeline && (
-                <div className="p-3 bg-slate-950/60 border border-slate-800/60 rounded-lg text-[11px] text-slate-400 space-y-1">
+                <div className="p-3.5 bg-stone-50 border border-stone-200/80 rounded-xl text-[11px] text-stone-600 space-y-1">
                   <div>
-                    <span className="text-slate-500">Dataset:</span>{' '}
-                    <span className="text-slate-300 font-mono">
+                    <span className="text-stone-500">Dataset:</span>{' '}
+                    <span className="text-stone-800 font-mono font-medium">
                       {targetDataset?.filename || selectedPipeline.dataset_id}
                     </span>
                   </div>
                   <div>
-                    <span className="text-slate-500">Monitored Sensors:</span>{' '}
-                    <span className="text-slate-300">
+                    <span className="text-stone-500">Monitored Sensors:</span>{' '}
+                    <span className="text-stone-800 font-medium">
                       {selectedPipeline.sensor_columns.join(', ')}
                     </span>
                   </div>
                   <div>
-                    <span className="text-slate-500">Policy:</span>{' '}
-                    <span className="text-amber-400/90 font-mono">
+                    <span className="text-stone-500">Policy:</span>{' '}
+                    <span className="text-[#EE602C] font-mono font-semibold">
                       Threshold &ge;{' '}
                       {(selectedPipeline.confidence_policy?.review_threshold * 100).toFixed(0)}%
                       {selectedPipeline.confidence_policy?.human_review_required
@@ -456,21 +462,22 @@ export const ReconstructionPage: React.FC = () => {
 
             {/* Completed Detection Run Selector */}
             <div className="space-y-2">
-              <label className="text-xs font-semibold text-slate-300 flex items-center justify-between">
+              <label className="text-xs font-semibold text-stone-800 flex items-center justify-between">
                 <span>Completed Anomaly Detection Run</span>
-                <span className="text-[10px] text-slate-500 font-mono">
+                <span className="text-[10px] text-stone-500 font-mono font-medium">
                   {detectionRuns.length} completed
                 </span>
               </label>
               {detectionRuns.length === 0 ? (
-                <div className="p-4 bg-slate-950 border border-dashed border-slate-800 rounded-lg text-center space-y-2">
-                  <p className="text-xs text-slate-400">
+                <div className="p-4 bg-stone-50 border border-dashed border-stone-300 rounded-xl text-center space-y-2.5">
+                  <p className="text-xs text-stone-600 font-medium">
                     No completed detection runs found for this pipeline.
                   </p>
                   <Button
                     size="sm"
                     variant="outline"
                     onClick={() => navigate('/anomalies')}
+                    className="shadow-2xs"
                   >
                     Go to Anomaly Explorer
                   </Button>
@@ -480,10 +487,10 @@ export const ReconstructionPage: React.FC = () => {
                   value={selectedDetectionRunId}
                   onChange={(e) => setSelectedDetectionRunId(e.target.value)}
                   disabled={isLoadingDetectionRuns || isExecuting}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3.5 py-2.5 text-xs text-slate-200 focus:outline-hidden focus:border-amber-500 transition-colors cursor-pointer"
+                  className="w-full bg-white border border-stone-300 rounded-xl px-3.5 py-2.5 text-xs text-stone-900 font-medium shadow-2xs focus:outline-hidden focus:border-[#EE602C] focus:ring-2 focus:ring-[#EE602C]/20 transition-all cursor-pointer disabled:bg-stone-100 disabled:text-stone-400 disabled:cursor-not-allowed"
                 >
                   {detectionRuns.map((r) => (
-                    <option key={r.run_id} value={r.run_id}>
+                    <option key={r.run_id} value={r.run_id} className="bg-white text-stone-900">
                       {r.run_id} — {r.summary.total_anomalies_detected} anomalies detected (
                       {new Date(r.start_time).toLocaleString()})
                     </option>
@@ -492,22 +499,22 @@ export const ReconstructionPage: React.FC = () => {
               )}
 
               {selectedDetectionRun && (
-                <div className="p-3 bg-slate-950/60 border border-slate-800/60 rounded-lg text-[11px] text-slate-400 flex items-center justify-between">
+                <div className="p-3.5 bg-stone-50 border border-stone-200/80 rounded-xl text-[11px] text-stone-600 flex items-center justify-between flex-wrap gap-2">
                   <div>
-                    <span className="text-slate-500">Flagged Anomalies:</span>{' '}
-                    <span className="font-mono text-rose-400 font-semibold">
+                    <span className="text-stone-500">Flagged Anomalies:</span>{' '}
+                    <span className="font-mono text-rose-600 font-semibold">
                       {selectedDetectionRun.summary.total_anomalies_detected}
                     </span>
                   </div>
                   <div>
-                    <span className="text-slate-500">Rows Evaluated:</span>{' '}
-                    <span className="font-mono text-slate-300">
+                    <span className="text-stone-500">Rows Evaluated:</span>{' '}
+                    <span className="font-mono text-stone-800 font-medium">
                       {selectedDetectionRun.summary.total_rows_analyzed}
                     </span>
                   </div>
                   <div>
-                    <span className="text-slate-500">Detectors:</span>{' '}
-                    <span className="text-slate-300 font-mono text-[10px]">
+                    <span className="text-stone-500">Detectors:</span>{' '}
+                    <span className="text-stone-700 font-mono text-[10px]">
                       {selectedDetectionRun.detector_methods.join(', ')}
                     </span>
                   </div>
@@ -517,7 +524,7 @@ export const ReconstructionPage: React.FC = () => {
           </div>
 
           {/* Action Trigger & Historical Reconstruction Selector */}
-          <div className="pt-4 border-t border-slate-800/70 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="pt-4 border-t border-stone-200 flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-3 w-full sm:w-auto">
               <Button
                 variant="primary"
@@ -677,7 +684,7 @@ export const ReconstructionPage: React.FC = () => {
               <select
                 value={sensorFilter}
                 onChange={(e) => setSensorFilter(e.target.value)}
-                className="bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-300 focus:outline-hidden"
+                className="bg-white border border-stone-300 rounded-lg px-2.5 py-1.5 text-xs text-stone-800 font-medium shadow-2xs focus:outline-hidden focus:border-[#EE602C] focus:ring-1 focus:ring-[#EE602C]/20"
               >
                 <option value="ALL">All Sensors</option>
                 {selectedPipeline?.sensor_columns.map((c) => (
@@ -691,7 +698,7 @@ export const ReconstructionPage: React.FC = () => {
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-300 focus:outline-hidden"
+                className="bg-white border border-stone-300 rounded-lg px-2.5 py-1.5 text-xs text-stone-800 font-medium shadow-2xs focus:outline-hidden focus:border-[#EE602C] focus:ring-1 focus:ring-[#EE602C]/20"
               >
                 <option value="ALL">All Statuses</option>
                 <option value="ESTIMATED">ESTIMATED</option>
@@ -706,28 +713,30 @@ export const ReconstructionPage: React.FC = () => {
                 placeholder="Search row, id, reason..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-300 placeholder:text-slate-600 focus:outline-hidden w-40"
+                className="bg-white border border-stone-300 rounded-lg px-2.5 py-1.5 text-xs text-stone-800 placeholder:text-stone-400 font-medium shadow-2xs focus:outline-hidden focus:border-[#EE602C] focus:ring-1 focus:ring-[#EE602C]/20 w-48"
               />
             </div>
           }
         />
         <CardContent className="p-0">
           {isLoadingResults ? (
-            <div className="p-12 text-center text-slate-400 space-y-3">
-              <RefreshCw className="w-6 h-6 animate-spin mx-auto text-amber-400" />
+            <div className="p-12 text-center text-stone-500 space-y-3">
+              <RefreshCw className="w-6 h-6 animate-spin mx-auto text-[#EE602C]" />
               <p className="text-xs">Loading reconstruction records and audit breakdown...</p>
             </div>
           ) : resultsError ? (
-            <div className="p-8 text-center text-rose-400 space-y-2">
+            <div className="p-8 text-center text-rose-600 space-y-2">
               <AlertTriangle className="w-6 h-6 mx-auto" />
               <p className="text-xs">{resultsError}</p>
             </div>
           ) : !activeReconstructionRun ? (
-            <EmptyState
-              icon={Wrench}
-              title="No Reconstruction Run Selected"
-              description="Select a pipeline and detection run, then click 'Start Reconstruction Run' to generate candidate repairs."
-            />
+            <div className="p-8">
+              <EmptyState
+                icon={Wrench}
+                title="No Reconstruction Run Selected"
+                description="Select a pipeline and detection run, then click 'Start Reconstruction Run' to generate candidate repairs."
+              />
+            </div>
           ) : displayedResults.length === 0 ? (
             <div className="p-10 text-center text-slate-500 text-xs">
               No reconstruction records match the selected filters.

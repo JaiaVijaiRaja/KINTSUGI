@@ -4,12 +4,12 @@ test.describe('Test Journey A: Application Navigation & Route Integrity', () => 
   test('A-01: Main page loads and redirects to overview or displays overview', async ({ page }) => {
     await page.goto('/');
     await expect(page).toHaveURL(/.*overview/);
-    await expect(page.locator('h1')).toContainText('System Overview');
+    await expect(page.locator('h1')).toContainText('System Dashboard');
   });
 
   test('A-02: All 8 core production routes render expected headings', async ({ page }) => {
     const pages = [
-      { path: '/overview', heading: 'System Overview', label: 'Overview' },
+      { path: '/overview', heading: 'System Dashboard', label: 'Dashboard' },
       { path: '/datasets', heading: 'Dataset Management', label: 'Dataset Management' },
       { path: '/pipeline', heading: 'Pipeline Configuration', label: 'Pipeline Configuration' },
       { path: '/anomalies', heading: 'Anomaly Explorer', label: 'Anomaly Explorer' },
@@ -35,11 +35,11 @@ test.describe('Test Journey A: Application Navigation & Route Integrity', () => 
     await expect(page.locator('h1')).toContainText('Page Not Located');
     await expect(page.getByText('Route Not Found')).toBeVisible();
 
-    // Click Return to Overview
-    const returnBtn = page.getByRole('button', { name: 'Return to Overview' });
+    // Click Return to Dashboard
+    const returnBtn = page.getByRole('button', { name: 'Return to Dashboard' });
     await expect(returnBtn).toBeVisible();
     await returnBtn.click();
     await expect(page).toHaveURL(/.*overview/);
-    await expect(page.locator('h1')).toContainText('System Overview');
+    await expect(page.locator('h1')).toContainText('System Dashboard');
   });
 });

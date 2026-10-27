@@ -4,7 +4,6 @@ import {
   LineChart,
   Info,
   Play,
-  RefreshCw,
   AlertTriangle,
   CheckCircle2,
   XCircle,
@@ -292,7 +291,7 @@ export const AnomaliesPage: React.FC = () => {
           subtitle="Select a saved pipeline configuration to run statistical and Isolation Forest detectors"
           icon={Sliders}
           badge={
-            <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+            <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200">
               Live Engine
             </span>
           }
@@ -300,31 +299,31 @@ export const AnomaliesPage: React.FC = () => {
         <CardContent>
           <div className="space-y-6">
             {catalogError && (
-              <div className="flex items-start gap-2.5 p-3.5 rounded-lg bg-red-950/40 border border-red-800 text-xs text-red-200">
-                <XCircle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
+              <div className="flex items-start gap-2.5 p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-800 font-medium">
+                <XCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
                 <span>{catalogError}</span>
               </div>
             )}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
               {/* Pipeline Selector */}
               <div className="space-y-1.5 md:col-span-2">
-                <label className="text-[11px] font-mono uppercase text-slate-400 block">
+                <label className="text-[11px] font-mono uppercase text-stone-500 font-semibold block">
                   Select Pipeline Configuration
                 </label>
                 {isLoadingCatalogs ? (
-                  <div className="h-10 bg-slate-950 border border-slate-800 rounded-lg animate-pulse" />
+                  <div className="h-10 bg-stone-100 border border-stone-200 rounded-xl animate-pulse" />
                 ) : pipelines.length === 0 ? (
-                  <div className="p-3 bg-amber-500/10 border border-amber-500/30 rounded-lg text-xs text-amber-300">
+                  <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-800 font-medium">
                     No pipeline configurations found. Create and save a pipeline in the Pipeline Configuration page first.
                   </div>
                 ) : (
                   <select
                     value={selectedPipelineId}
                     onChange={(e) => setSelectedPipelineId(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2.5 text-xs text-slate-200 focus:outline-none focus:border-emerald-500 transition-colors"
+                    className="w-full bg-white border border-stone-300 rounded-xl px-3.5 py-2.5 text-xs text-stone-900 font-medium shadow-2xs focus:outline-hidden focus:border-[#EE602C] focus:ring-2 focus:ring-[#EE602C]/20 transition-all cursor-pointer"
                   >
                     {pipelines.map((p) => (
-                      <option key={p.configuration_id} value={p.configuration_id}>
+                      <option key={p.configuration_id} value={p.configuration_id} className="bg-white text-stone-900">
                         {p.configuration_name} (v{p.configuration_version}) — Dataset: {p.dataset_id}
                       </option>
                     ))}
@@ -335,60 +334,53 @@ export const AnomaliesPage: React.FC = () => {
               {/* Run Button */}
               <div>
                 <Button
+                  variant="primary"
                   onClick={handleRunDetection}
                   disabled={!selectedPipelineId || isExecuting || pipelines.length === 0}
-                  className="w-full justify-center bg-emerald-600 hover:bg-emerald-500 text-white font-medium py-2.5 shadow-lg shadow-emerald-950/40"
+                  loading={isExecuting}
+                  icon={Play}
+                  className="w-full justify-center py-2.5"
                 >
-                  {isExecuting ? (
-                    <>
-                      <RefreshCw className="w-4 h-4 mr-2 animate-spin text-white" />
-                      Executing Detectors...
-                    </>
-                  ) : (
-                    <>
-                      <Play className="w-4 h-4 mr-2 text-white fill-current" />
-                      Run Real Detection
-                    </>
-                  )}
+                  {isExecuting ? 'Executing Detectors...' : 'Run Real Detection'}
                 </Button>
               </div>
             </div>
 
             {/* Selected Pipeline Details Badges */}
             {selectedPipeline && (
-              <div className="p-4 rounded-xl bg-slate-950/70 border border-slate-800/80 flex flex-wrap items-center gap-4 text-xs">
-                <div className="flex items-center gap-1.5 text-slate-400">
-                  <Database className="w-3.5 h-3.5 text-cyan-400" />
-                  <span className="font-mono text-slate-300">
+              <div className="p-3.5 rounded-xl bg-stone-50 border border-stone-200/80 flex flex-wrap items-center gap-3 text-xs">
+                <div className="flex items-center gap-1.5 text-stone-600">
+                  <Database className="w-3.5 h-3.5 text-[#EE602C]" />
+                  <span className="font-mono text-stone-800 font-medium">
                     {targetDataset ? targetDataset.filename : selectedPipeline.dataset_id}
                   </span>
                 </div>
-                <div className="h-4 w-px bg-slate-800" />
-                <div className="flex items-center gap-1.5 text-slate-400">
-                  <Activity className="w-3.5 h-3.5 text-indigo-400" />
-                  <span>Sensors ({selectedPipeline.sensor_columns.length}):</span>
-                  <div className="flex gap-1 flex-wrap">
+                <div className="h-4 w-px bg-stone-300" />
+                <div className="flex items-center gap-1.5 text-stone-600">
+                  <Activity className="w-3.5 h-3.5 text-[#EE602C]" />
+                  <span className="font-medium text-stone-700">Sensors ({selectedPipeline.sensor_columns.length}):</span>
+                  <div className="flex gap-1.5 flex-wrap">
                     {selectedPipeline.sensor_columns.map((s) => (
                       <span
                         key={s}
-                        className="px-2 py-0.5 rounded bg-slate-800/80 font-mono text-[10px] text-slate-300"
+                        className="px-2 py-0.5 rounded-md bg-white border border-stone-200 font-mono text-[10px] text-stone-800 font-semibold shadow-2xs"
                       >
                         {s}
                       </span>
                     ))}
                   </div>
                 </div>
-                <div className="h-4 w-px bg-slate-800" />
-                <div className="flex items-center gap-1.5 text-slate-400">
-                  <Sliders className="w-3.5 h-3.5 text-emerald-400" />
-                  <span>Detectors:</span>
+                <div className="h-4 w-px bg-stone-300" />
+                <div className="flex items-center gap-1.5 text-stone-600">
+                  <Sliders className="w-3.5 h-3.5 text-[#EE602C]" />
+                  <span className="font-medium text-stone-700">Detectors:</span>
                   {selectedPipeline.detection_settings.statistical.enabled && (
-                    <span className="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-mono">
+                    <span className="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-800 border border-emerald-200 text-[10px] font-mono font-medium">
                       Rolling MAD (w={selectedPipeline.detection_settings.statistical.window_size})
                     </span>
                   )}
                   {selectedPipeline.detection_settings.isolation_forest.enabled && (
-                    <span className="px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20 text-[10px] font-mono">
+                    <span className="px-2 py-0.5 rounded-md bg-sky-50 text-sky-800 border border-sky-200 text-[10px] font-mono font-medium">
                       Isolation Forest (c={selectedPipeline.detection_settings.isolation_forest.contamination})
                     </span>
                   )}
@@ -398,8 +390,8 @@ export const AnomaliesPage: React.FC = () => {
 
             {/* Execution Error Banner */}
             {executionError && (
-              <div className="flex items-start gap-2.5 p-3.5 rounded-lg bg-red-950/40 border border-red-800 text-xs text-red-200">
-                <XCircle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
+              <div className="flex items-start gap-2.5 p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-800 font-medium">
+                <XCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
                 <span>{executionError}</span>
               </div>
             )}
@@ -532,7 +524,7 @@ export const AnomaliesPage: React.FC = () => {
 
             {/* SVG Visualizer or Empty State */}
             {!activeRun ? (
-              <div className="min-h-[260px] flex items-center justify-center border border-slate-800/80 rounded-xl bg-slate-950/50 p-6">
+              <div className="min-h-[260px] flex items-center justify-center p-2">
                 <EmptyState
                   icon={LineChart}
                   title="Detection Engine Standby"
@@ -540,11 +532,11 @@ export const AnomaliesPage: React.FC = () => {
                 />
               </div>
             ) : chartPoints.length === 0 ? (
-              <div className="min-h-[260px] flex items-center justify-center border border-slate-800/80 rounded-xl bg-slate-950/50 p-6 text-slate-500 text-xs font-mono">
+              <div className="min-h-[260px] flex items-center justify-center border border-dashed border-stone-300 rounded-2xl bg-stone-50/50 p-6 text-stone-500 text-xs font-mono">
                 No numeric data points available for sensor channel '{activeSensorView}'.
               </div>
             ) : (
-              <div className="relative border border-slate-800 rounded-xl bg-slate-950 p-4 overflow-hidden">
+              <div className="relative border border-stone-200 rounded-2xl bg-white p-4 overflow-hidden">
                 {/* SVG Time Series Rendering */}
                 <div className="w-full overflow-x-auto">
                   <svg
@@ -734,14 +726,14 @@ export const AnomaliesPage: React.FC = () => {
         <CardContent>
           <div className="space-y-4">
             {/* Filter Bar */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-3.5 rounded-xl bg-slate-950/70 border border-slate-800">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-3.5 rounded-xl bg-stone-50 border border-stone-200">
               {/* Sensor Channel Filter */}
               <div className="space-y-1">
-                <label className="text-[10px] font-mono uppercase text-slate-400 block">Sensor Channel</label>
+                <label className="text-[10px] font-mono uppercase text-stone-500 font-semibold block">Sensor Channel</label>
                 <select
                   value={sensorFilter}
                   onChange={(e) => setSensorFilter(e.target.value)}
-                  className="w-full bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-slate-600"
+                  className="w-full bg-white border border-stone-300 rounded-lg px-2.5 py-1.5 text-xs text-stone-800 font-medium shadow-2xs focus:outline-hidden focus:border-[#EE602C] focus:ring-1 focus:ring-[#EE602C]/20"
                 >
                   <option value="ALL">All Sensors</option>
                   {selectedPipeline?.sensor_columns.map((col) => (
@@ -754,11 +746,11 @@ export const AnomaliesPage: React.FC = () => {
 
               {/* Detector Filter */}
               <div className="space-y-1">
-                <label className="text-[10px] font-mono uppercase text-slate-400 block">Detector Algorithm</label>
+                <label className="text-[10px] font-mono uppercase text-stone-500 font-semibold block">Detector Algorithm</label>
                 <select
                   value={detectorFilter}
                   onChange={(e) => setDetectorFilter(e.target.value)}
-                  className="w-full bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-slate-600"
+                  className="w-full bg-white border border-stone-300 rounded-lg px-2.5 py-1.5 text-xs text-stone-800 font-medium shadow-2xs focus:outline-hidden focus:border-[#EE602C] focus:ring-1 focus:ring-[#EE602C]/20"
                 >
                   <option value="ALL">All Detectors</option>
                   <option value="statistical_mad">Statistical MAD Only</option>
@@ -769,11 +761,11 @@ export const AnomaliesPage: React.FC = () => {
 
               {/* Severity Filter */}
               <div className="space-y-1">
-                <label className="text-[10px] font-mono uppercase text-slate-400 block">Severity Level</label>
+                <label className="text-[10px] font-mono uppercase text-stone-500 font-semibold block">Severity Level</label>
                 <select
                   value={severityFilter}
                   onChange={(e) => setSeverityFilter(e.target.value)}
-                  className="w-full bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-slate-600"
+                  className="w-full bg-white border border-stone-300 rounded-lg px-2.5 py-1.5 text-xs text-stone-800 font-medium shadow-2xs focus:outline-hidden focus:border-[#EE602C] focus:ring-1 focus:ring-[#EE602C]/20"
                 >
                   <option value="ALL">All Severities</option>
                   <option value="CRITICAL">Critical</option>

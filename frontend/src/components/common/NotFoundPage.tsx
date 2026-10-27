@@ -34,7 +34,7 @@ export const NotFoundPage: React.FC = () => {
           icon={ArrowLeft}
           onClick={() => navigate('/overview')}
         >
-          Return to Overview
+          Return to Dashboard
         </Button>
       </div>
     </div>
